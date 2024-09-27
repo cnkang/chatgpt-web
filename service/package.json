@@ -24,7 +24,7 @@
     "common:cleanup": "rimraf node_modules && rimraf pnpm-lock.yaml"
   },
   "dependencies": {
-    "axios": "^1.7.5",
+    "axios": "^1.7.6",
     "chatgpt": "^5.1.2",
     "dotenv": "^16.4.5",
     "esno": "^4.7.0",
