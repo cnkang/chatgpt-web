@@ -28,7 +28,7 @@
     "chatgpt": "^5.1.2",
     "dotenv": "^16.4.7",
     "esno": "^4.8.0",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "express-rate-limit": "^6.7.0",
     "https-proxy-agent": "^5.0.1",
     "isomorphic-fetch": "^3.0.0",
