@@ -30,7 +30,7 @@
     "katex": "^0.16.23",
     "markdown-it": "^13.0.2",
     "mermaid-it-markdown": "^1.0.8",
-    "naive-ui": "^2.34.3",
+    "naive-ui": "^2.43.1",
     "pinia": "^2.3.1",
     "vue": "^3.2.47",
     "vue-i18n": "^9.14.5",
