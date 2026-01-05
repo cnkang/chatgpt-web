@@ -1,6 +1,6 @@
-import express from 'express'
-import type { RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
+import type { RequestProps } from './types'
+import express from 'express'
 import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
 import { auth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
@@ -20,19 +20,19 @@ app.all('*', (_, res, next) => {
 })
 
 router.get('/health', async (_req, res, _next) => {
-
   const healthcheck = {
-      uptime: process.uptime(),
-      message: 'OK',
-      timestamp: Date.now()
-  };
-  try {
-      res.send(healthcheck);
-  } catch (error) {
-      healthcheck.message = error;
-      res.status(503).send();
+    uptime: process.uptime(),
+    message: 'OK',
+    timestamp: Date.now(),
   }
-});
+  try {
+    res.send(healthcheck)
+  }
+  catch (error) {
+    healthcheck.message = error
+    res.status(503).send()
+  }
+})
 
 router.post('/chat-process', [auth, limiter], async (req, res) => {
   res.setHeader('Content-type', 'application/octet-stream')
