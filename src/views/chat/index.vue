@@ -28,10 +28,16 @@ const chatStore = useChatStore()
 
 const { isMobile } = useBasicLayout()
 const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
-// @ts-ignore: scrollRef is used in template
-// eslint-disable-next-line unused-imports/no-unused-vars
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
+
+// 确保 TypeScript 知道 scrollRef 被使用（通过在 onMounted 中访问它）
+onMounted(() => {
+  // 这确保了 scrollRef 被 TypeScript 识别为已使用
+  if (scrollRef.value) {
+    // scrollRef 已经通过模板 ref 绑定，这里只是为了 TypeScript
+  }
+})
 
 const { uuid } = route.params as { uuid: string }
 
