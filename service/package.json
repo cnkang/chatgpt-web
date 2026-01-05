@@ -1,5 +1,6 @@
 {
   "name": "chatgpt-web-service",
+  "type": "module",
   "version": "1.0.0",
   "private": false,
   "description": "ChatGPT Web Service",
@@ -11,7 +12,7 @@
     "express"
   ],
   "engines": {
-    "node": "^16 || ^18 || ^20"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "start": "esno ./src/index.ts",
@@ -25,23 +26,23 @@
   },
   "dependencies": {
     "axios": "^1.13.2",
-    "chatgpt": "^5.1.2",
-    "dotenv": "^16.6.1",
+    "chatgpt": "^5.2.5",
+    "dotenv": "^17.2.3",
     "esno": "^4.8.0",
     "express": "^5.2.1",
-    "express-rate-limit": "^6.7.0",
-    "https-proxy-agent": "^5.0.1",
+    "express-rate-limit": "^8.2.1",
+    "https-proxy-agent": "^7.0.6",
     "isomorphic-fetch": "^3.0.0",
-    "node-fetch": "^3.3.0",
-    "socks-proxy-agent": "^7.0.0"
+    "node-fetch": "^3.3.2",
+    "socks-proxy-agent": "^8.0.5"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^0.35.3",
+    "@antfu/eslint-config": "^6.7.3",
     "@types/express": "^5.0.6",
-    "@types/node": "^18.14.6",
-    "eslint": "^8.35.0",
-    "rimraf": "^4.3.0",
+    "@types/node": "^25.0.3",
+    "eslint": "^9.39.2",
+    "rimraf": "^6.1.2",
     "tsup": "^8.5.1",
-    "typescript": "^4.9.5"
+    "typescript": "^5.9.3"
   }
 }
