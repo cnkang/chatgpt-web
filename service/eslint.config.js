@@ -2,20 +2,12 @@ import antfu from '@antfu/eslint-config'
 
 export default antfu({
   ignores: [
-    'docker-compose/**',
-    'kubernetes/**',
-    'service/build/**',
-    'dist/**',
+    'build/**',
   ],
   rules: {
     // 允许在 Node.js 环境中使用全局 process
     'node/prefer-global/process': 'off',
     // 允许使用 global（在某些情况下是必要的）
     'no-restricted-globals': 'off',
-    // 允许未使用的变量，如果它们以 _ 开头
-    'unused-imports/no-unused-vars': ['error', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_',
-    }],
   },
 })
