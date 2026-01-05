@@ -8,36 +8,36 @@
 ![cover2](./docs/c2.png)
 
 - [ChatGPT Web](#chatgpt-web)
-	- [Introduction](#introduction)
-	- [Roadmap](#roadmap)
-	- [Prerequisites](#prerequisites)
-		- [Node](#node)
-		- [PNPM](#pnpm)
-		- [Filling in the Key](#filling-in-the-key)
-	- [Install Dependencies](#install-dependencies)
-		- [Backend](#backend)
-		- [Frontend](#frontend)
-	- [Run in Test Environment](#run-in-test-environment)
-		- [Backend Service](#backend-service)
-		- [Frontend Webpage](#frontend-webpage)
-	- [Environment Variables](#environment-variables)
-	- [Packaging](#packaging)
-		- [Use Docker](#use-docker)
-			- [Docker Parameter Examples](#docker-parameter-examples)
-			- [Docker build \& Run](#docker-build--run)
-			- [Docker compose](#docker-compose)
-			- [Prevent Crawlers](#prevent-crawlers)
-		- [Deploy with Railway](#deploy-with-railway)
-			- [Railway Environment Variables](#railway-environment-variables)
-		- [Deploy with Sealos](#deploy-with-sealos)
-		- [Package Manually](#package-manually)
-			- [Backend Service](#backend-service-1)
-			- [Frontend Webpage](#frontend-webpage-1)
-	- [FAQ](#faq)
-	- [Contributing](#contributing)
-	- [Acknowledgements](#acknowledgements)
-	- [Sponsors](#sponsors)
-	- [License](#license)
+  - [Introduction](#introduction)
+  - [Roadmap](#roadmap)
+  - [Prerequisites](#prerequisites)
+    - [Node](#node)
+    - [PNPM](#pnpm)
+    - [Filling in the Key](#filling-in-the-key)
+  - [Install Dependencies](#install-dependencies)
+    - [Backend](#backend)
+    - [Frontend](#frontend)
+  - [Run in Test Environment](#run-in-test-environment)
+    - [Backend Service](#backend-service)
+    - [Frontend Webpage](#frontend-webpage)
+  - [Environment Variables](#environment-variables)
+  - [Packaging](#packaging)
+    - [Use Docker](#use-docker)
+      - [Docker Parameter Examples](#docker-parameter-examples)
+      - [Docker build \& Run](#docker-build--run)
+      - [Docker compose](#docker-compose)
+      - [Prevent Crawlers](#prevent-crawlers)
+    - [Deploy with Railway](#deploy-with-railway)
+      - [Railway Environment Variables](#railway-environment-variables)
+    - [Deploy with Sealos](#deploy-with-sealos)
+    - [Package Manually](#package-manually)
+      - [Backend Service](#backend-service-1)
+      - [Frontend Webpage](#frontend-webpage-1)
+  - [FAQ](#faq)
+  - [Contributing](#contributing)
+  - [Acknowledgements](#acknowledgements)
+  - [Sponsors](#sponsors)
+  - [License](#license)
 ## Introduction
 
 Supports dual models and provides two unofficial `ChatGPT API` methods
@@ -350,14 +350,14 @@ Thanks to [JetBrains](https://www.jetbrains.com/) SoftWare for providing free Op
 If you find this project helpful and can afford it, you can give me a little support. Anyway, thanks for your support~
 
 <div style="display: flex; gap: 20px;">
-	<div style="text-align: center">
-		<img style="max-width: 100%" src="./docs/wechat.png" alt="WeChat" />
-		<p>WeChat Pay</p>
-	</div>
-	<div style="text-align: center">
-		<img style="max-width: 100%" src="./docs/alipay.png" alt="Alipay" />
-		<p>Alipay</p>
-	</div>
+  <div style="text-align: center">
+    <img style="max-width: 100%" src="./docs/wechat.png" alt="WeChat" />
+    <p>WeChat Pay</p>
+  </div>
+  <div style="text-align: center">
+    <img style="max-width: 100%" src="./docs/alipay.png" alt="Alipay" />
+    <p>Alipay</p>
+  </div>
 </div>
 
 ## License

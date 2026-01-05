@@ -8,36 +8,36 @@
 ![cover2](./docs/c2.png)
 
 - [ChatGPT Web](#chatgpt-web)
-	- [介绍](#介绍)
-	- [待实现路线](#待实现路线)
-	- [前置要求](#前置要求)
-		- [Node](#node)
-		- [PNPM](#pnpm)
-		- [填写密钥](#填写密钥)
-	- [安装依赖](#安装依赖)
-		- [后端](#后端)
-		- [前端](#前端)
-	- [测试环境运行](#测试环境运行)
-		- [后端服务](#后端服务)
-		- [前端网页](#前端网页)
-	- [环境变量](#环境变量)
-	- [打包](#打包)
-		- [使用 Docker](#使用-docker)
-			- [Docker 参数示例](#docker-参数示例)
-			- [Docker build \& Run](#docker-build--run)
-			- [Docker compose](#docker-compose)
-			- [防止爬虫抓取](#防止爬虫抓取)
-		- [使用 Railway 部署](#使用-railway-部署)
-			- [Railway 环境变量](#railway-环境变量)
-		- [使用 Sealos 部署](#使用-sealos-部署)
-		- [手动打包](#手动打包)
-			- [后端服务](#后端服务-1)
-			- [前端网页](#前端网页-1)
-	- [常见问题](#常见问题)
-	- [参与贡献](#参与贡献)
-	- [致谢](#致谢)
-	- [赞助](#赞助)
-	- [License](#license)
+  - [介绍](#介绍)
+  - [待实现路线](#待实现路线)
+  - [前置要求](#前置要求)
+    - [Node](#node)
+    - [PNPM](#pnpm)
+    - [填写密钥](#填写密钥)
+  - [安装依赖](#安装依赖)
+    - [后端](#后端)
+    - [前端](#前端)
+  - [测试环境运行](#测试环境运行)
+    - [后端服务](#后端服务)
+    - [前端网页](#前端网页)
+  - [环境变量](#环境变量)
+  - [打包](#打包)
+    - [使用 Docker](#使用-docker)
+      - [Docker 参数示例](#docker-参数示例)
+      - [Docker build \& Run](#docker-build--run)
+      - [Docker compose](#docker-compose)
+      - [防止爬虫抓取](#防止爬虫抓取)
+    - [使用 Railway 部署](#使用-railway-部署)
+      - [Railway 环境变量](#railway-环境变量)
+    - [使用 Sealos 部署](#使用-sealos-部署)
+    - [手动打包](#手动打包)
+      - [后端服务](#后端服务-1)
+      - [前端网页](#前端网页-1)
+  - [常见问题](#常见问题)
+  - [参与贡献](#参与贡献)
+  - [致谢](#致谢)
+  - [赞助](#赞助)
+  - [License](#license)
 ## 介绍
 
 支持双模型，提供了两种非官方 `ChatGPT API` 方法
@@ -353,14 +353,14 @@ A: 一种可能原因是经过 Nginx 反向代理，开启了 buffer，则 Nginx
 如果你觉得这个项目对你有帮助，并且情况允许的话，可以给我一点点支持，总之非常感谢支持～
 
 <div style="display: flex; gap: 20px;">
-	<div style="text-align: center">
-		<img style="max-width: 100%" src="./docs/wechat.png" alt="微信" />
-		<p>WeChat Pay</p>
-	</div>
-	<div style="text-align: center">
-		<img style="max-width: 100%" src="./docs/alipay.png" alt="支付宝" />
-		<p>Alipay</p>
-	</div>
+  <div style="text-align: center">
+    <img style="max-width: 100%" src="./docs/wechat.png" alt="微信" />
+    <p>WeChat Pay</p>
+  </div>
+  <div style="text-align: center">
+    <img style="max-width: 100%" src="./docs/alipay.png" alt="支付宝" />
+    <p>Alipay</p>
+  </div>
 </div>
 
 ## License

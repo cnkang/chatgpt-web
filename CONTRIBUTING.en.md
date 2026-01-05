@@ -43,7 +43,6 @@ The following is a list of commit types:
 - test: Unit test
 - chore: Other commits that do not modify src or test files
 
-
 ## License
 
 [MIT](./license)
