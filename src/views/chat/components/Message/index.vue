@@ -1,13 +1,13 @@
 <script setup lang='ts'>
-import { computed, ref } from 'vue'
 import { NDropdown, useMessage } from 'naive-ui'
-import AvatarComponent from './Avatar.vue'
-import TextComponent from './Text.vue'
+import { computed, ref } from 'vue'
 import { SvgIcon } from '@/components/common'
+import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useIconRender } from '@/hooks/useIconRender'
 import { t } from '@/locales'
-import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { copyToClip } from '@/utils/copy'
+import AvatarComponent from './Avatar.vue'
+import TextComponent from './Text.vue'
 
 interface Props {
   dateTime?: string
@@ -31,8 +31,6 @@ const { isMobile } = useBasicLayout()
 const { iconRender } = useIconRender()
 
 const message = useMessage()
-
-const textRef = ref<HTMLElement>()
 
 const asRawText = ref(props.inversion)
 
@@ -113,7 +111,6 @@ async function handleCopy() {
         :class="[inversion ? 'flex-row-reverse' : 'flex-row']"
       >
         <TextComponent
-          ref="textRef"
           :inversion="inversion"
           :error="error"
           :text="text"
