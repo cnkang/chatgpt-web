@@ -6,36 +6,68 @@ on:
   release:
     types: [created] # 表示在创建新的 Release 时触发
 
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY || 'chatgpt-web' }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+
 jobs:
   build_docker:
     name: Build docker
     runs-on: ubuntu-latest
+    # Required for OIDC authentication
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.ref_name }}
+
       - run: |
-          echo "本次构建的版本为：${GITHUB_REF_NAME} (但是这个变量目前上下文中无法获取到)"
-          echo 本次构建的版本为：${{ github.ref_name }}
-          env
+          echo "本次构建的版本为：${{ github.ref_name }}"
+          echo "ECR Registry: ${{ steps.login-ecr.outputs.registry }}"
+          echo "ECR Repository: ${{ env.ECR_REPOSITORY }}"
+          echo "AWS Region: ${{ env.AWS_REGION }}"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push to ECR
         id: docker_build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/chatgpt-web:${{ github.ref_name }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/chatgpt-web:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
