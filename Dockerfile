@@ -1,5 +1,5 @@
 # build front-end
-FROM node:20.19.0-alpine3.20 AS frontend
+FROM node:24-alpine AS frontend
 
 RUN npm install pnpm -g
 
@@ -16,7 +16,7 @@ COPY . /app
 RUN pnpm run build
 
 # build backend
-FROM node:20.19.0-alpine3.20 as backend
+FROM node:24-alpine as backend
 
 RUN npm install pnpm -g
 
@@ -33,7 +33,7 @@ COPY /service /app
 RUN pnpm build
 
 # service
-FROM node:20.19.0-alpine3.20
+FROM node:24-alpine
 
 RUN npm install pnpm -g
 
