@@ -180,7 +180,7 @@ mermaid-it-markdown@1.0.13 requires mermaid@^10.7.0 but found 11.12.2
 ```
 @types/vue@2.0.0, source-map@0.8.0-beta.0, sourcemap-codec@1.4.8
 ```
-**解决方案**: 
+**解决方案**:
 - 移除了 `mermaid-it-markdown` 解决了 `@types/vue@2.0.0` 问题
 - 使用 pnpm overrides 将弃用的依赖替换为最新版本：
   - `source-map@0.8.0-beta.0` → `source-map@^0.7.6`
