@@ -52,7 +52,7 @@ export default defineConfig((env) => {
     },
     build: {
       // 性能优化
-      target: 'es2020', // 现代浏览器目标，减少 polyfill
+      target: 'esnext', // 最新 ES 标准，最小化 polyfill
       reportCompressedSize: false, // 禁用压缩大小报告以加快构建
       sourcemap: false, // 生产环境禁用 sourcemap
 
