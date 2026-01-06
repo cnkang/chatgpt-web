@@ -118,7 +118,7 @@ export default defineConfig((env) => {
         },
         // 外部化依赖（如果需要 CDN）
         // external: ['vue', 'vue-router'],
-        
+
         // 更激进的 tree-shaking
         treeshake: {
           preset: 'recommended',
@@ -126,26 +126,14 @@ export default defineConfig((env) => {
         },
       },
 
-      // 压缩优化 - 考虑使用 SWC 替代 Terser 以获得更快的构建速度
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          // 移除 console 和 debugger
-          drop_console: isProduction,
-          drop_debugger: isProduction,
-          // 移除未使用的代码
-          pure_funcs: isProduction ? ['console.log', 'console.info', 'console.debug'] : [],
-          // 更激进的优化
-          passes: 2,
-        },
-        mangle: {
-          // 混淆变量名
-          safari10: true,
-        },
-        format: {
-          // 移除注释
-          comments: false,
-        },
+      // 压缩优化 - esbuild 优化配置
+      minify: 'esbuild',
+      esbuildOptions: {
+        drop: isProduction ? ['console', 'debugger'] : [],
+        minifyIdentifiers: true,
+        minifySyntax: true,
+        minifyWhitespace: true,
+        treeShaking: true,
       },
 
       // 构建优化
