@@ -17,6 +17,22 @@ app.use((_: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', 'authorization, Content-Type')
   res.header('Access-Control-Allow-Methods', '*')
+
+  // Content Security Policy for Mermaid and other dynamic libraries
+  res.header('Content-Security-Policy', [
+    'default-src \'self\'',
+    'script-src \'self\' \'unsafe-eval\' \'unsafe-inline\'',
+    'style-src \'self\' \'unsafe-inline\'',
+    'img-src \'self\' data: blob:',
+    'font-src \'self\' data:',
+    'connect-src \'self\' https: wss:',
+    'worker-src \'self\' blob:',
+    'child-src \'self\' blob:',
+    'object-src \'none\'',
+    'base-uri \'self\'',
+    'form-action \'self\'',
+  ].join('; '))
+
   next()
 })
 
