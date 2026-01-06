@@ -13,7 +13,7 @@ const router = express.Router()
 app.use(express.static('public'))
 app.use(express.json())
 
-app.all('*(.*)' as any, (_: Request, res: Response, next: NextFunction) => {
+app.use((_: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', 'authorization, Content-Type')
   res.header('Access-Control-Allow-Methods', '*')
