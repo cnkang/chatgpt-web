@@ -12,10 +12,27 @@ env:
   ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
 
 jobs:
-  # 并行构建不同架构，使用原生runner
+  # 检查仓库类型，决定构建策略
+  check-repo:
+    name: Check repository type
+    runs-on: ubuntu-latest
+    outputs:
+      is-public: ${{ steps.check.outputs.is-public }}
+    steps:
+      - name: Check if repository is public
+        id: check
+        run: |
+          if [[ "${{ github.event.repository.private }}" == "false" ]]; then
+            echo "is-public=true" >> $GITHUB_OUTPUT
+          else
+            echo "is-public=false" >> $GITHUB_OUTPUT
+          fi
+
+  # 并行构建不同架构，使用原生runner（公共仓库）或QEMU（私有仓库）
   build:
     name: Build ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
+    needs: check-repo
     strategy:
       fail-fast: false
       matrix:
@@ -24,7 +41,7 @@ jobs:
             runner: ubuntu-latest
             platform: linux/amd64
           - arch: arm64
-            runner: ubuntu-24.04-arm64  # GitHub原生ARM64 runner
+            runner: ${{ needs.check-repo.outputs.is-public == 'true' && 'ubuntu-24.04-arm64' || 'ubuntu-latest' }}
             platform: linux/arm64
     permissions:
       id-token: write
@@ -54,6 +71,11 @@ jobs:
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ github.ref_name }}
+
+      # 仅在私有仓库且构建ARM64时设置QEMU
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64' && needs.check-repo.outputs.is-public == 'false'
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
