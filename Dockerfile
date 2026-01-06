@@ -16,7 +16,7 @@ COPY . /app
 RUN pnpm run build
 
 # build backend
-FROM node:24-alpine as backend
+FROM node:24-alpine AS backend
 
 RUN npm install pnpm -g
 
