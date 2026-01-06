@@ -138,7 +138,7 @@ export default defineConfig((env) => {
                 if (id.includes('config') || id.includes('theme')) {
                   return 'mermaid-config'
                 }
-                
+
                 // 渲染引擎 - 分离不同的渲染器
                 if (id.includes('render') && id.includes('svg')) {
                   return 'mermaid-svg-render'
@@ -149,7 +149,7 @@ export default defineConfig((env) => {
                 if (id.includes('render')) {
                   return 'mermaid-render-base'
                 }
-                
+
                 // 布局引擎
                 if (id.includes('dagre') || id.includes('layout')) {
                   return 'mermaid-layout'
@@ -157,7 +157,7 @@ export default defineConfig((env) => {
                 if (id.includes('d3') && !id.includes('render')) {
                   return 'mermaid-d3-utils'
                 }
-                
+
                 // 流程图 - 按复杂度分割
                 if (id.includes('flowchart-v2') || id.includes('flowDiagram-v2')) {
                   return 'mermaid-flow-v2'
@@ -165,17 +165,17 @@ export default defineConfig((env) => {
                 if (id.includes('flowchart') || id.includes('flowDiagram') || id.includes('flow')) {
                   return 'mermaid-flow-v1'
                 }
-                
+
                 // 时序图
                 if (id.includes('sequence') || id.includes('sequenceDiagram')) {
                   return 'mermaid-sequence'
                 }
-                
+
                 // 甘特图
                 if (id.includes('gantt')) {
                   return 'mermaid-gantt'
                 }
-                
+
                 // 类图和ER图
                 if (id.includes('classDiagram-v2')) {
                   return 'mermaid-class-v2'
@@ -186,7 +186,7 @@ export default defineConfig((env) => {
                 if (id.includes('er') || id.includes('erDiagram')) {
                   return 'mermaid-er'
                 }
-                
+
                 // 状态图
                 if (id.includes('stateDiagram-v2')) {
                   return 'mermaid-state-v2'
@@ -194,7 +194,7 @@ export default defineConfig((env) => {
                 if (id.includes('state') || id.includes('stateDiagram')) {
                   return 'mermaid-state-v1'
                 }
-                
+
                 // 饼图和旅程图
                 if (id.includes('pie') || id.includes('pieDiagram')) {
                   return 'mermaid-pie'
@@ -202,72 +202,72 @@ export default defineConfig((env) => {
                 if (id.includes('journey') || id.includes('user-journey')) {
                   return 'mermaid-journey'
                 }
-                
+
                 // Git图
                 if (id.includes('git') || id.includes('gitGraph')) {
                   return 'mermaid-git'
                 }
-                
+
                 // C4图
                 if (id.includes('c4') || id.includes('c4Diagram')) {
                   return 'mermaid-c4'
                 }
-                
+
                 // 架构图
                 if (id.includes('architecture') || id.includes('architectureDiagram')) {
                   return 'mermaid-architecture'
                 }
-                
+
                 // 块图
                 if (id.includes('block') || id.includes('blockDiagram')) {
                   return 'mermaid-block'
                 }
-                
+
                 // XY图表
                 if (id.includes('xychart') || id.includes('xyChart')) {
                   return 'mermaid-xychart'
                 }
-                
+
                 // 象限图
                 if (id.includes('quadrant') || id.includes('quadrantChart')) {
                   return 'mermaid-quadrant'
                 }
-                
+
                 // 桑基图
                 if (id.includes('sankey') || id.includes('sankeyDiagram')) {
                   return 'mermaid-sankey'
                 }
-                
+
                 // 时间线
                 if (id.includes('timeline')) {
                   return 'mermaid-timeline'
                 }
-                
+
                 // 思维导图
                 if (id.includes('mindmap')) {
                   return 'mermaid-mindmap'
                 }
-                
+
                 // 看板图
                 if (id.includes('kanban')) {
                   return 'mermaid-kanban'
                 }
-                
+
                 // 需求图
                 if (id.includes('requirement')) {
                   return 'mermaid-requirement'
                 }
-                
+
                 // 信息图
                 if (id.includes('info') || id.includes('infoDiagram')) {
                   return 'mermaid-info'
                 }
-                
+
                 // 通用工具
                 if (id.includes('utils') || id.includes('common')) {
                   return 'mermaid-utils'
                 }
-                
+
                 return 'mermaid-other'
               }
               if (id.includes('@md-reader/markdown-it-mermaid')) {
