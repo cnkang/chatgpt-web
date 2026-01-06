@@ -1,3 +1,4 @@
+import type { NextFunction, Request, Response } from 'express'
 import type { ChatMessage } from './chatgpt'
 import type { RequestProps } from './types'
 import express from 'express'
@@ -12,7 +13,7 @@ const router = express.Router()
 app.use(express.static('public'))
 app.use(express.json())
 
-app.all('*(.*)' as any, (_, res, next) => {
+app.all('*(.*)' as any, (_: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', 'authorization, Content-Type')
   res.header('Access-Control-Allow-Methods', '*')
@@ -29,12 +30,12 @@ router.get('/health', async (_req, res, _next) => {
     res.send(healthcheck)
   }
   catch (error) {
-    healthcheck.message = error
+    healthcheck.message = error instanceof Error ? error.message : String(error)
     res.status(503).send()
   }
 })
 
-router.post('/chat-process', [auth, limiter], async (req, res) => {
+router.post('/chat-process', [auth, limiter], async (req: Request, res: Response) => {
   res.setHeader('Content-type', 'application/octet-stream')
 
   try {
@@ -53,31 +54,31 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
     })
   }
   catch (error) {
-    res.write(JSON.stringify(error))
+    res.write(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }))
   }
   finally {
     res.end()
   }
 })
 
-router.post('/config', auth, async (req, res) => {
+router.post('/config', auth, async (_req, res) => {
   try {
     const response = await chatConfig()
     res.send(response)
   }
   catch (error) {
-    res.send(error)
+    res.send({ error: error instanceof Error ? error.message : String(error) })
   }
 })
 
-router.post('/session', async (req, res) => {
+router.post('/session', async (_req, res) => {
   try {
-    const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
+    const { AUTH_SECRET_KEY } = process.env
     const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
     res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel() } })
   }
   catch (error) {
-    res.send({ status: 'Fail', message: error.message, data: null })
+    res.send({ status: 'Fail', message: error instanceof Error ? error.message : String(error), data: null })
   }
 })
 
@@ -93,7 +94,7 @@ router.post('/verify', async (req, res) => {
     res.send({ status: 'Success', message: 'Verify successfully', data: null })
   }
   catch (error) {
-    res.send({ status: 'Fail', message: error.message, data: null })
+    res.send({ status: 'Fail', message: error instanceof Error ? error.message : String(error), data: null })
   }
 })
 
