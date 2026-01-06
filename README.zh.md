@@ -1,6 +1,8 @@
 # ChatGPT Web
 
-> 声明：此项目只发布于 GitHub，基于 MIT 协议，免费且作为开源学习使用。并且不会有任何形式的卖号、付费服务、讨论群、讨论组等行为。谨防受骗。
+> 声明：此项目基于原开源项目进行修改和优化，遵循 MIT 协议，免费且作为开源学习使用。并且不会有任何形式的卖号、付费服务、讨论群、讨论组等行为。谨防受骗。
+
+> 原项目地址：https://github.com/Chanzhaoyu/chatgpt-web
 
 [English](README.md)
 
@@ -340,28 +342,17 @@ A: 一种可能原因是经过 Nginx 反向代理，开启了 buffer，则 Nginx
 
 感谢所有做过贡献的人!
 
-<a href="https://github.com/Chanzhaoyu/chatgpt-web/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Chanzhaoyu/chatgpt-web" />
+<a href="https://github.com/cnkang/chatgpt-web/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=cnkang/chatgpt-web" />
 </a>
 
 ## 致谢
 
 感谢 [JetBrains](https://www.jetbrains.com/) 为这个项目提供免费开源许可的软件。
 
-## 赞助
-
-如果你觉得这个项目对你有帮助，并且情况允许的话，可以给我一点点支持，总之非常感谢支持～
-
-<div style="display: flex; gap: 20px;">
-  <div style="text-align: center">
-    <img style="max-width: 100%" src="./docs/wechat.png" alt="微信" />
-    <p>WeChat Pay</p>
-  </div>
-  <div style="text-align: center">
-    <img style="max-width: 100%" src="./docs/alipay.png" alt="支付宝" />
-    <p>Alipay</p>
-  </div>
-</div>
+感谢原作者 [ChenZhaoYu](https://github.com/Chanzhaoyu) 创建了这个优秀的开源项目。
 
 ## License
-MIT © [ChenZhaoYu](./license)
+MIT © [Kang Liu](./license)
+
+基于原项目：MIT © [ChenZhaoYu](https://github.com/Chanzhaoyu/chatgpt-web)

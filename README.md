@@ -1,6 +1,8 @@
 # ChatGPT Web
 
-> Disclaimer: This project is only published on GitHub, based on the MIT license, free and for open source learning usage. And there will be no any form of account selling, paid service, discussion group, discussion group and other behaviors. Beware of being deceived.
+> Disclaimer: This project is based on the original open source project with modifications and optimizations, following the MIT license, free and for open source learning usage. And there will be no any form of account selling, paid service, discussion group, discussion group and other behaviors. Beware of being deceived.
+
+> Original project: https://github.com/Chanzhaoyu/chatgpt-web
 
 [中文](README.zh.md)
 
@@ -337,28 +339,17 @@ Please read the [Contributing Guide](./CONTRIBUTING.md) before contributing
 
 Thanks to everyone who has contributed!
 
-<a href="https://github.com/Chanzhaoyu/chatgpt-web/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Chanzhaoyu/chatgpt-web" />
+<a href="https://github.com/cnkang/chatgpt-web/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=cnkang/chatgpt-web" />
 </a>
 
 ## Acknowledgements
 
 Thanks to [JetBrains](https://www.jetbrains.com/) SoftWare for providing free Open Source license for this project.
 
-## Sponsors
-
-If you find this project helpful and can afford it, you can give me a little support. Anyway, thanks for your support~
-
-<div style="display: flex; gap: 20px;">
-  <div style="text-align: center">
-    <img style="max-width: 100%" src="./docs/wechat.png" alt="WeChat" />
-    <p>WeChat Pay</p>
-  </div>
-  <div style="text-align: center">
-    <img style="max-width: 100%" src="./docs/alipay.png" alt="Alipay" />
-    <p>Alipay</p>
-  </div>
-</div>
+Thanks to the original author [ChenZhaoYu](https://github.com/Chanzhaoyu) for creating this excellent open source project.
 
 ## License
-MIT © [ChenZhaoYu]
+MIT © [Kang Liu](./license)
+
+Based on original project: MIT © [ChenZhaoYu](https://github.com/Chanzhaoyu/chatgpt-web)
