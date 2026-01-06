@@ -59,26 +59,37 @@ export default defineConfig((env) => {
       // 代码分割优化
       rollupOptions: {
         output: {
-          // 手动分割代码块
-          manualChunks: {
-            // Vue 生态系统
-            'vue-vendor': ['vue', 'vue-router', 'pinia'],
-            // UI 库
-            'ui-vendor': ['naive-ui'],
-            // 工具库
-            'utils-vendor': ['@vueuse/core'],
-            // Markdown 相关
-            'markdown-vendor': [
-              'markdown-it',
-              '@md-reader/markdown-it-mermaid',
-              '@vscode/markdown-it-katex',
-              'katex',
-              'mermaid',
-            ],
-            // 代码高亮
-            'highlight-vendor': ['highlight.js'],
-            // 国际化
-            'i18n-vendor': ['vue-i18n'],
+          // 手动分割代码块 - 进一步优化
+          manualChunks: (id) => {
+            // 更智能的代码分割策略
+            if (id.includes('node_modules')) {
+              // Vue 生态系统
+              if (id.includes('vue') || id.includes('pinia') || id.includes('@vue')) {
+                return 'vue-vendor'
+              }
+              // UI 库
+              if (id.includes('naive-ui')) {
+                return 'ui-vendor'
+              }
+              // 工具库
+              if (id.includes('@vueuse') || id.includes('lodash')) {
+                return 'utils-vendor'
+              }
+              // Markdown 和数学公式相关 - 按需加载
+              if (id.includes('markdown-it') || id.includes('katex') || id.includes('mermaid')) {
+                return 'markdown-vendor'
+              }
+              // 代码高亮
+              if (id.includes('highlight.js')) {
+                return 'highlight-vendor'
+              }
+              // 国际化
+              if (id.includes('vue-i18n')) {
+                return 'i18n-vendor'
+              }
+              // 其他第三方库
+              return 'vendor'
+            }
           },
           // 优化文件名
           chunkFileNames: (chunkInfo) => {
@@ -107,9 +118,15 @@ export default defineConfig((env) => {
         },
         // 外部化依赖（如果需要 CDN）
         // external: ['vue', 'vue-router'],
+        
+        // 更激进的 tree-shaking
+        treeshake: {
+          preset: 'recommended',
+          manualPureFunctions: ['console.log', 'console.info', 'console.debug'],
+        },
       },
 
-      // 压缩优化
+      // 压缩优化 - 考虑使用 SWC 替代 Terser 以获得更快的构建速度
       minify: 'terser',
       terserOptions: {
         compress: {
@@ -117,11 +134,17 @@ export default defineConfig((env) => {
           drop_console: isProduction,
           drop_debugger: isProduction,
           // 移除未使用的代码
-          pure_funcs: isProduction ? ['console.log', 'console.info'] : [],
+          pure_funcs: isProduction ? ['console.log', 'console.info', 'console.debug'] : [],
+          // 更激进的优化
+          passes: 2,
         },
         mangle: {
           // 混淆变量名
           safari10: true,
+        },
+        format: {
+          // 移除注释
+          comments: false,
         },
       },
 
