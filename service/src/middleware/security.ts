@@ -4,9 +4,8 @@
  */
 
 import type { NextFunction, Request, Response } from 'express'
-import type { SessionOptions } from 'express-session'
-import RedisStore from 'connect-redis'
 import { rateLimit } from 'express-rate-limit'
+import type { SessionOptions } from 'express-session'
 import session from 'express-session'
 import helmet from 'helmet'
 import { createClient } from 'redis'
@@ -77,18 +76,18 @@ export function createSecurityHeaders(config: SecurityConfig = defaultSecurityCo
     contentSecurityPolicy: config.helmet.contentSecurityPolicy
       ? {
           directives: {
-            defaultSrc: ['\'self\''],
-            scriptSrc: ['\'self\'', '\'unsafe-eval\'', '\'unsafe-inline\''],
-            styleSrc: ['\'self\'', '\'unsafe-inline\''],
-            imgSrc: ['\'self\'', 'data:', 'blob:'],
-            fontSrc: ['\'self\'', 'data:'],
-            connectSrc: ['\'self\'', 'https:', 'wss:'],
-            workerSrc: ['\'self\'', 'blob:'],
-            childSrc: ['\'self\'', 'blob:'],
-            objectSrc: ['\'none\''],
-            baseUri: ['\'self\''],
-            formAction: ['\'self\''],
-            frameAncestors: ['\'none\''],
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:', 'blob:'],
+            fontSrc: ["'self'", 'data:'],
+            connectSrc: ["'self'", 'https:', 'wss:'],
+            workerSrc: ["'self'", 'blob:'],
+            childSrc: ["'self'", 'blob:'],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'"],
+            frameAncestors: ["'none'"],
             upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
           },
         }
@@ -125,14 +124,10 @@ export async function createSessionMiddleware(
       })
 
       await redisClient.connect()
-      const RedisStoreConstructor = RedisStore as unknown as new (
-        sessionFn: typeof session,
-      ) => (options: { client: typeof redisClient }) => SessionOptions['store']
-      store = new RedisStoreConstructor(session)({ client: redisClient })
+      store = new RedisStore({ client: redisClient })
 
       console.warn('✓ Redis session store connected')
-    }
-    catch (error) {
+    } catch (error) {
       console.warn(
         '⚠ Redis connection failed, using memory store:',
         error instanceof Error ? error.message : String(error),
@@ -247,15 +242,13 @@ function sanitizeApiKeys(obj: unknown): unknown {
       // Mask sensitive values
       if (shouldFullyMask) {
         sanitized[key] = '****'
-      }
-      else {
-        sanitized[key]
-          = value.length > 8
+      } else {
+        sanitized[key] =
+          value.length > 8
             ? `${value.substring(0, 4)}****${value.substring(value.length - 4)}`
             : '****'
       }
-    }
-    else {
+    } else {
       sanitized[key] = sanitizeApiKeys(value)
     }
   }
@@ -329,14 +322,14 @@ export function createSecureLogger() {
 /**
  * Environment validation for security settings
  */
-export function validateSecurityEnvironment(): { isValid: boolean, warnings: string[] } {
+export function validateSecurityEnvironment(): { isValid: boolean; warnings: string[] } {
   const warnings: string[] = []
   let isValid = true
 
   // Check session secret
   if (
-    !process.env.SESSION_SECRET
-    || process.env.SESSION_SECRET === 'default-session-secret-change-in-production'
+    !process.env.SESSION_SECRET ||
+    process.env.SESSION_SECRET === 'default-session-secret-change-in-production'
   ) {
     warnings.push('SESSION_SECRET should be set to a secure random value in production')
     if (process.env.NODE_ENV === 'production') {

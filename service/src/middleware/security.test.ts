@@ -20,11 +20,11 @@ type MockResponse = Partial<Response>
 
 // Mock external dependencies
 vi.mock('helmet', () => ({
-  default: vi.fn().mockImplementation((options) => {
+  default: vi.fn().mockImplementation(options => {
     return (_req: Request, res: Response, next: NextFunction) => {
       // Simulate helmet setting headers
       if (options.contentSecurityPolicy) {
-        res.setHeader('Content-Security-Policy', 'default-src \'self\'')
+        res.setHeader('Content-Security-Policy', "default-src 'self'")
       }
       if (options.hsts) {
         res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
@@ -37,7 +37,7 @@ vi.mock('helmet', () => ({
 }))
 
 vi.mock('express-rate-limit', () => ({
-  rateLimit: vi.fn().mockImplementation((options) => {
+  rateLimit: vi.fn().mockImplementation(options => {
     return (req: Request, _res: Response, next: NextFunction) => {
       // Simulate rate limiting logic
       const requestCount = (req as RequestWithCount).requestCount || 0
@@ -60,7 +60,7 @@ vi.mock('express-session', () => ({
 }))
 
 vi.mock('connect-redis', () => ({
-  default: vi.fn().mockImplementation(() => {
+  RedisStore: vi.fn().mockImplementation(() => {
     return vi.fn().mockImplementation(() => ({}))
   }),
 }))
@@ -370,9 +370,8 @@ describe('security middleware', () => {
       mockReq.method = 'POST'
       mockReq.url = '/api/chat'
       Object.defineProperty(mockReq, 'ip', { value: '192.168.1.1', writable: true })
-      mockReq.get = vi.fn().mockImplementation((header) => {
-        if (header === 'User-Agent')
-          return 'Test Browser'
+      mockReq.get = vi.fn().mockImplementation(header => {
+        if (header === 'User-Agent') return 'Test Browser'
         return undefined
       })
 
