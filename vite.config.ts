@@ -1,211 +1,233 @@
-import type { PluginOption } from 'vite'
-import path from 'node:path'
 import vue from '@vitejs/plugin-vue'
+import path from 'node:path'
+import type { PluginOption } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 function setupPlugins(env: ImportMetaEnv): PluginOption[] {
-  return [
-    vue({
-      // 优化 Vue 编译
-      script: {
-        defineModel: true,
-        propsDestructure: true,
-      },
-    }),
-    env.VITE_GLOB_APP_PWA === 'true' && VitePWA({
-      injectRegister: 'auto',
-      manifest: {
-        name: 'chatGPT',
-        short_name: 'chatGPT',
-        icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-        ],
-      },
-    }),
-  ]
+	return [
+		vue({
+			// Optimize Vue compilation for Vue 3.5+ features
+			script: {
+				defineModel: true,
+				propsDestructure: true,
+			},
+			// Enable Vue 3.5+ performance optimizations
+			template: {
+				compilerOptions: {
+					// Enable modern browser optimizations
+					hoistStatic: true,
+					cacheHandlers: true,
+				},
+			},
+		}),
+		env.VITE_GLOB_APP_PWA === 'true' &&
+			VitePWA({
+				injectRegister: 'auto',
+				manifest: {
+					name: 'chatGPT',
+					short_name: 'chatGPT',
+					icons: [
+						{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+						{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+					],
+				},
+			}),
+	]
 }
 
-export default defineConfig((env) => {
-  const viteEnv = loadEnv(env.mode, process.cwd()) as unknown as ImportMetaEnv
-  const isProduction = env.mode === 'production'
+export default defineConfig(env => {
+	const viteEnv = loadEnv(env.mode, process.cwd()) as unknown as ImportMetaEnv
+	const isProduction = env.mode === 'production'
 
-  return {
-    resolve: {
-      alias: {
-        '@': path.resolve(process.cwd(), 'src'),
-      },
-    },
-    plugins: setupPlugins(viteEnv),
-    server: {
-      host: '0.0.0.0',
-      port: 1002,
-      open: false,
-      proxy: {
-        '/api': {
-          target: viteEnv.VITE_APP_API_BASE_URL,
-          changeOrigin: true, // 允许跨域
-          rewrite: path => path.replace('/api/', '/'),
-        },
-      },
-    },
-    build: {
-      // 性能优化
-      target: 'esnext', // 最新 ES 标准，最小化 polyfill
-      reportCompressedSize: false, // 禁用压缩大小报告以加快构建
-      sourcemap: false, // 生产环境禁用 sourcemap
+	return {
+		resolve: {
+			alias: {
+				'@': path.resolve(process.cwd(), 'src'),
+			},
+		},
+		plugins: setupPlugins(viteEnv),
+		server: {
+			host: '0.0.0.0',
+			port: 1002,
+			open: false,
+			// Enhanced HMR for Node.js 24
+			hmr: {
+				overlay: true,
+			},
+			// Optimized for development performance
+			fs: {
+				strict: false,
+			},
+			proxy: {
+				'/api': {
+					target: viteEnv.VITE_APP_API_BASE_URL,
+					changeOrigin: true,
+					rewrite: path => path.replace('/api/', '/'),
+				},
+			},
+		},
+		build: {
+			// Performance optimization for Node.js 24 - ESNext target for latest 2 major versions
+			target: ['esnext', 'chrome131', 'firefox133', 'safari18'], // Latest 2 major versions of mainstream browsers
+			reportCompressedSize: false, // Disable compressed size reporting for faster builds
+			sourcemap: false, // Disable sourcemap in production for performance
 
-      // 代码分割优化 - 简化策略避免循环依赖
-      rollupOptions: {
-        output: {
-          // 简化代码分割策略，避免循环依赖
-          manualChunks: (id) => {
-            if (id.includes('node_modules')) {
-              // Vue 生态系统
-              if (id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n')) {
-                return 'vue'
-              }
-              if (id.includes('vue-router')) {
-                return 'vue-router'
-              }
-              if (id.includes('pinia')) {
-                return 'pinia'
-              }
-              if (id.includes('vue-i18n')) {
-                return 'vue-i18n'
-              }
-              if (id.includes('@vueuse')) {
-                return 'vueuse'
-              }
+			// Code splitting optimization - simplified strategy to avoid circular dependencies
+			rollupOptions: {
+				output: {
+					// Simplified code splitting strategy, avoiding circular dependencies
+					manualChunks: id => {
+						if (id.includes('node_modules')) {
+							// Vue ecosystem
+							if (id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n')) {
+								return 'vue'
+							}
+							if (id.includes('vue-router')) {
+								return 'vue-router'
+							}
+							if (id.includes('pinia')) {
+								return 'pinia'
+							}
+							if (id.includes('vue-i18n')) {
+								return 'vue-i18n'
+							}
+							if (id.includes('@vueuse')) {
+								return 'vueuse'
+							}
 
-              // UI 库 - 统一处理，避免细分导致的循环依赖
-              if (id.includes('naive-ui')) {
-                return 'naive-ui'
-              }
+							// UI libraries - unified handling to avoid circular dependencies
+							if (id.includes('naive-ui')) {
+								return 'naive-ui'
+							}
 
-              // Markdown 和图表库 - 按主要功能分组
-              if (id.includes('mermaid')) {
-                return 'mermaid'
-              }
-              if (id.includes('katex')) {
-                return 'katex'
-              }
-              if (id.includes('markdown-it')) {
-                return 'markdown'
-              }
-              if (id.includes('highlight.js')) {
-                return 'highlight'
-              }
+							// Markdown and chart libraries - grouped by main functionality
+							if (id.includes('mermaid')) {
+								return 'mermaid'
+							}
+							if (id.includes('katex')) {
+								return 'katex'
+							}
+							if (id.includes('markdown-it')) {
+								return 'markdown'
+							}
+							if (id.includes('highlight.js')) {
+								return 'highlight'
+							}
 
-              // 工具库
-              if (id.includes('axios')) {
-                return 'axios'
-              }
-              if (id.includes('crypto-js')) {
-                return 'crypto'
-              }
-              if (id.includes('@iconify')) {
-                return 'icons'
-              }
-              if (id.includes('html-to-image')) {
-                return 'html-to-image'
-              }
+							// Utility libraries
+							if (id.includes('crypto-js')) {
+								return 'crypto'
+							}
+							if (id.includes('@iconify')) {
+								return 'icons'
+							}
+							if (id.includes('html-to-image')) {
+								return 'html-to-image'
+							}
 
-              // 其他第三方库
-              return 'vendor'
-            }
+							// Other third-party libraries
+							return 'vendor'
+						}
 
-            // 应用代码 - 简化分组，避免循环依赖
-            if (id.includes('/src/')) {
-              // 不再细分应用代码，让 Vite 自动处理
-              return undefined
-            }
-          },
-          // 优化文件名
-          chunkFileNames: 'js/[name]-[hash].js',
-          entryFileNames: 'js/[name]-[hash].js',
-          assetFileNames: (assetInfo) => {
-            if (!assetInfo.name)
-              return 'assets/[name]-[hash].[ext]'
-            const info = assetInfo.name.split('.')
-            let extType = info[info.length - 1]
-            if (/\.(?:mp4|webm|ogg|mp3|wav|flac|aac)(?:\?.*)?$/i.test(assetInfo.name)) {
-              extType = 'media'
-            }
-            else if (/\.(?:png|jpe?g|gif|svg)(?:\?.*)?$/i.test(assetInfo.name)) {
-              extType = 'img'
-            }
-            else if (/\.(?:woff2?|eot|ttf|otf)(?:\?.*)?$/i.test(assetInfo.name)) {
-              extType = 'fonts'
-            }
-            return `${extType}/[name]-[hash].[ext]`
-          },
-        },
+						// Application code - simplified grouping to avoid circular dependencies
+						if (id.includes('/src/')) {
+							// Let Vite handle application code automatically for better optimization
+							return undefined
+						}
+					},
+					// Optimize file names for better caching
+					chunkFileNames: 'js/[name]-[hash].js',
+					entryFileNames: 'js/[name]-[hash].js',
+					assetFileNames: assetInfo => {
+						if (!assetInfo.name) return 'assets/[name]-[hash].[ext]'
+						const info = assetInfo.name.split('.')
+						let extType = info[info.length - 1]
+						if (/\.(?:mp4|webm|ogg|mp3|wav|flac|aac)(?:\?.*)?$/i.test(assetInfo.name)) {
+							extType = 'media'
+						} else if (/\.(?:png|jpe?g|gif|svg)(?:\?.*)?$/i.test(assetInfo.name)) {
+							extType = 'img'
+						} else if (/\.(?:woff2?|eot|ttf|otf)(?:\?.*)?$/i.test(assetInfo.name)) {
+							extType = 'fonts'
+						}
+						return `${extType}/[name]-[hash].[ext]`
+					},
+				},
 
-        // 更激进的 tree-shaking
-        treeshake: {
-          preset: 'recommended',
-          manualPureFunctions: ['console.log', 'console.info', 'console.debug'],
-          moduleSideEffects: false, // 假设所有模块都没有副作用，更激进的 tree-shaking
-        },
-      },
+				// More aggressive tree-shaking for Node.js 24
+				treeshake: {
+					preset: 'recommended',
+					manualPureFunctions: ['console.log', 'console.info', 'console.debug'],
+					moduleSideEffects: false, // Assume all modules have no side effects for aggressive tree-shaking
+				},
+			},
 
-      // 压缩优化 - esbuild 优化配置
-      minify: 'esbuild',
-      esbuildOptions: {
-        drop: isProduction ? ['console', 'debugger'] : [],
-        minifyIdentifiers: true,
-        minifySyntax: true,
-        minifyWhitespace: true,
-        treeShaking: true,
-        // 更激进的压缩
-        legalComments: 'none',
-      },
+			// Compression optimization - esbuild optimization configuration
+			minify: 'esbuild',
+			esbuildOptions: {
+				drop: isProduction ? ['console', 'debugger'] : [],
+				minifyIdentifiers: true,
+				minifySyntax: true,
+				minifyWhitespace: true,
+				treeShaking: true,
+				// More aggressive compression
+				legalComments: 'none',
+				// Node.js 24 specific optimizations - ESNext target
+				target: 'esnext',
+				platform: 'browser',
+			},
 
-      // 构建优化 - 针对小文件优化
-      chunkSizeWarningLimit: 500, // 降低警告阈值到 500KB
-      assetsInlineLimit: 4096, // 4KB 以下的资源内联为 base64
+			// Build optimization - optimized for small files
+			chunkSizeWarningLimit: 500, // Lower warning threshold to 500KB
+			assetsInlineLimit: 4096, // Inline resources under 4KB as base64
 
-      commonjsOptions: {
-        ignoreTryCatch: false,
-      },
-    },
+			commonjsOptions: {
+				ignoreTryCatch: false,
+			},
+		},
 
-    // 优化依赖预构建 - 更激进的按需加载
-    optimizeDeps: {
-      include: [
-        'vue',
-        'vue-router',
-        'pinia',
-        '@vueuse/core',
-        'vue-i18n',
-      ],
-      exclude: [
-        // 排除大型库，让它们按需加载和分割
-        'mermaid',
-        'katex',
-        'highlight.js',
-        'naive-ui', // 让 UI 库按需加载
-        'markdown-it',
-        '@md-reader/markdown-it-mermaid',
-        '@vscode/markdown-it-katex',
-        'html-to-image',
-        'crypto-js',
-      ],
-    },
+		// Optimize dependency pre-building for Node.js 24
+		optimizeDeps: {
+			include: ['vue', 'vue-router', 'pinia', '@vueuse/core', 'vue-i18n'],
+			exclude: [
+				// Exclude large libraries for on-demand loading and splitting
+				'mermaid',
+				'katex',
+				'highlight.js',
+				'naive-ui', // Let UI library load on demand
+				'markdown-it',
+				'@md-reader/markdown-it-mermaid',
+				'@vscode/markdown-it-katex',
+				'html-to-image',
+				'crypto-js',
+			],
+			// Node.js 24 specific optimizations - ESNext target
+			esbuildOptions: {
+				target: 'esnext',
+			},
+		},
 
-    // 实验性功能
-    experimental: {
-      // 启用构建优化
-      renderBuiltUrl(filename, { hostType }) {
-        if (hostType === 'js') {
-          return { js: `/${filename}` }
-        }
-        else {
-          return { relative: true }
-        }
-      },
-    },
-  }
+		// Enhanced development experience
+		css: {
+			devSourcemap: true,
+		},
+
+		// Enable experimental features for Node.js 24
+		experimental: {
+			// Enable build optimization
+			renderBuiltUrl(filename, { hostType }) {
+				if (hostType === 'js') {
+					return { js: `/${filename}` }
+				} else {
+					return { relative: true }
+				}
+			},
+		},
+
+		// Define global constants for better tree-shaking
+		define: {
+			__VUE_OPTIONS_API__: false, // Disable Options API for smaller bundle
+			__VUE_PROD_DEVTOOLS__: false, // Disable devtools in production
+		},
+	}
 })

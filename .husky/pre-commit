@@ -1,4 +1,17 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Run lint-staged for code quality
 npx lint-staged
+
+# Run type checking to ensure no TypeScript errors
+echo "Running type check..."
+pnpm type-check
+
+# Check service directory if it exists
+if [ -d "service" ]; then
+  echo "Running service type check..."
+  cd service && pnpm type-check && cd ..
+fi
+
+echo "Pre-commit checks passed!"

@@ -1,65 +1,28 @@
 {
-  "prettier.enable": false,
-  "editor.formatOnSave": false,
+  "typescript.preferences.quoteStyle": "single",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
   },
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact",
-    "vue",
-    "html",
-    "json",
-    "jsonc",
-    "json5",
-    "yaml",
-    "yml",
-    "markdown"
-  ],
-  "cSpell.words": [
-    "antfu",
-    "axios",
-    "bumpp",
-    "chatgpt",
-    "chenzhaoyu",
-    "commitlint",
-    "davinci",
-    "dockerhub",
-    "esno",
-    "GPTAPI",
-    "highlightjs",
-    "hljs",
-    "iconify",
-    "katex",
-    "katexmath",
-    "linkify",
-    "logprobs",
-    "mdhljs",
-    "mila",
-    "nodata",
-    "OPENAI",
-    "pinia",
-    "Popconfirm",
-    "rushstack",
-    "Sider",
-    "tailwindcss",
-    "traptitech",
-    "tsup",
-    "Typecheck",
-    "unplugin",
-    "VITE",
-    "vueuse",
-    "Zhao"
-  ],
-  "i18n-ally.enabledParsers": [
-    "ts"
-  ],
-  "i18n-ally.sortKeys": true,
-  "i18n-ally.keepFulfilled": true,
-  "i18n-ally.localesPaths": [
-    "src/locales"
-  ],
-  "i18n-ally.keystyle": "nested"
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "vue"],
+  "eslint.workingDirectories": [".", "service"],
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "vue.codeActions.enabled": true,
+  "vue.complete.casing.tags": "pascal",
+  "vue.complete.casing.props": "camel",
+  "files.associations": {
+    "*.vue": "vue"
+  },
+  "emmet.includeLanguages": {
+    "vue": "html"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/pnpm-lock.yaml": true
+  }
 }
