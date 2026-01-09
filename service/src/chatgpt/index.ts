@@ -139,7 +139,7 @@ async function fetchUsage() {
 	const urlUsage = `${API_BASE_URL}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`
 
 	const headers = {
-		Authorization: `Bearer ${OPENAI_API_KEY}`,
+		'Authorization': `Bearer ${OPENAI_API_KEY}`,
 		'Content-Type': 'application/json',
 	}
 
