@@ -380,7 +380,9 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       try {
         let buffer = ''
 
+        // eslint-disable-next-line no-await-in-loop
         while (true) {
+          // eslint-disable-next-line no-await-in-loop
           const { done, value } = await reader.read()
 
           if (done) {

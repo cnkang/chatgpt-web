@@ -30,7 +30,7 @@ async function initializeProvider(): Promise<void> {
     provider = await factory.createWithValidation(config.ai)
     apiModel = config.ai.provider === 'azure' ? 'AzureOpenAI' : 'ChatGPTAPI'
 
-    console.log(`✓ AI Provider initialized: ${config.ai.provider}`)
+    console.warn(`✓ AI Provider initialized: ${config.ai.provider}`)
   } catch (error) {
     console.error('Failed to initialize AI provider:', error)
     throw error
@@ -225,7 +225,7 @@ async function fetchUsage(): Promise<string> {
 /**
  * Chat configuration
  */
-async function chatConfig(): Promise<any> {
+async function chatConfig(): Promise<ReturnType<typeof sendResponse<ModelConfig>>> {
   const usage = await fetchUsage()
   const config = getConfig()
 
