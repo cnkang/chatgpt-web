@@ -1,0 +1,154 @@
+# Dependabot configuration file
+# Documentation: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # npm dependency update configuration
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "02:00"
+      timezone: "Asia/Shanghai"
+    # Batch update configuration
+    groups:
+      # Vue ecosystem
+      vue-ecosystem:
+        patterns:
+          - "vue*"
+          - "@vue*"
+          - "@vueuse*"
+          - "vue-*"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Build tools
+      build-tools:
+        patterns:
+          - "vite*"
+          - "@vitejs*"
+          - "rollup*"
+          - "esbuild*"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # ESLint ecosystem
+      eslint-ecosystem:
+        patterns:
+          - "eslint*"
+          - "@eslint*"
+          - "eslint-*"
+          - "@antfu/eslint-config"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # TypeScript related
+      typescript-ecosystem:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "vue-tsc"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # CSS tools
+      css-tools:
+        patterns:
+          - "tailwindcss*"
+          - "@tailwindcss*"
+          - "postcss*"
+          - "autoprefixer"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Development tools
+      dev-tools:
+        patterns:
+          - "husky"
+          - "lint-staged"
+          - "prettier"
+          - "rimraf"
+          - "npm-run-all"
+        update-types:
+          - "minor"
+          - "patch"
+    
+    # PR configuration
+    open-pull-requests-limit: 10
+    
+    # Commit message configuration
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    
+    # Label configuration
+    labels:
+      - "dependencies"
+      - "automated"
+    
+    # Reviewer configuration (optional, add as needed)
+    # reviewers:
+    #   - "your-username"
+    
+    # Assignee configuration (optional, add as needed)
+    # assignees:
+    #   - "your-username"
+    
+    # Milestone configuration (optional)
+    # milestone: 1
+    
+    # Ignore specific dependencies
+    ignore:
+      # Ignore major version updates for packages (requires manual review)
+      - dependency-name: "vue"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+    
+    # Allowed update types
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    
+    # Rebase strategy configuration
+    rebase-strategy: "auto"
+
+  # GitHub Actions dependency updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "Asia/Shanghai"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "automated"
+    open-pull-requests-limit: 5
+
+  # Docker dependency updates (if using Dockerfile)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "02:00"
+      timezone: "Asia/Shanghai"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+    labels:
+      - "docker"
+      - "automated"
+    open-pull-requests-limit: 3
