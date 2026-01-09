@@ -40,31 +40,44 @@
   - [致谢](#致谢)
   - [赞助](#赞助)
   - [License](#license)
+
 ## 介绍
 
-支持双模型，提供了两种非官方 `ChatGPT API` 方法
+此 ChatGPT Web 应用程序为与 OpenAI 官方 ChatGPT API 交互提供了一个简洁、现代的界面。该应用程序仅支持官方 OpenAI API 访问方法，以增强安全性和可靠性。
 
-| 方式                                          | 免费？ | 可靠性     | 质量 |
-| --------------------------------------------- | ------ | ---------- | ---- |
-| `ChatGPTAPI(gpt-3.5-turbo-0301)`                           | 否     | 可靠       | 相对较笨 |
-| `ChatGPTUnofficialProxyAPI(网页 accessToken)` | 是     | 相对不可靠 | 聪明 |
+**支持的 API 方法：**
 
-对比：
-1. `ChatGPTAPI` 使用 `gpt-3.5-turbo` 通过 `OpenAI` 官方 `API` 调用 `ChatGPT`
-2. `ChatGPTUnofficialProxyAPI` 使用非官方代理服务器访问 `ChatGPT` 的后端`API`，绕过`Cloudflare`（依赖于第三方服务器，并且有速率限制）
+- **OpenAI 官方 API**：通过 OpenAI 官方 API 使用 `gpt-4o`、`gpt-4o-mini`、`gpt-4-turbo` 和其他现代模型
+- **Azure OpenAI**：支持 Azure OpenAI 服务用于企业部署
 
-警告：
-1. 你应该首先使用 `API` 方式
-2. 使用 `API` 时，如果网络不通，那是国内被墙了，你需要自建代理，绝对不要使用别人的公开代理，那是危险的。
-3. 使用 `accessToken` 方式时反向代理将向第三方暴露您的访问令牌，这样做应该不会产生任何不良影响，但在使用这种方法之前请考虑风险。
-4. 使用 `accessToken` 时，不管你是国内还是国外的机器，都会使用代理。默认代理为 [pengzhile](https://github.com/pengzhile) 大佬的 `https://ai.fakeopen.com/api/conversation`，这不是后门也不是监听，除非你有能力自己翻过 `CF` 验证，用前请知悉。[社区代理](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy)（注意：只有这两个是推荐，其他第三方来源，请自行甄别）
-5. 把项目发布到公共网络时，你应该设置 `AUTH_SECRET_KEY` 变量添加你的密码访问权限，你也应该修改 `index.html` 中的 `title`，防止被关键词搜索到。
+**安全性和可靠性：**
 
-切换方式：
+- 仅支持官方 API 方法以确保最大安全性
+- 不使用非官方代理服务器或网页抓取方法
+- 直接与 OpenAI 官方端点集成
+- 安全的 API 密钥认证
+
+**设置：**
+
 1. 进入 `service/.env.example` 文件，复制内容到 `service/.env` 文件
-2. 使用 `OpenAI API Key` 请填写 `OPENAI_API_KEY` 字段 [(获取 apiKey)](https://platform.openai.com/overview)
-3. 使用 `Web API` 请填写 `OPENAI_ACCESS_TOKEN` 字段 [(获取 accessToken)](https://chat.openai.com/api/auth/session)
-4. 同时存在时以 `OpenAI API Key` 优先
+2. 使用您的官方 OpenAI API 密钥填写 `OPENAI_API_KEY` 字段 [(获取 apiKey)](https://platform.openai.com/api-keys)
+3. 可选择配置 `OPENAI_API_BASE_URL` 用于自定义端点或 Azure OpenAI
+
+**从非官方 API 迁移：**
+
+如果您之前使用非官方代理 API（accessToken 方法），您需要迁移到官方 API：
+
+1. **从您的 `.env` 文件中删除已弃用的变量**：
+   - `OPENAI_ACCESS_TOKEN`
+   - `API_REVERSE_PROXY`
+
+2. **添加官方 API 配置**：
+   - `OPENAI_API_KEY=sk-your_official_api_key_here`
+   - 可选：`OPENAI_API_BASE_URL=https://api.openai.com`（如果使用自定义端点）
+
+3. **获取您的官方 API 密钥**：访问 [OpenAI API Keys](https://platform.openai.com/api-keys) 创建您的 API 密钥
+
+4. **重要**：非官方代理 API 方法已因安全性和可靠性原因被完全移除
 
 环境变量：
 
@@ -75,6 +88,7 @@
 ```
 
 ## 待实现路线
+
 [✓] 双模型
 
 [✓] 多会话储存和上下文逻辑
@@ -104,23 +118,28 @@ node -v
 ```
 
 ### PNPM
+
 如果你没有安装过 `pnpm`
+
 ```shell
 npm install pnpm -g
 ```
 
 ### 填写密钥
-获取 `Openai Api Key` 或 `accessToken` 并填写本地环境变量 [跳转](#介绍)
+
+获取您的官方 `OpenAI API Key` 并填写本地环境变量。访问 [OpenAI API Keys](https://platform.openai.com/api-keys) 创建您的 API 密钥。
 
 ```
 # service/.env 文件
 
-# OpenAI API Key - https://platform.openai.com/overview
-OPENAI_API_KEY=
+# OpenAI API Key - https://platform.openai.com/api-keys
+OPENAI_API_KEY=sk-your_official_api_key_here
 
-# change this to an `accessToken` extracted from the ChatGPT site's `https://chat.openai.com/api/auth/session` response
-OPENAI_ACCESS_TOKEN=
+# 可选：自定义 API 基础 URL（用于 Azure OpenAI 或其他兼容端点）
+OPENAI_API_BASE_URL=https://api.openai.com
 ```
+
+**迁移提醒**：如果您之前使用 `OPENAI_ACCESS_TOKEN` 或 `API_REVERSE_PROXY`，这些已不再支持。请迁移到上述官方 API 密钥方法。
 
 ## 安装依赖
 
@@ -135,12 +154,15 @@ pnpm install
 ```
 
 ### 前端
+
 根目录下运行以下命令
+
 ```shell
 pnpm bootstrap
 ```
 
 ## 测试环境运行
+
 ### 后端服务
 
 进入文件夹 `/service` 运行以下命令
@@ -150,34 +172,62 @@ pnpm start
 ```
 
 ### 前端网页
+
 根目录下运行以下命令
+
 ```shell
 pnpm dev
 ```
 
 ## 环境变量
 
-`API` 可用：
+**必需变量：**
 
-- `OPENAI_API_KEY` 和 `OPENAI_ACCESS_TOKEN` 二选一
-- `OPENAI_API_MODEL`  设置模型，可选，默认：`gpt-3.5-turbo`
-- `OPENAI_API_BASE_URL` 设置接口地址，可选，默认：`https://api.openai.com`
-- `OPENAI_API_DISABLE_DEBUG` 设置接口关闭 debug 日志，可选，默认：empty 不关闭
+- `OPENAI_API_KEY` - 您的官方 OpenAI API 密钥 [(获取 apiKey)](https://platform.openai.com/api-keys)
 
-`ACCESS_TOKEN` 可用：
+**可选 API 配置：**
 
-- `OPENAI_ACCESS_TOKEN`  和 `OPENAI_API_KEY` 二选一，同时存在时，`OPENAI_API_KEY` 优先
-- `API_REVERSE_PROXY` 设置反向代理，可选，默认：`https://ai.fakeopen.com/api/conversation`，[社区](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy)（注意：只有这两个是推荐，其他第三方来源，请自行甄别）
+- `OPENAI_API_MODEL` - 设置模型，可选，默认：`gpt-4o`
+- `OPENAI_API_BASE_URL` - 设置接口地址，可选，默认：`https://api.openai.com`
+- `OPENAI_API_DISABLE_DEBUG` - 设置接口关闭 debug 日志，可选，默认：empty 不关闭
 
-通用：
+**通用配置：**
 
-- `AUTH_SECRET_KEY` 访问权限密钥，可选
-- `MAX_REQUEST_PER_HOUR` 每小时最大请求次数，可选，默认无限
-- `TIMEOUT_MS` 超时，单位毫秒，可选
-- `SOCKS_PROXY_HOST` 和 `SOCKS_PROXY_PORT` 一起时生效，可选
-- `SOCKS_PROXY_PORT` 和 `SOCKS_PROXY_HOST` 一起时生效，可选
-- `HTTPS_PROXY` 支持 `http`，`https`, `socks5`，可选
-- `ALL_PROXY` 支持 `http`，`https`, `socks5`，可选
+- `AUTH_SECRET_KEY` - 访问权限密钥，可选
+- `MAX_REQUEST_PER_HOUR` - 每小时最大请求次数，可选，默认无限
+- `TIMEOUT_MS` - 超时，单位毫秒，可选
+- `SOCKS_PROXY_HOST` 和 `SOCKS_PROXY_PORT` - Socks 代理配置，两者需同时设置，可选
+- `SOCKS_PROXY_USERNAME` 和 `SOCKS_PROXY_PASSWORD` - Socks 代理认证，可选
+- `HTTPS_PROXY` - 支持 `http`，`https`, `socks5`，可选
+- `ALL_PROXY` - 支持 `http`，`https`, `socks5`，可选
+
+**已弃用变量（不再支持）：**
+
+以下环境变量已被移除，不再支持：
+
+- ~~`OPENAI_ACCESS_TOKEN`~~ - 请使用 `OPENAI_API_KEY` 替代
+- ~~`API_REVERSE_PROXY`~~ - 官方 API 不再需要
+
+**迁移指南：**
+
+如果您的配置中有任何已弃用的变量：
+
+1. **删除** 这些变量从您的 `.env` 文件：
+
+   ```bash
+   # 删除这些行
+   OPENAI_ACCESS_TOKEN=xxx
+   API_REVERSE_PROXY=xxx
+   ```
+
+2. **添加** 官方 API 密钥：
+
+   ```bash
+   # 添加这行
+   OPENAI_API_KEY=sk-your_official_api_key_here
+   ```
+
+3. **获取您的 API 密钥** 从 [OpenAI API Keys](https://platform.openai.com/api-keys)
 
 ## 打包
 
@@ -215,32 +265,35 @@ services:
     ports:
       - 127.0.0.1:3002:3002
     environment:
-      # 二选一
-      OPENAI_API_KEY: sk-xxx
-      # 二选一
-      OPENAI_ACCESS_TOKEN: xxx
-      # API接口地址，可选，设置 OPENAI_API_KEY 时可用
-      OPENAI_API_BASE_URL: xxx
-      # API模型，可选，设置 OPENAI_API_KEY 时可用，https://platform.openai.com/docs/models
-      # gpt-4, gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4-turbo-preview, gpt-4-0125-preview, gpt-4-1106-preview, gpt-4-0314, gpt-4-0613, gpt-4-32k, gpt-4-32k-0314, gpt-4-32k-0613, gpt-3.5-turbo-16k, gpt-3.5-turbo-16k-0613, gpt-3.5-turbo, gpt-3.5-turbo-0301, gpt-3.5-turbo-0613, text-davinci-003, text-davinci-002, code-davinci-002
-      OPENAI_API_MODEL: xxx
-      # 反向代理，可选
-      API_REVERSE_PROXY: xxx
-      # 访问权限密钥，可选
-      AUTH_SECRET_KEY: xxx
-      # 每小时最大请求次数，可选，默认无限
+      # 必需：OpenAI API 密钥
+      OPENAI_API_KEY: sk-your_official_api_key_here
+      # 可选：API接口地址
+      OPENAI_API_BASE_URL: https://api.openai.com
+      # 可选：API模型，推荐使用最新模型
+      # gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4, o1, o1-preview, o1-mini
+      OPENAI_API_MODEL: gpt-4o
+      # 可选：访问权限密钥
+      AUTH_SECRET_KEY: your_secret_key
+      # 可选：每小时最大请求次数，默认无限
       MAX_REQUEST_PER_HOUR: 0
-      # 超时，单位毫秒，可选
+      # 可选：超时，单位毫秒
       TIMEOUT_MS: 60000
-      # Socks代理，可选，和 SOCKS_PROXY_PORT 一起时生效
+      # 可选：Socks代理，和 SOCKS_PROXY_PORT 一起时生效
       SOCKS_PROXY_HOST: xxx
-      # Socks代理端口，可选，和 SOCKS_PROXY_HOST 一起时生效
+      # 可选：Socks代理端口，和 SOCKS_PROXY_HOST 一起时生效
       SOCKS_PROXY_PORT: xxx
-      # HTTPS 代理，可选，支持 http，https，socks5
+      # 可选：Socks代理用户名
+      SOCKS_PROXY_USERNAME: xxx
+      # 可选：Socks代理密码
+      SOCKS_PROXY_PASSWORD: xxx
+      # 可选：HTTPS 代理，支持 http，https，socks5
       HTTPS_PROXY: http://xxx:7890
 ```
-- `OPENAI_API_BASE_URL`  可选，设置 `OPENAI_API_KEY` 时可用
-- `OPENAI_API_MODEL`  可选，设置 `OPENAI_API_KEY` 时可用
+
+- `OPENAI_API_BASE_URL` 可选，设置 `OPENAI_API_KEY` 时可用
+- `OPENAI_API_MODEL` 可选，设置 `OPENAI_API_KEY` 时可用
+
+**注意**：此应用程序现在仅支持官方 OpenAI API 以增强安全性和可靠性。非官方代理 API 方法已被移除。
 
 #### 防止爬虫抓取
 
@@ -256,29 +309,32 @@ services:
     }
 ```
 
-###  使用 Railway 部署
+### 使用 Railway 部署
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/yytmgc)
 
 #### Railway 环境变量
 
-| 环境变量名称          | 必填                   | 备注                                                                                               |
-| --------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
-| `PORT`                | 必填                   | 默认 `3002`
-| `AUTH_SECRET_KEY`          | 可选                   | 访问权限密钥                                        |
-| `MAX_REQUEST_PER_HOUR`          | 可选                   | 每小时最大请求次数，可选，默认无限                                        |
-| `TIMEOUT_MS`          | 可选                   | 超时时间，单位毫秒                                                                             |
-| `OPENAI_API_KEY`      | `OpenAI API` 二选一    | 使用 `OpenAI API` 所需的 `apiKey` [(获取 apiKey)](https://platform.openai.com/overview)            |
-| `OPENAI_ACCESS_TOKEN` | `Web API` 二选一       | 使用 `Web API` 所需的 `accessToken` [(获取 accessToken)](https://chat.openai.com/api/auth/session) |
-| `OPENAI_API_BASE_URL`   | 可选，`OpenAI API` 时可用 |  `API`接口地址  |
-| `OPENAI_API_MODEL`   | 可选，`OpenAI API` 时可用 |  `API`模型  |
-| `API_REVERSE_PROXY`   | 可选，`Web API` 时可用 | `Web API` 反向代理地址 [详情](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy)    |
-| `SOCKS_PROXY_HOST`   | 可选，和 `SOCKS_PROXY_PORT` 一起时生效 | Socks代理    |
-| `SOCKS_PROXY_PORT`   | 可选，和 `SOCKS_PROXY_HOST` 一起时生效 | Socks代理端口    |
-| `SOCKS_PROXY_USERNAME`   | 可选，和 `SOCKS_PROXY_HOST` 一起时生效 | Socks代理用户名    |
-| `SOCKS_PROXY_PASSWORD`   | 可选，和 `SOCKS_PROXY_HOST` 一起时生效 | Socks代理密码    |
-| `HTTPS_PROXY`   | 可选 | HTTPS 代理，支持 http，https, socks5    |
-| `ALL_PROXY`   | 可选 | 所有代理 代理，支持 http，https, socks5    |
+| 环境变量名称           | 必填 | 备注                                                                       |
+| ---------------------- | ---- | -------------------------------------------------------------------------- |
+| `PORT`                 | 必填 | 默认 `3002`                                                                |
+| `AUTH_SECRET_KEY`      | 可选 | 访问权限密钥                                                               |
+| `MAX_REQUEST_PER_HOUR` | 可选 | 每小时最大请求次数，可选，默认无限                                         |
+| `TIMEOUT_MS`           | 可选 | 超时时间，单位毫秒                                                         |
+| `OPENAI_API_KEY`       | 必填 | 官方 OpenAI API 密钥 [(获取 apiKey)](https://platform.openai.com/api-keys) |
+| `OPENAI_API_BASE_URL`  | 可选 | API 接口地址，默认：`https://api.openai.com`                               |
+| `OPENAI_API_MODEL`     | 可选 | API 模型，默认：`gpt-4o`                                                   |
+| `SOCKS_PROXY_HOST`     | 可选 | Socks代理，和 `SOCKS_PROXY_PORT` 一起时生效                                |
+| `SOCKS_PROXY_PORT`     | 可选 | Socks代理端口，和 `SOCKS_PROXY_HOST` 一起时生效                            |
+| `SOCKS_PROXY_USERNAME` | 可选 | Socks代理用户名，和 `SOCKS_PROXY_HOST` 一起时生效                          |
+| `SOCKS_PROXY_PASSWORD` | 可选 | Socks代理密码，和 `SOCKS_PROXY_HOST` 一起时生效                            |
+| `HTTPS_PROXY`          | 可选 | HTTPS 代理，支持 http，https, socks5                                       |
+| `ALL_PROXY`            | 可选 | 所有代理，支持 http，https, socks5                                         |
+
+**迁移提醒**：以下变量不再支持：
+
+- ~~`OPENAI_ACCESS_TOKEN`~~ - 请使用 `OPENAI_API_KEY` 替代
+- ~~`API_REVERSE_PROXY`~~ - 官方 API 不再需要
 
 > 注意: `Railway` 修改环境变量会重新 `Deploy`
 
@@ -289,7 +345,9 @@ services:
 > 环境变量与 Docker 环境变量一致
 
 ### 手动打包
+
 #### 后端服务
+
 > 如果你不需要本项目的 `node` 接口，可以省略如下操作
 
 复制 `service` 文件夹到你有 `node` 服务环境的服务器上。
@@ -320,6 +378,7 @@ pnpm build
 ```
 
 ## 常见问题
+
 Q: 为什么 `Git` 提交总是报错？
 
 A: 因为有提交信息验证，请遵循 [Commit 指南](./CONTRIBUTING.md)
@@ -353,6 +412,7 @@ A: 一种可能原因是经过 Nginx 反向代理，开启了 buffer，则 Nginx
 感谢原作者 [ChenZhaoYu](https://github.com/Chanzhaoyu) 创建了这个优秀的开源项目。
 
 ## License
+
 MIT © [Kang Liu](./license)
 
 基于原项目：MIT © [ChenZhaoYu](https://github.com/Chanzhaoyu/chatgpt-web)

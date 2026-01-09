@@ -63,9 +63,7 @@ aws ecr describe-repositories \
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken"
-      ],
+      "Action": ["ecr:GetAuthorizationToken"],
       "Resource": "*"
     },
     {
@@ -129,14 +127,15 @@ aws iam get-role \
 
 在 GitHub 仓库设置中，转到 `Settings` > `Secrets and variables` > `Actions` > `Secrets` 标签页，添加以下 secrets：
 
-| Secret 名 | 值 | 描述 |
-|-----------|-----|------|
-| `AWS_REGION` | `us-east-1` | AWS 区域 |
-| `ECR_REPOSITORY` | `chatgpt-web` | ECR 仓库名称 |
-| `ECR_REGISTRY` | `123456789012.dkr.ecr.us-east-1.amazonaws.com` | ECR 注册表 URI |
-| `AWS_ROLE_ARN` | `arn:aws:iam::123456789012:role/GitHubActions-ECR-Role` | IAM Role ARN |
+| Secret 名        | 值                                                      | 描述           |
+| ---------------- | ------------------------------------------------------- | -------------- |
+| `AWS_REGION`     | `us-east-1`                                             | AWS 区域       |
+| `ECR_REPOSITORY` | `chatgpt-web`                                           | ECR 仓库名称   |
+| `ECR_REGISTRY`   | `123456789012.dkr.ecr.us-east-1.amazonaws.com`          | ECR 注册表 URI |
+| `AWS_ROLE_ARN`   | `arn:aws:iam::123456789012:role/GitHubActions-ECR-Role` | IAM Role ARN   |
 
-**注意**: 
+**注意**:
+
 - 替换 `123456789012` 为你的 AWS 账户 ID
 - `ECR_REGISTRY` 格式为: `{account-id}.dkr.ecr.{region}.amazonaws.com`
 
@@ -162,13 +161,14 @@ env:
 
 ```yaml
 permissions:
-  id-token: write  # 用于 OIDC 认证
-  contents: read   # 用于检出代码
+  id-token: write # 用于 OIDC 认证
+  contents: read # 用于检出代码
 ```
 
 ### 镜像标签策略
 
 工作流程会自动生成以下标签：
+
 - `latest` (仅在 main 分支)
 - 分支名称 (如 `main`, `develop`)
 - 标签名称 (如 `v1.0.0`)
@@ -177,6 +177,7 @@ permissions:
 ### 缓存优化
 
 使用 GitHub Actions 缓存来加速构建：
+
 ```yaml
 cache-from: type=gha
 cache-to: type=gha,mode=max
@@ -194,6 +195,7 @@ cache-to: type=gha,mode=max
 ### 常见错误
 
 #### 1. "No basic auth credentials" 错误
+
 ```
 Error: buildx failed with: error: failed to solve: failed to authorize: rpc error: code = Unknown desc = failed to fetch anonymous token: unexpected status: 401 Unauthorized
 ```
@@ -201,6 +203,7 @@ Error: buildx failed with: error: failed to solve: failed to authorize: rpc erro
 **解决方案**: 检查 ECR 登录是否成功，确认 IAM Role 有 `ecr:GetAuthorizationToken` 权限。
 
 #### 2. "Repository does not exist" 错误
+
 ```
 Error: failed to push: failed to do request: Put https://123456789012.dkr.ecr.us-east-1.amazonaws.com/v2/chatgpt-web/manifests/latest: unexpected status: 400 Bad Request
 ```
@@ -208,11 +211,13 @@ Error: failed to push: failed to do request: Put https://123456789012.dkr.ecr.us
 **解决方案**: 确认 ECR 仓库已创建，仓库名称正确。
 
 #### 3. OIDC 认证失败
+
 ```
 Error: Could not assume role with OIDC: Not authorized to perform sts:AssumeRoleWithWebIdentity
 ```
 
-**解决方案**: 
+**解决方案**:
+
 - 检查 OIDC 提供商是否正确配置
 - 验证信任策略中的仓库路径是否正确
 - 确认 GitHub Actions 权限包含 `id-token: write`
@@ -220,13 +225,14 @@ Error: Could not assume role with OIDC: Not authorized to perform sts:AssumeRole
 ### 调试步骤
 
 1. **验证 AWS 配置**:
+
    ```bash
    # 检查 ECR 仓库
    aws ecr describe-repositories --repository-names chatgpt-web
-   
+
    # 检查 IAM Role
    aws iam get-role --role-name GitHubActions-ECR-Role
-   
+
    # 测试 ECR 登录
    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
    ```
@@ -240,11 +246,13 @@ Error: Could not assume role with OIDC: Not authorized to perform sts:AssumeRole
 可以为不同环境配置不同的 secrets：
 
 ### Development 环境
+
 - `AWS_REGION`: `us-east-1`
 - `ECR_REPOSITORY`: `chatgpt-web-dev`
 - `ECR_REGISTRY`: `123456789012.dkr.ecr.us-east-1.amazonaws.com`
 
 ### Production 环境
+
 - `AWS_REGION`: `us-west-2`
 - `ECR_REPOSITORY`: `chatgpt-web-prod`
 - `ECR_REGISTRY`: `123456789012.dkr.ecr.us-west-2.amazonaws.com`
@@ -265,6 +273,7 @@ aws ecr put-lifecycle-policy \
 ```
 
 lifecycle-policy.json:
+
 ```json
 {
   "rules": [

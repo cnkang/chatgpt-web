@@ -11,6 +11,7 @@
 
 - [ChatGPT Web](#chatgpt-web)
   - [Introduction](#introduction)
+  - [New Features](#new-features)
   - [Roadmap](#roadmap)
   - [Prerequisites](#prerequisites)
     - [Node](#node)
@@ -40,37 +41,109 @@
   - [Acknowledgements](#acknowledgements)
   - [Sponsors](#sponsors)
   - [License](#license)
+
 ## Introduction
 
-Supports dual models and provides two unofficial `ChatGPT API` methods
+This ChatGPT Web application provides a clean, modern interface for interacting with OpenAI's official ChatGPT API. The application has been completely modernized with Node.js 24, Vue.js 3.5+, and the latest OpenAI API v1 with native Azure OpenAI support.
 
-| Method                             | Free? | Reliability | Quality |
-| ---------------------------------- | ----- | ----------- | ------- |
-| `ChatGPTAPI(gpt-3.5-turbo-0301)`   | No    | Reliable    | Relatively stupid |
-| `ChatGPTUnofficialProxyAPI(web accessToken)` | Yes   | Relatively unreliable | Smart |
+**Supported API Methods:**
 
-Comparison:
-1. `ChatGPTAPI` uses `gpt-3.5-turbo` through `OpenAI` official `API` to call `ChatGPT`
-2. `ChatGPTUnofficialProxyAPI` uses unofficial proxy server to access `ChatGPT`'s backend `API`, bypass `Cloudflare` (dependent on third-party servers, and has rate limits)
+- **OpenAI Official API v1**: Uses the latest OpenAI API v1 with support for `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, and reasoning models (`o1`, `o1-preview`, `o1-mini`)
+- **Azure OpenAI**: Native Azure OpenAI Service integration for enterprise deployments
+- **Reasoning Models**: Full support for OpenAI's reasoning models with step-by-step thought display
 
-Warnings:
-1. You should first use the `API` method
-2. When using the `API`, if the network is not working, it is blocked in China, you need to build your own proxy, never use someone else's public proxy, which is dangerous.
-3. When using the `accessToken` method, the reverse proxy will expose your access token to third parties. This should not have any adverse effects, but please consider the risks before using this method.
-4. When using `accessToken`, whether you are a domestic or foreign machine, proxies will be used. The default proxy is [pengzhile](https://github.com/pengzhile)'s `https://ai.fakeopen.com/api/conversation`. This is not a backdoor or monitoring unless you have the ability to flip over `CF` verification yourself. Use beforehand acknowledge. [Community Proxy](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy) (Note: Only these two are recommended, other third-party sources, please identify for yourself)
-5. When publishing the project to public network, you should set the `AUTH_SECRET_KEY` variable to add your password access, you should also modify the `title` in `index. html` to prevent it from being searched by keywords.
+**Security and Reliability:**
 
-Switching methods:
+- Only official API methods are supported for maximum security
+- Comprehensive input validation and sanitization
+- Security headers (CSP, HSTS, X-Frame-Options) implementation
+- Rate limiting and request throttling
+- Secure API key handling and session management
+- Zero TypeScript errors and ESLint warnings
+
+**Modern Architecture:**
+
+- **Node.js 24**: Latest Node.js features and performance improvements
+- **Vue.js 3.5+**: Modern Vue.js with Composition API and performance optimizations
+- **TypeScript**: Strict type checking with zero errors
+- **Provider Abstraction**: Seamless switching between OpenAI and Azure OpenAI
+- **Native Fetch**: Uses Node.js native fetch instead of external HTTP libraries
+- **Property-Based Testing**: Comprehensive testing with Fast-check library
+
+**Setup:**
+
 1. Enter the `service/.env.example` file, copy the contents to the `service/.env` file
-2. To use `OpenAI API Key`, fill in the `OPENAI_API_KEY` field [(get apiKey)](https://platform.openai.com/overview)
-3. To use `Web API`, fill in the `OPENAI_ACCESS_TOKEN` field [(get accessToken)](https://chat.openai.com/api/auth/session)
-4. `OpenAI API Key` takes precedence when both exist
+2. Fill in the `OPENAI_API_KEY` field with your official OpenAI API key [(get apiKey)](https://platform.openai.com/api-keys)
+3. Optionally configure Azure OpenAI or other provider settings
+
+**Migration from Unofficial API:**
+
+If you were previously using the unofficial proxy API (accessToken method), you need to migrate to the official API:
+
+1. **Remove deprecated variables** from your `.env` file:
+   - `OPENAI_ACCESS_TOKEN`
+   - `API_REVERSE_PROXY`
+
+2. **Add official API configuration**:
+   - `OPENAI_API_KEY=sk-your_official_api_key_here`
+   - Optionally: `OPENAI_API_BASE_URL=https://api.openai.com` (if using custom endpoint)
+
+3. **Get your official API key**: Visit [OpenAI API Keys](https://platform.openai.com/api-keys) to create your API key
+
+4. **Important**: The unofficial proxy API method has been completely removed for security and reliability reasons
 
 Environment variables:
 
 See all parameter variables [here](#environment-variables)
 
+## New Features
+
+**🚀 Latest Technology Stack:**
+
+- Node.js 24 with native fetch and modern JavaScript features
+- Vue.js 3.5+ with Composition API and reactive props destructuring
+- TypeScript 5.9+ with strict configuration and zero errors
+- Vite build system optimized for Node.js 24
+
+**🤖 Advanced AI Features:**
+
+- OpenAI API v1 native integration with all endpoints
+- Reasoning models support (o1, o1-preview, o1-mini) with step-by-step display
+- Azure OpenAI native integration without third-party proxies
+- Streaming responses for both OpenAI and Azure providers
+- Provider abstraction layer for seamless switching
+
+**🔒 Enhanced Security:**
+
+- Comprehensive input validation and XSS protection
+- Security headers implementation (CSP, HSTS, X-Frame-Options)
+- Rate limiting and request throttling
+- Secure API key handling with no client-side exposure
+- Session management with secure cookies
+
+**⚡ Performance Optimizations:**
+
+- Route-based code splitting and lazy loading
+- Bundle optimization and modern browser targets
+- Hot module replacement for development
+- Optimized build analysis and caching strategies
+
+**🧪 Quality Assurance:**
+
+- Property-based testing with Fast-check
+- Zero TypeScript errors and ESLint warnings
+- Comprehensive test coverage for all providers
+- Pre-commit hooks for code quality validation
+
+**🛠 Developer Experience:**
+
+- Modern ESLint configuration with zero warnings policy
+- Prettier integration with consistent formatting
+- Conventional commit message standards
+- Comprehensive error handling and retry logic
+
 ## Roadmap
+
 [✓] Dual models
 
 [✓] Multi-session storage and context logic
@@ -93,30 +166,48 @@ See all parameter variables [here](#environment-variables)
 
 ### Node
 
-`node` requires version `^16 || ^18 || ^19` (`node >= 14` needs [fetch polyfill](https://github.com/developit/unfetch#usage-as-a-polyfill) installation), use [nvm](https://github.com/nvm-sh/nvm) to manage multiple local `node` versions
+`node` requires version `^24.0.0` (Node.js 24 or higher), use [nvm](https://github.com/nvm-sh/nvm) to manage multiple local `node` versions
 
 ```shell
 node -v
 ```
 
+**Important**: This application requires Node.js 24 for:
+
+- Native fetch API support
+- Modern JavaScript features and performance improvements
+- Enhanced security and stability
+- Optimized build processes
+
 ### PNPM
-If you haven't installed `pnpm`
+
+If you haven't installed `pnpm` (version 10.0.0 or higher required)
+
 ```shell
-npm install pnpm -g
+npm install pnpm@latest -g
 ```
 
 ### Filling in the Key
-Get `Openai Api Key` or `accessToken` and fill in the local environment variables [Go to Introduction](#introduction)
+
+Get your official `OpenAI API Key` and fill in the local environment variables. Visit [OpenAI API Keys](https://platform.openai.com/api-keys) to create your API key.
 
 ```
 # service/.env file
 
-# OpenAI API Key - https://platform.openai.com/overview
-OPENAI_API_KEY=
+# OpenAI API Key - https://platform.openai.com/api-keys
+OPENAI_API_KEY=sk-your_official_api_key_here
 
-# change this to an `accessToken` extracted from the ChatGPT site's `https://chat.openai.com/api/auth/session` response
-OPENAI_ACCESS_TOKEN=
+# Optional: Custom API base URL (for Azure OpenAI or other compatible endpoints)
+OPENAI_API_BASE_URL=https://api.openai.com
+
+# Optional: Azure OpenAI Configuration
+AZURE_OPENAI_API_KEY=your_azure_api_key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
 ```
+
+**Migration Notice**: If you were previously using `OPENAI_ACCESS_TOKEN` or `API_REVERSE_PROXY`, these are no longer supported. Please migrate to the official API key method above.
 
 ## Install Dependencies
 
@@ -131,12 +222,15 @@ pnpm install
 ```
 
 ### Frontend
+
 Run the following commands at the root directory
+
 ```shell
 pnpm bootstrap
 ```
 
 ## Run in Test Environment
+
 ### Backend Service
 
 Enter the folder `/service` and run the following commands
@@ -146,34 +240,133 @@ pnpm start
 ```
 
 ### Frontend Webpage
+
 Run the following commands at the root directory
+
 ```shell
 pnpm dev
 ```
 
 ## Environment Variables
 
-`API` available:
+**Required Variables:**
 
-- `OPENAI_API_KEY` and `OPENAI_ACCESS_TOKEN` choose one
-- `OPENAI_API_MODEL` Set model, optional, default: `gpt-3.5-turbo`
-- `OPENAI_API_BASE_URL` Set interface address, optional, default: `https://api.openai.com`
-- `OPENAI_API_DISABLE_DEBUG` Set interface to close debug logs, optional, default: empty does not close
+- `OPENAI_API_KEY` - Your official OpenAI API key [(get apiKey)](https://platform.openai.com/api-keys)
 
-`ACCESS_TOKEN` available:
+**OpenAI API Configuration:**
 
-- `OPENAI_ACCESS_TOKEN` and `OPENAI_API_KEY` choose one, `OPENAI_API_KEY` takes precedence when both exist
-- `API_REVERSE_PROXY` Set reverse proxy, optional, default: `https://ai.fakeopen.com/api/conversation`, [Community](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy) (Note: Only these two are recommended, other third party sources, please identify for yourself)
+- `OPENAI_API_MODEL` - Set model, optional, default: `gpt-4o`
+- `OPENAI_API_BASE_URL` - Set interface address, optional, default: `https://api.openai.com`
+- `OPENAI_API_DISABLE_DEBUG` - Set interface to close debug logs, optional, default: empty does not close
 
-Common:
+**Azure OpenAI Configuration:**
 
-- `AUTH_SECRET_KEY` Access permission key, optional
-- `MAX_REQUEST_PER_HOUR` Maximum number of requests per hour, optional, unlimited by default
-- `TIMEOUT_MS` Timeout, unit milliseconds, optional
-- `SOCKS_PROXY_HOST` and `SOCKS_PROXY_PORT` take effect together, optional
-- `SOCKS_PROXY_PORT` and `SOCKS_PROXY_HOST` take effect together, optional
-- `HTTPS_PROXY` Support `http`, `https`, `socks5`, optional
-- `ALL_PROXY` Support `http`, `https`, `socks5`, optional
+- `AZURE_OPENAI_API_KEY` - Your Azure OpenAI API key
+- `AZURE_OPENAI_ENDPOINT` - Your Azure OpenAI endpoint (e.g., `https://your-resource.openai.azure.com`)
+- `AZURE_OPENAI_DEPLOYMENT` - Your Azure OpenAI deployment name
+- `AZURE_OPENAI_API_VERSION` - Azure OpenAI API version, default: `2024-02-15-preview`
+
+**Provider Selection:**
+
+- `AI_PROVIDER` - Choose AI provider: `openai` (default) or `azure`
+
+**Security Configuration:**
+
+- `AUTH_SECRET_KEY` - Access permission key, optional
+- `MAX_REQUEST_PER_HOUR` - Maximum number of requests per hour, optional, unlimited by default
+- `RATE_LIMIT_WINDOW_MS` - Rate limiting window in milliseconds, default: 3600000 (1 hour)
+- `RATE_LIMIT_MAX_REQUESTS` - Maximum requests per window, default: 100
+
+**Performance Configuration:**
+
+- `TIMEOUT_MS` - Timeout, unit milliseconds, optional, default: 60000
+- `RETRY_MAX_ATTEMPTS` - Maximum retry attempts for failed requests, default: 3
+- `RETRY_BASE_DELAY` - Base delay between retries in milliseconds, default: 1000
+
+**Proxy Configuration:**
+
+- `SOCKS_PROXY_HOST` and `SOCKS_PROXY_PORT` - Socks proxy configuration, both required together, optional
+- `SOCKS_PROXY_USERNAME` and `SOCKS_PROXY_PASSWORD` - Socks proxy authentication, optional
+- `HTTPS_PROXY` - Support `http`, `https`, `socks5`, optional
+- `ALL_PROXY` - Support `http`, `https`, `socks5`, optional
+
+**Development Configuration:**
+
+- `NODE_ENV` - Environment mode: `development`, `production`, or `test`
+- `LOG_LEVEL` - Logging level: `error`, `warn`, `info`, `debug`
+- `ENABLE_CORS` - Enable CORS for development, default: `true` in development
+
+**Reasoning Models Configuration:**
+
+- `ENABLE_REASONING_MODELS` - Enable reasoning models (o1, o1-preview, o1-mini), default: `true`
+- `REASONING_MODEL_TIMEOUT_MS` - Timeout for reasoning models, default: 120000 (2 minutes)
+
+**Deprecated Variables (No Longer Supported):**
+
+The following environment variables have been removed and are no longer supported:
+
+- ~~`OPENAI_ACCESS_TOKEN`~~ - Use `OPENAI_API_KEY` instead
+- ~~`API_REVERSE_PROXY`~~ - No longer needed with official API
+
+**Migration Guide:**
+
+If you have any of the deprecated variables in your configuration:
+
+1. **Remove** these variables from your `.env` file:
+
+   ```bash
+   # Remove these lines
+   OPENAI_ACCESS_TOKEN=xxx
+   API_REVERSE_PROXY=xxx
+   ```
+
+2. **Add** the official API key:
+
+   ```bash
+   # Add this line
+   OPENAI_API_KEY=sk-your_official_api_key_here
+   ```
+
+3. **Get your API key** from [OpenAI API Keys](https://platform.openai.com/api-keys)
+
+**Example Configuration Files:**
+
+**OpenAI Configuration (.env):**
+
+```bash
+# OpenAI Provider Configuration
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-your_official_api_key_here
+OPENAI_API_MODEL=gpt-4o
+OPENAI_API_BASE_URL=https://api.openai.com
+
+# Security
+AUTH_SECRET_KEY=your_secret_key
+MAX_REQUEST_PER_HOUR=100
+
+# Performance
+TIMEOUT_MS=60000
+RETRY_MAX_ATTEMPTS=3
+```
+
+**Azure OpenAI Configuration (.env):**
+
+```bash
+# Azure OpenAI Provider Configuration
+AI_PROVIDER=azure
+AZURE_OPENAI_API_KEY=your_azure_api_key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=gpt-4o-deployment
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+
+# Security
+AUTH_SECRET_KEY=your_secret_key
+MAX_REQUEST_PER_HOUR=100
+
+# Performance
+TIMEOUT_MS=60000
+RETRY_MAX_ATTEMPTS=3
+```
 
 ## Packaging
 
@@ -211,33 +404,63 @@ services:
     ports:
       - 127.0.0.1:3002:3002
     environment:
-      # choose one
-      OPENAI_API_KEY: sk-xxx
-      # choose one
-      OPENAI_ACCESS_TOKEN: xxx
-      # API interface address, optional, available when OPENAI_API_KEY is set
-      OPENAI_API_BASE_URL: xxx
-      # API model, optional, available when OPENAI_API_KEY is set, https://platform.openai.com/docs/models
-      # gpt-4, gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4-turbo-preview, gpt-4-0125-preview, gpt-4-1106-preview, gpt-4-0314, gpt-4-0613, gpt-4-32k, gpt-4-32k-0314, gpt-4-32k-0613, gpt-3.5-turbo-16k, gpt-3.5-turbo-16k-0613, gpt-3.5-turbo, gpt-3.5-turbo-0301, gpt-3.5-turbo-0613, text-davinci-003, text-davinci-002, code-davinci-002
-      OPENAI_API_MODEL: xxx
-      # reverse proxy, optional
-      API_REVERSE_PROXY: xxx
-      # access permission key, optional
-      AUTH_SECRET_KEY: xxx
-      # maximum number of requests per hour, optional, unlimited by default
-      MAX_REQUEST_PER_HOUR: 0
-      # timeout, unit milliseconds, optional
+      # Required: Choose AI Provider
+      AI_PROVIDER: openai # or 'azure'
+
+      # OpenAI Configuration (when AI_PROVIDER=openai)
+      OPENAI_API_KEY: sk-your_official_api_key_here
+      OPENAI_API_BASE_URL: https://api.openai.com
+      OPENAI_API_MODEL: gpt-4o # Latest model with reasoning support
+
+      # Azure OpenAI Configuration (when AI_PROVIDER=azure)
+      # AZURE_OPENAI_API_KEY: your_azure_api_key
+      # AZURE_OPENAI_ENDPOINT: https://your-resource.openai.azure.com
+      # AZURE_OPENAI_DEPLOYMENT: gpt-4o-deployment
+      # AZURE_OPENAI_API_VERSION: 2024-02-15-preview
+
+      # Security Configuration
+      AUTH_SECRET_KEY: your_secret_key
+      MAX_REQUEST_PER_HOUR: 100
+      RATE_LIMIT_WINDOW_MS: 3600000
+      RATE_LIMIT_MAX_REQUESTS: 100
+
+      # Performance Configuration
       TIMEOUT_MS: 60000
-      # Socks proxy, optional, take effect with SOCKS_PROXY_PORT
-      SOCKS_PROXY_HOST: xxx
-      # Socks proxy port, optional, take effect with SOCKS_PROXY_HOST
-      SOCKS_PROXY_PORT: xxx
-      # HTTPS proxy, optional, support http,https,socks5
-      HTTPS_PROXY: http://xxx:7890
+      RETRY_MAX_ATTEMPTS: 3
+      RETRY_BASE_DELAY: 1000
+
+      # Reasoning Models (optional)
+      ENABLE_REASONING_MODELS: true
+      REASONING_MODEL_TIMEOUT_MS: 120000
+
+      # Proxy Configuration (optional)
+      # SOCKS_PROXY_HOST: xxx
+      # SOCKS_PROXY_PORT: xxx
+      # SOCKS_PROXY_USERNAME: xxx
+      # SOCKS_PROXY_PASSWORD: xxx
+      # HTTPS_PROXY: http://xxx:7890
+
+      # Development Configuration
+      NODE_ENV: production
+      LOG_LEVEL: info
 ```
 
-- `OPENAI_API_BASE_URL` Optional, available when `OPENAI_API_KEY` is set
-- `OPENAI_API_MODEL` Optional, available when `OPENAI_API_KEY` is set
+**Supported Models:**
+
+**OpenAI Models:**
+
+- `gpt-4o`, `gpt-4o-mini` - Latest GPT-4o models with enhanced capabilities
+- `gpt-4-turbo`, `gpt-4-turbo-preview` - GPT-4 Turbo models
+- `gpt-4`, `gpt-4-32k` - Standard GPT-4 models
+- `gpt-3.5-turbo`, `gpt-3.5-turbo-16k` - Legacy GPT-3.5 Turbo models (not recommended)
+- `o1`, `o1-preview`, `o1-mini` - Reasoning models with step-by-step thinking
+
+**Azure OpenAI Models:**
+
+- Use your deployment names configured in Azure OpenAI Studio
+- Supports all models available in your Azure OpenAI resource
+
+**Note**: This application now supports both OpenAI API v1 and Azure OpenAI with native integration, reasoning models, and enhanced security features.
 
 #### Prevent Crawlers
 
@@ -259,23 +482,59 @@ Fill in the following configuration in the nginx configuration file to prevent c
 
 #### Railway Environment Variables
 
-| Environment variable name | Required | Remarks |
-| --------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
-| `PORT`                | Required | Default `3002` |
-| `AUTH_SECRET_KEY`          | Optional | Access permission key                             |
-| `MAX_REQUEST_PER_HOUR`          | Optional | Maximum number of requests per hour, optional, unlimited by default                             |
-| `TIMEOUT_MS`          | Optional | Timeout, unit milliseconds                                                                    |
-| `OPENAI_API_KEY`      | `OpenAI API` choose one | `apiKey` required for `OpenAI API` [(get apiKey)](https://platform.openai.com/overview)           |
-| `OPENAI_ACCESS_TOKEN` | `Web API` choose one | `accessToken` required for `Web API` [(get accessToken)](https://chat.openai.com/api/auth/session) |
-| `OPENAI_API_BASE_URL`   | Optional, available when `OpenAI API` | `API` interface address |
-| `OPENAI_API_MODEL`   | Optional, available when `OpenAI API` | `API` model |
-| `API_REVERSE_PROXY`   | Optional, available when `Web API` | `Web API` reverse proxy address [Details](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy) |
-| `SOCKS_PROXY_HOST`   | Optional, take effect with `SOCKS_PROXY_PORT` | Socks proxy |
-| `SOCKS_PROXY_PORT`   | Optional, take effect with `SOCKS_PROXY_HOST` | Socks proxy port |
-| `SOCKS_PROXY_USERNAME`   | Optional, take effect with `SOCKS_PROXY_HOST` | Socks proxy username |
-| `SOCKS_PROXY_PASSWORD`   | Optional, take effect with `SOCKS_PROXY_HOST` | Socks proxy password |
-| `HTTPS_PROXY`   | Optional | HTTPS proxy, support http,https, socks5 |
-| `ALL_PROXY`   | Optional | All proxies, support http,https, socks5 |
+| Environment variable name    | Required | Remarks                                                                      |
+| ---------------------------- | -------- | ---------------------------------------------------------------------------- |
+| `PORT`                       | Required | Default `3002`                                                               |
+| `AI_PROVIDER`                | Optional | Choose provider: `openai` (default) or `azure`                               |
+| `OPENAI_API_KEY`             | Required | Official OpenAI API key [(get apiKey)](https://platform.openai.com/api-keys) |
+| `OPENAI_API_BASE_URL`        | Optional | API interface address, default: `https://api.openai.com`                     |
+| `OPENAI_API_MODEL`           | Optional | API model, default: `gpt-4o`                                                 |
+| `AZURE_OPENAI_API_KEY`       | Optional | Azure OpenAI API key (required when `AI_PROVIDER=azure`)                     |
+| `AZURE_OPENAI_ENDPOINT`      | Optional | Azure OpenAI endpoint (required when `AI_PROVIDER=azure`)                    |
+| `AZURE_OPENAI_DEPLOYMENT`    | Optional | Azure OpenAI deployment name (required when `AI_PROVIDER=azure`)             |
+| `AZURE_OPENAI_API_VERSION`   | Optional | Azure OpenAI API version, default: `2024-02-15-preview`                      |
+| `AUTH_SECRET_KEY`            | Optional | Access permission key                                                        |
+| `MAX_REQUEST_PER_HOUR`       | Optional | Maximum number of requests per hour, optional, unlimited by default          |
+| `RATE_LIMIT_WINDOW_MS`       | Optional | Rate limiting window in milliseconds, default: 3600000                       |
+| `RATE_LIMIT_MAX_REQUESTS`    | Optional | Maximum requests per window, default: 100                                    |
+| `TIMEOUT_MS`                 | Optional | Timeout, unit milliseconds, default: 60000                                   |
+| `RETRY_MAX_ATTEMPTS`         | Optional | Maximum retry attempts, default: 3                                           |
+| `RETRY_BASE_DELAY`           | Optional | Base delay between retries in milliseconds, default: 1000                    |
+| `ENABLE_REASONING_MODELS`    | Optional | Enable reasoning models, default: `true`                                     |
+| `REASONING_MODEL_TIMEOUT_MS` | Optional | Timeout for reasoning models, default: 120000                                |
+| `SOCKS_PROXY_HOST`           | Optional | Socks proxy, take effect with `SOCKS_PROXY_PORT`                             |
+| `SOCKS_PROXY_PORT`           | Optional | Socks proxy port, take effect with `SOCKS_PROXY_HOST`                        |
+| `SOCKS_PROXY_USERNAME`       | Optional | Socks proxy username, take effect with `SOCKS_PROXY_HOST`                    |
+| `SOCKS_PROXY_PASSWORD`       | Optional | Socks proxy password, take effect with `SOCKS_PROXY_HOST`                    |
+| `HTTPS_PROXY`                | Optional | HTTPS proxy, support http,https, socks5                                      |
+| `ALL_PROXY`                  | Optional | All proxies, support http,https, socks5                                      |
+| `NODE_ENV`                   | Optional | Environment mode: `production` (recommended for Railway)                     |
+| `LOG_LEVEL`                  | Optional | Logging level: `error`, `warn`, `info`, `debug`                              |
+
+**Migration Notice**: The following variables are no longer supported:
+
+- ~~`OPENAI_ACCESS_TOKEN`~~ - Use `OPENAI_API_KEY` instead
+- ~~`API_REVERSE_PROXY`~~ - No longer needed with official API
+
+**Provider Configuration Examples:**
+
+**OpenAI Configuration:**
+
+```
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-your_official_api_key_here
+OPENAI_API_MODEL=gpt-4o
+```
+
+**Azure OpenAI Configuration:**
+
+```
+AI_PROVIDER=azure
+AZURE_OPENAI_API_KEY=your_azure_api_key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=gpt-4o-deployment
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+```
 
 > Note: Modifying environment variables on `Railway` will re-`Deploy`
 
@@ -286,7 +545,9 @@ Fill in the following configuration in the nginx configuration file to prevent c
 > Environment variables are consistent with Docker environment variables
 
 ### Package Manually
+
 #### Backend Service
+
 > If you don't need the `node` interface of this project, you can omit the following operations
 
 Copy the `service` folder to the server where you have the `node` service environment.
@@ -317,6 +578,7 @@ pnpm build
 ```
 
 ## FAQ
+
 Q: Why does `Git` commit always report errors?
 
 A: Because there is a commit message verification, please follow the [Commit Guide](./CONTRIBUTING.md)
@@ -350,6 +612,7 @@ Thanks to [JetBrains](https://www.jetbrains.com/) SoftWare for providing free Op
 Thanks to the original author [ChenZhaoYu](https://github.com/Chanzhaoyu) for creating this excellent open source project.
 
 ## License
+
 MIT © [Kang Liu](./license)
 
 Based on original project: MIT © [ChenZhaoYu](https://github.com/Chanzhaoyu/chatgpt-web)
