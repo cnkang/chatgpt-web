@@ -192,7 +192,8 @@ export class ConfigurationValidator {
           'Missing AZURE_OPENAI_DEPLOYMENT environment variable. Please provide your Azure OpenAI deployment name.',
         )
       }
-    } else {
+    }
+    else {
       // Validate OpenAI configuration
       if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
         const errorMessage = this.buildMissingConfigErrorMessage()
@@ -273,12 +274,13 @@ export class ConfigurationValidator {
 
       // Check for potential Azure configuration issues
       if (
-        process.env.AZURE_OPENAI_ENDPOINT &&
-        !process.env.AZURE_OPENAI_ENDPOINT.startsWith('https://')
+        process.env.AZURE_OPENAI_ENDPOINT
+        && !process.env.AZURE_OPENAI_ENDPOINT.startsWith('https://')
       ) {
         warnings.push('AZURE_OPENAI_ENDPOINT should use HTTPS protocol')
       }
-    } else {
+    }
+    else {
       // Validate OpenAI configuration
       if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
         errors.push('Missing required configuration: OPENAI_API_KEY')
@@ -286,8 +288,8 @@ export class ConfigurationValidator {
 
       // Check for potential OpenAI configuration issues
       if (
-        process.env.OPENAI_API_BASE_URL &&
-        !process.env.OPENAI_API_BASE_URL.startsWith('https://')
+        process.env.OPENAI_API_BASE_URL
+        && !process.env.OPENAI_API_BASE_URL.startsWith('https://')
       ) {
         warnings.push('OPENAI_API_BASE_URL should use HTTPS protocol')
       }
@@ -306,19 +308,21 @@ export class ConfigurationValidator {
    * @returns {string} Formatted error message with migration steps
    */
   private static buildDeprecationErrorMessage(deprecatedVars: string[]): string {
-    const hasAccessToken =
-      deprecatedVars.includes('OPENAI_ACCESS_TOKEN') ||
-      deprecatedVars.includes('CHATGPT_ACCESS_TOKEN')
-    const hasReverseProxy =
-      deprecatedVars.includes('API_REVERSE_PROXY') || deprecatedVars.includes('REVERSE_PROXY_URL')
+    const hasAccessToken
+      = deprecatedVars.includes('OPENAI_ACCESS_TOKEN')
+        || deprecatedVars.includes('CHATGPT_ACCESS_TOKEN')
+    const hasReverseProxy
+      = deprecatedVars.includes('API_REVERSE_PROXY') || deprecatedVars.includes('REVERSE_PROXY_URL')
 
     let guidance: MigrationGuidance
 
     if (hasAccessToken) {
       guidance = MIGRATION_MESSAGES.DEPRECATED_ACCESS_TOKEN
-    } else if (hasReverseProxy) {
+    }
+    else if (hasReverseProxy) {
       guidance = MIGRATION_MESSAGES.DEPRECATED_REVERSE_PROXY
-    } else {
+    }
+    else {
       // Generic deprecation message
       guidance = {
         title: 'Deprecated Configuration Detected',
@@ -357,11 +361,11 @@ ${guidance.steps
     (step, index) =>
       `${index + 1}. ${step.action}
    ${step.description}${
-     step.example
-       ? `
+      step.example
+        ? `
    Example: ${step.example}`
-       : ''
-   }`,
+        : ''
+    }`,
   )
   .join('\n\n')}
 
@@ -411,7 +415,8 @@ AZURE_OPENAI_API_VERSION=2024-02-15-preview
 
 Please set your Azure OpenAI configuration and restart the application.
       `.trim()
-    } else {
+    }
+    else {
       return `
 Missing Required Configuration: OPENAI_API_KEY
 
@@ -457,7 +462,8 @@ Please set your API key and restart the application.
       if (!isNotEmptyString(process.env.AZURE_OPENAI_DEPLOYMENT)) {
         steps.push('Set AZURE_OPENAI_DEPLOYMENT with your Azure OpenAI deployment name')
       }
-    } else {
+    }
+    else {
       if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
         steps.push('Set OPENAI_API_KEY with your official OpenAI API key')
       }

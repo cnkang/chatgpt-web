@@ -108,7 +108,7 @@ export class ConfigurationManager {
   /**
    * Validate configuration
    */
-  public validateConfiguration(): { isValid: boolean; errors: string[] } {
+  public validateConfiguration(): { isValid: boolean, errors: string[] } {
     const errors: string[] = []
 
     // Validate AI configuration
@@ -218,6 +218,6 @@ export function getAIConfig(): AIConfig {
 /**
  * Validate current configuration
  */
-export function validateConfig(): { isValid: boolean; errors: string[] } {
+export function validateConfig(): { isValid: boolean, errors: string[] } {
   return ConfigurationManager.getInstance().validateConfiguration()
 }
