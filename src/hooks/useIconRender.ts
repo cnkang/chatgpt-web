@@ -1,36 +1,33 @@
 import { h } from 'vue'
 import { SvgIcon } from '@/components/common'
 
+interface IconConfig {
+	icon?: string
+	color?: string
+	fontSize?: number
+}
+
+interface IconStyle {
+	color?: string
+	fontSize?: string
+}
+
 export function useIconRender() {
-  interface IconConfig {
-    icon?: string
-    color?: string
-    fontSize?: number
-  }
+	const iconRender = (config: IconConfig) => {
+		const { color, fontSize, icon } = config
 
-  interface IconStyle {
-    color?: string
-    fontSize?: string
-  }
+		const style: IconStyle = {}
 
-  const iconRender = (config: IconConfig) => {
-    const { color, fontSize, icon } = config
+		if (color) style.color = color
 
-    const style: IconStyle = {}
+		if (fontSize) style.fontSize = `${fontSize}px`
 
-    if (color)
-      style.color = color
+		if (!icon) window.console.warn('iconRender: icon is required')
 
-    if (fontSize)
-      style.fontSize = `${fontSize}px`
+		return () => h(SvgIcon, { icon, style })
+	}
 
-    if (!icon)
-      window.console.warn('iconRender: icon is required')
-
-    return () => h(SvgIcon, { icon, style })
-  }
-
-  return {
-    iconRender,
-  }
+	return {
+		iconRender,
+	}
 }
