@@ -1,5 +1,4 @@
 import type { ChatMessage } from 'chatgpt'
-import type fetch from 'node-fetch'
 
 export interface RequestOptions {
   message: string
@@ -10,8 +9,10 @@ export interface RequestOptions {
   top_p?: number
 }
 
+export type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<unknown>
+
 export interface SetProxyOptions {
-  fetch?: typeof fetch
+  fetch?: FetchLike
 }
 
 export interface UsageResponse {

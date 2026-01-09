@@ -1,13 +1,67 @@
 import antfu from '@antfu/eslint-config'
 
 export default antfu({
-  ignores: [
-    'build/**',
-  ],
-  rules: {
-    // 允许在 Node.js 环境中使用全局 process
-    'node/prefer-global/process': 'off',
-    // 允许使用 global（在某些情况下是必要的）
-    'no-restricted-globals': 'off',
-  },
+	ignores: ['build/**', 'eslint.config.js', '.vscode/**', '**/*.json', '**/*.jsonc', '**/*.md'],
+	typescript: true,
+	formatters: {
+		markdown: 'prettier',
+	},
+	overrides: [
+		{
+			files: ['eslint.config.js'],
+			rules: {
+				'ts/consistent-type-imports': 'off',
+				'@typescript-eslint/consistent-type-imports': 'off',
+			},
+		},
+		{
+			files: ['**/*.json', '**/*.jsonc'],
+			rules: {
+				'ts/consistent-type-imports': 'off',
+				'@typescript-eslint/consistent-type-imports': 'off',
+			},
+		},
+		{
+			files: ['**/*.md'],
+			rules: {
+				'ts/consistent-type-imports': 'off',
+				'@typescript-eslint/consistent-type-imports': 'off',
+			},
+		},
+	],
+	rules: {
+		// Zero-warning policy - treat warnings as errors
+		'no-console': 'off', // Allow console statements for logging
+		'no-debugger': 'error',
+
+		// Node.js specific rules
+		'node/prefer-global/process': 'off',
+		'no-restricted-globals': 'off',
+
+		// TypeScript specific rules
+		'@typescript-eslint/no-unused-vars': [
+			'error',
+			{
+				argsIgnorePattern: '^_',
+				varsIgnorePattern: '^_',
+			},
+		],
+		'@typescript-eslint/consistent-type-imports': 'error',
+		'@typescript-eslint/no-explicit-any': 'off', // Allow any type for flexibility
+
+		// Security rules
+		'no-eval': 'error',
+		'no-implied-eval': 'error',
+		'no-new-func': 'error',
+
+		// Performance rules
+		'no-await-in-loop': 'off', // Allow await in loops for certain use cases
+		'prefer-const': 'error',
+		'no-var': 'error',
+
+		// Code quality rules - relaxed for modernization phase
+		'complexity': ['off'], // Disable complexity warnings
+		'max-depth': ['off'], // Disable max depth warnings
+		'max-lines-per-function': ['off'], // Disable function length warnings
+	},
 })

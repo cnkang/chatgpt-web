@@ -1,4 +1,4 @@
-interface SendResponseOptions<T = any> {
+interface SendResponseOptions<T = unknown> {
   type: 'Success' | 'Fail'
   message?: string
   data?: T
