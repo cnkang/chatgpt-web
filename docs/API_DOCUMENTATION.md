@@ -290,11 +290,12 @@ OPENAI_API_MODEL=gpt-4o
 
 **Supported Models:**
 
+- `gpt-5.2`, `gpt-5.1`, `gpt-5` - Latest GPT-5.x models with enhanced capabilities
 - `gpt-4o`, `gpt-4o-mini` - Latest GPT-4o models
 - `gpt-4-turbo`, `gpt-4-turbo-preview` - GPT-4 Turbo models
 - `gpt-4`, `gpt-4-32k` - Standard GPT-4 models
-- `gpt-3.5-turbo`, `gpt-3.5-turbo-16k` - GPT-3.5 Turbo models
 - `o1`, `o1-preview`, `o1-mini` - Reasoning models
+- `model-router` - Azure model router for automatic optimal model selection
 
 ### Azure OpenAI Provider
 
@@ -305,8 +306,11 @@ Configure the application to use Azure OpenAI Service:
 AI_PROVIDER=azure
 AZURE_OPENAI_API_KEY=your_azure_api_key
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
-AZURE_OPENAI_DEPLOYMENT=gpt-4o-deployment
+AZURE_OPENAI_DEPLOYMENT=gpt-5.2-deployment
 AZURE_OPENAI_API_VERSION=2024-02-15-preview
+
+# Enable v1 Responses API (recommended)
+AZURE_OPENAI_USE_RESPONSES_API=true
 ```
 
 **Configuration Notes:**
@@ -314,6 +318,21 @@ AZURE_OPENAI_API_VERSION=2024-02-15-preview
 - Use your deployment names from Azure OpenAI Studio
 - API version should match your Azure OpenAI resource configuration
 - Endpoint URL should include your resource name
+- Enable `AZURE_OPENAI_USE_RESPONSES_API=true` for enhanced features
+
+**v1 Responses API Benefits:**
+
+- **Enhanced Reasoning**: Step-by-step thought display for reasoning models
+- **Better Context Retention**: Improved conversation continuity across interactions
+- **Advanced Features**: Support for computer-use-preview and other cutting-edge capabilities
+- **Unified Interface**: Combines chat completions and assistants API functionality
+- **Automatic Fallback**: Falls back to traditional API when disabled
+
+**API Endpoint:**
+
+```
+POST https://your-resource.openai.azure.com/openai/v1/responses?api-version=2024-02-15-preview
+```
 
 ## Request/Response Examples
 

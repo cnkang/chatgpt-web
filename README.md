@@ -48,8 +48,8 @@ This ChatGPT Web application provides a clean, modern interface for interacting 
 
 **Supported API Methods:**
 
-- **OpenAI Official API v1**: Uses the latest OpenAI API v1 with support for `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, and reasoning models (`o1`, `o1-preview`, `o1-mini`)
-- **Azure OpenAI**: Native Azure OpenAI Service integration for enterprise deployments
+- **OpenAI Official API v1**: Uses the latest OpenAI API v1 with support for `gpt-5.2`, `gpt-5.1`, `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, and reasoning models (`o1`, `o1-preview`, `o1-mini`)
+- **Azure OpenAI**: Native Azure OpenAI Service integration for enterprise deployments with v1 responses API support
 - **Reasoning Models**: Full support for OpenAI's reasoning models with step-by-step thought display
 
 **Security and Reliability:**
@@ -109,7 +109,7 @@ See all parameter variables [here](#environment-variables)
 
 - OpenAI API v1 native integration with all endpoints
 - Reasoning models support (o1, o1-preview, o1-mini) with step-by-step display
-- Azure OpenAI native integration without third-party proxies
+- Azure OpenAI native integration with v1 responses API for enhanced reasoning and context retention
 - Streaming responses for both OpenAI and Azure providers
 - Provider abstraction layer for seamless switching
 
