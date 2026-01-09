@@ -7,16 +7,12 @@ services:
     ports:
       - 3002:3002
     environment:
-      # pick one of two
+      # Official OpenAI API key (required)
       OPENAI_API_KEY:
-      # pick one of two
-      OPENAI_ACCESS_TOKEN:
       # API interface address, optional, available when OPENAI_API_KEY is set
       OPENAI_API_BASE_URL:
       # API model, optional, available when OPENAI_API_KEY is set
       OPENAI_API_MODEL:
-      # reverse proxy, optional
-      API_REVERSE_PROXY:
       # Access permission key, optional
       AUTH_SECRET_KEY:
       # The maximum number of requests per hour, optional, default unlimited

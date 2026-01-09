@@ -139,7 +139,7 @@ jobs:
         run: |
           # 获取所有digest文件
           digests=$(printf '${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@sha256:%s ' *)
-          
+
           # 为每个tag创建多架构manifest
           tags="${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
