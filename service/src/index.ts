@@ -1,7 +1,7 @@
+import dotenv from 'dotenv'
 import type { Request, Response } from 'express'
-import type { ChatMessage } from './chatgpt/index.js'
-import type { RequestProps } from './types'
 import express from 'express'
+import type { ChatMessage } from './chatgpt/index.js'
 import { ConfigurationValidator } from './config/validator'
 import { auth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
@@ -20,6 +20,7 @@ import {
   validateRequestSize,
 } from './middleware/validation'
 import { performSecurityValidation } from './security/index.js'
+import type { RequestProps } from './types'
 import {
   asyncHandler,
   errorHandler,
@@ -44,6 +45,9 @@ const apiCircuitBreaker = new CircuitBreaker({
 })
 
 function validateConfigOrExit() {
+  // Load environment variables from .env file
+  dotenv.config()
+
   try {
     ConfigurationValidator.validateEnvironment()
     console.warn('✓ Configuration validation passed')
@@ -52,7 +56,7 @@ function validateConfigOrExit() {
     const securityResult = performSecurityValidation()
     if (!securityResult.isSecure) {
       console.error('✗ Security validation failed:')
-      securityResult.risks.forEach((risk) => {
+      securityResult.risks.forEach(risk => {
         console.error(`  [${risk.severity}] ${risk.description}`)
         console.error(`    Mitigation: ${risk.mitigation}`)
       })
@@ -68,13 +72,12 @@ function validateConfigOrExit() {
     }
     if (envValidation.warnings.length > 0) {
       console.warn('⚠ Security warnings:')
-      envValidation.warnings.forEach((warning) => {
+      envValidation.warnings.forEach(warning => {
         console.warn(`  - ${warning}`)
       })
     }
     console.warn('✓ Security environment validation passed')
-  }
-  catch (error) {
+  } catch (error) {
     console.error('✗ Configuration validation failed:')
     console.error(error instanceof Error ? error.message : String(error))
     process.exit(1)
@@ -109,8 +112,7 @@ function registerHealthRoute(router: express.Router) {
 
     try {
       res.send(healthcheck)
-    }
-    catch (error) {
+    } catch (error) {
       healthcheck.message = error instanceof Error ? error.message : String(error)
       res.status(503).send()
     }
@@ -281,8 +283,17 @@ function listen(app: express.Express) {
 async function startServer() {
   validateConfigOrExit()
 
-  // Dynamic import of chatgpt module after validation passes
-  const chatModule = await import('./chatgpt/index.js')
+  // Dynamic import of appropriate chat module based on AI_PROVIDER
+  const aiProvider = process.env.AI_PROVIDER || 'openai'
+  let chatModule: ChatModule
+
+  if (aiProvider === 'azure' || aiProvider === 'openai') {
+    // Use new provider system for both Azure and OpenAI
+    chatModule = await import('./chatgpt/provider-adapter.js')
+  } else {
+    // Fallback to legacy OpenAI implementation
+    chatModule = await import('./chatgpt/index.js')
+  }
 
   const app = express()
   const router = express.Router()
@@ -322,7 +333,7 @@ async function startServer() {
 }
 
 // Start the server
-startServer().catch((error) => {
+startServer().catch(error => {
   console.error('Failed to start server:', error)
   process.exit(1)
 })

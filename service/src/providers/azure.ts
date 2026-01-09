@@ -4,7 +4,16 @@
  * Supports both traditional chat completions and the new v1 responses API
  */
 
+import { AzureOpenAI } from 'openai'
+import {
+  ErrorType,
+  createExternalApiError,
+  createNetworkError,
+  createTimeoutError,
+} from '../utils/error-handler.js'
+import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
+import { retryWithBackoff } from '../utils/retry.js'
 import type {
   AIProvider,
   ChatCompletionChunk,
@@ -14,17 +23,8 @@ import type {
   ReasoningStep,
   UsageInfo,
 } from './base.js'
-import type { AzureOpenAIConfig } from './config.js'
-import { AzureOpenAI } from 'openai'
-import {
-  createExternalApiError,
-  createNetworkError,
-  createTimeoutError,
-  ErrorType,
-} from '../utils/error-handler.js'
-import { logger } from '../utils/logger.js'
-import { retryWithBackoff } from '../utils/retry.js'
 import { BaseAIProvider } from './base.js'
+import type { AzureOpenAIConfig } from './config.js'
 
 // Azure v1 Responses API interfaces
 interface AzureResponsesRequest {
@@ -203,8 +203,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     // Use v1 responses API if enabled, otherwise fall back to traditional chat completions
     if (this.config.useResponsesAPI) {
       return this.createResponsesCompletion(request)
-    }
-    else {
+    } else {
       return this.createTraditionalChatCompletion(request)
     }
   }
@@ -249,8 +248,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       })
 
       return result
-    }
-    catch (error) {
+    } catch (error) {
       const duration = Date.now() - startTime
       logger.error('Azure OpenAI v1 responses completion failed', {
         model: request.model,
@@ -306,8 +304,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       })
 
       return result
-    }
-    catch (error) {
+    } catch (error) {
       const duration = Date.now() - startTime
       logger.error('Azure OpenAI chat completion failed', {
         model: request.model,
@@ -325,7 +322,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
    * Create a streaming chat completion
    * Automatically uses v1 responses API if enabled for enhanced features
    */
-  async* createStreamingChatCompletion(
+  async *createStreamingChatCompletion(
     request: ChatCompletionRequest,
   ): AsyncIterable<ChatCompletionChunk> {
     this.validateRequest(request)
@@ -333,8 +330,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     // Use v1 responses API if enabled, otherwise fall back to traditional streaming
     if (this.config.useResponsesAPI) {
       yield* this.createStreamingResponsesCompletion(request)
-    }
-    else {
+    } else {
       yield* this.createTraditionalStreamingCompletion(request)
     }
   }
@@ -342,7 +338,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
   /**
    * Create a streaming completion using the v1 responses API
    */
-  private async* createStreamingResponsesCompletion(
+  private async *createStreamingResponsesCompletion(
     request: ChatCompletionRequest,
   ): AsyncIterable<ChatCompletionChunk> {
     try {
@@ -384,8 +380,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       try {
         let buffer = ''
 
-        // Recursive function to process stream without await in loop
-        const processStream = async (): Promise<void> => {
+        while (true) {
           const { done, value } = await reader.read()
 
           if (done) {
@@ -399,15 +394,14 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
                     try {
                       const parsed: AzureResponsesStreamChunk = JSON.parse(data)
                       yield this.convertFromResponsesStreamChunk(parsed)
-                    }
-                    catch {
+                    } catch {
                       // Skip invalid JSON lines
                     }
                   }
                 }
               }
             }
-            return
+            break
           }
 
           if (value) {
@@ -421,32 +415,22 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 const data = line.slice(6).trim()
-                if (data === '[DONE]')
-                  return
+                if (data === '[DONE]') break
 
                 try {
                   const parsed: AzureResponsesStreamChunk = JSON.parse(data)
                   yield this.convertFromResponsesStreamChunk(parsed)
-                }
-                catch {
+                } catch {
                   // Skip invalid JSON lines
                 }
               }
             }
           }
-
-          // Continue processing
-
-          await processStream()
         }
-
-        await processStream()
-      }
-      finally {
+      } finally {
         reader.releaseLock()
       }
-    }
-    catch (error) {
+    } catch (error) {
       throw this.handleAzureError(error)
     }
   }
@@ -454,7 +438,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
   /**
    * Create a streaming completion using traditional chat completions API
    */
-  private async* createTraditionalStreamingCompletion(
+  private async *createTraditionalStreamingCompletion(
     request: ChatCompletionRequest,
   ): AsyncIterable<ChatCompletionChunk> {
     try {
@@ -471,8 +455,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       for await (const chunk of stream) {
         yield this.convertFromAzureChunk(chunk)
       }
-    }
-    catch (error) {
+    } catch (error) {
       throw this.handleAzureError(error)
     }
   }
@@ -515,8 +498,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       })
 
       return true
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Azure OpenAI configuration validation failed:', error)
       return false
     }
@@ -535,8 +517,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
         promptTokens: 0,
         completionTokens: 0,
       }
-    }
-    catch (error) {
+    } catch (error) {
       throw this.handleAzureError(error)
     }
   }
@@ -602,15 +583,13 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
    * Parse reasoning text into structured reasoning steps
    */
   private parseReasoningFromText(reasoningText: string): ReasoningStep[] | undefined {
-    if (!reasoningText)
-      return undefined
+    if (!reasoningText) return undefined
 
     // Simple parsing - split by common reasoning patterns
     const stepPattern = /Step \d+:|Thought \d+:|Reasoning:|Analysis:/gi
     const parts = reasoningText.split(stepPattern).filter(part => part.trim())
 
-    if (parts.length === 0)
-      return undefined
+    if (parts.length === 0) return undefined
 
     return parts.map((thought, index) => ({
       step: index + 1,
@@ -637,32 +616,25 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       // GPT-5.x models - latest generation with enhanced capabilities
       if (model.includes('gpt-5.2')) {
         maxTokens = 200000 // GPT-5.2 has larger context window
-      }
-      else {
+      } else {
         maxTokens = 128000 // Other GPT-5.x models
       }
-    }
-    else if (model === 'model-router' || model.includes('router')) {
+    } else if (model === 'model-router' || model.includes('router')) {
       // Model router - conservative estimate since backend chooses model
       maxTokens = 128000
-    }
-    else if (model.includes('gpt-4o')) {
+    } else if (model.includes('gpt-4o')) {
       maxTokens = model.includes('mini') ? 128000 : 128000
-    }
-    else if (
-      model.includes('gpt-4-turbo')
-      || model.includes('gpt-4-0125')
-      || model.includes('gpt-4-1106')
+    } else if (
+      model.includes('gpt-4-turbo') ||
+      model.includes('gpt-4-0125') ||
+      model.includes('gpt-4-1106')
     ) {
       maxTokens = 128000
-    }
-    else if (model.includes('gpt-4-32k')) {
+    } else if (model.includes('gpt-4-32k')) {
       maxTokens = 32768
-    }
-    else if (model.includes('gpt-4')) {
+    } else if (model.includes('gpt-4')) {
       maxTokens = 8192
-    }
-    else if (isReasoningModel) {
+    } else if (isReasoningModel) {
       maxTokens = 128000
     }
 
@@ -740,25 +712,22 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
    * would depend on the specific format returned by reasoning models
    */
   private extractReasoningSteps(content: string | null | undefined): ReasoningStep[] | undefined {
-    if (!content)
-      return undefined
+    if (!content) return undefined
 
     const stepPattern = /Step (\d+):/g
     const matches = Array.from(content.matchAll(stepPattern))
-    if (matches.length === 0)
-      return undefined
+    if (matches.length === 0) return undefined
 
     const steps: ReasoningStep[] = []
 
     for (let index = 0; index < matches.length; index++) {
       const match = matches[index]
       const startIndex = (match.index ?? 0) + match[0].length
-      const endIndex
-        = index + 1 < matches.length ? (matches[index + 1].index ?? content.length) : content.length
+      const endIndex =
+        index + 1 < matches.length ? (matches[index + 1].index ?? content.length) : content.length
       const thought = content.slice(startIndex, endIndex).trim()
 
-      if (!thought)
-        continue
+      if (!thought) continue
 
       steps.push({
         step: Number.parseInt(match[1], 10),
@@ -780,7 +749,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     let errorType = ErrorType.EXTERNAL_API
 
     // Handle OpenAI SDK errors (which now includes Azure errors)
-    const errorValue = error as { status?: number, message?: string }
+    const errorValue = error as { status?: number; message?: string }
     if (typeof errorValue?.status === 'number') {
       statusCode = errorValue.status
 
@@ -792,8 +761,8 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
           errorType = ErrorType.AUTHENTICATION
           break
         case 403:
-          message
-            = '[Azure OpenAI] Access denied. Please check your API key permissions and deployment access'
+          message =
+            '[Azure OpenAI] Access denied. Please check your API key permissions and deployment access'
           code = 'AZURE_ACCESS_DENIED'
           errorType = ErrorType.AUTHORIZATION
           break
@@ -831,8 +800,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
           message = `[Azure OpenAI] HTTP ${statusCode}: ${errorValue.message || 'Unknown error'}`
           errorType = ErrorType.EXTERNAL_API
       }
-    }
-    else if (errorValue?.message) {
+    } else if (errorValue?.message) {
       message = `[Azure OpenAI] ${errorValue.message}`
     }
 
@@ -845,10 +813,10 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       }
 
       if (
-        errorMessage.includes('network')
-        || errorMessage.includes('econnreset')
-        || errorMessage.includes('enotfound')
-        || errorMessage.includes('econnrefused')
+        errorMessage.includes('network') ||
+        errorMessage.includes('econnreset') ||
+        errorMessage.includes('enotfound') ||
+        errorMessage.includes('econnrefused')
       ) {
         return createNetworkError(`Azure OpenAI network error: ${error.message}`, {
           provider: 'azure',
