@@ -47,8 +47,8 @@ OPENAI_API_KEY=sk-your_official_api_key_here
 # OPTIONAL - Custom API endpoint
 OPENAI_API_BASE_URL=https://api.openai.com
 
-# OPTIONAL - Model selection (defaults to gpt-4o)
-OPENAI_API_MODEL=gpt-4o
+# OPTIONAL - Model selection (defaults to gpt-5.2)
+OPENAI_API_MODEL=gpt-5.2
 ```
 
 ### Migration Steps
@@ -93,7 +93,7 @@ OPENAI_API_MODEL=gpt-4o
 # Official OpenAI API Configuration
 OPENAI_API_KEY=sk-your_official_api_key_here
 OPENAI_API_BASE_URL=https://api.openai.com
-OPENAI_API_MODEL=gpt-4o
+OPENAI_API_MODEL=gpt-5.2
 
 # Optional: Timeout configuration
 TIMEOUT_MS=100000
@@ -152,7 +152,7 @@ metadata:
   name: chatgpt-web-config
 data:
   OPENAI_API_BASE_URL: 'https://api.openai.com'
-  OPENAI_API_MODEL: gpt-4o
+  OPENAI_API_MODEL: gpt-5.2
   TIMEOUT_MS: '100000'
   MAX_REQUEST_PER_HOUR: '1000'
 ```
@@ -206,8 +206,27 @@ For Azure OpenAI Service, use these environment variables:
 # Azure OpenAI Configuration
 OPENAI_API_KEY=your_azure_api_key
 OPENAI_API_BASE_URL=https://your-resource.openai.azure.com
-OPENAI_API_MODEL=gpt-35-turbo  # Note: Azure uses different model names
+OPENAI_API_MODEL=model-router  # Use Azure model router for optimal model selection
+
+# Azure OpenAI Provider Configuration
+AI_PROVIDER=azure
+AZURE_OPENAI_API_KEY=your_azure_api_key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_DEPLOYMENT=model-router
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+
+# Enable v1 Responses API for enhanced features (recommended)
+AZURE_OPENAI_USE_RESPONSES_API=true
 ```
+
+**Benefits of v1 Responses API:**
+
+- Enhanced reasoning capabilities with step-by-step thought display
+- Better context retention across conversations
+- Support for advanced model features like computer-use-preview
+- Unified interface combining chat completions and assistants capabilities
+
+````
 
 ## Validation and Testing
 
@@ -223,7 +242,7 @@ The application automatically validates configuration on startup:
 # Invalid configuration - application fails with helpful error
 ❌ Deprecated configuration detected: OPENAI_ACCESS_TOKEN
 ❌ Please migrate to official OpenAI API
-```
+````
 
 ### Health Checks
 
