@@ -70,15 +70,47 @@ export function validateEnvironmentSecurity(): SecurityValidationResult {
  */
 export function validateAuthenticationMethods(): SecurityValidationResult {
   const risks: SecurityRisk[] = []
+  const aiProvider = process.env.AI_PROVIDER || 'openai'
 
-  // Check for required official API key
-  if (!isNotEmptyString(process.env.OPENAI_API_KEY)) {
-    risks.push({
-      type: 'MISSING_OFFICIAL_AUTH',
-      description: 'Missing official OpenAI API key',
-      severity: 'HIGH',
-      mitigation: 'Set OPENAI_API_KEY environment variable with your official OpenAI API key',
-    })
+  // Check for required official API key based on provider
+  if (aiProvider === 'azure') {
+    // Validate Azure OpenAI configuration
+    if (!isNotEmptyString(process.env.AZURE_OPENAI_API_KEY)) {
+      risks.push({
+        type: 'MISSING_OFFICIAL_AUTH',
+        description: 'Missing Azure OpenAI API key',
+        severity: 'HIGH',
+        mitigation: 'Set AZURE_OPENAI_API_KEY environment variable with your Azure OpenAI API key',
+      })
+    }
+    if (!isNotEmptyString(process.env.AZURE_OPENAI_ENDPOINT)) {
+      risks.push({
+        type: 'MISSING_OFFICIAL_AUTH',
+        description: 'Missing Azure OpenAI endpoint',
+        severity: 'HIGH',
+        mitigation:
+          'Set AZURE_OPENAI_ENDPOINT environment variable with your Azure OpenAI endpoint',
+      })
+    }
+    if (!isNotEmptyString(process.env.AZURE_OPENAI_DEPLOYMENT)) {
+      risks.push({
+        type: 'MISSING_OFFICIAL_AUTH',
+        description: 'Missing Azure OpenAI deployment',
+        severity: 'HIGH',
+        mitigation:
+          'Set AZURE_OPENAI_DEPLOYMENT environment variable with your Azure OpenAI deployment name',
+      })
+    }
+  } else {
+    // Validate OpenAI configuration
+    if (!isNotEmptyString(process.env.OPENAI_API_KEY)) {
+      risks.push({
+        type: 'MISSING_OFFICIAL_AUTH',
+        description: 'Missing official OpenAI API key',
+        severity: 'HIGH',
+        mitigation: 'Set OPENAI_API_KEY environment variable with your official OpenAI API key',
+      })
+    }
   }
 
   // Check for any unofficial authentication remnants
@@ -90,33 +122,54 @@ export function validateAuthenticationMethods(): SecurityValidationResult {
   ]
   const foundUnofficial = unofficialAuthVars.filter(varName => process.env[varName] !== undefined)
 
-  foundUnofficial.forEach((varName) => {
+  foundUnofficial.forEach(varName => {
     risks.push({
       type: 'UNOFFICIAL_AUTH',
       description: `Unofficial authentication method detected: ${varName}`,
       severity: 'HIGH',
-      mitigation: `Remove ${varName} and use official OPENAI_API_KEY instead`,
+      mitigation: `Remove ${varName} and use official API configuration instead`,
     })
   })
 
-  // Validate API key format if present
-  const apiKey = process.env.OPENAI_API_KEY
-  if (isNotEmptyString(apiKey)) {
-    const officialPatterns = [
-      /^sk-[a-zA-Z0-9]{48}$/,
-      /^sk-proj-[a-zA-Z0-9]{48}$/,
-      /^sk_[\w-]{48,}$/,
-    ]
+  // Validate API key format if present based on provider
+  if (aiProvider === 'azure') {
+    const azureApiKey = process.env.AZURE_OPENAI_API_KEY
+    if (isNotEmptyString(azureApiKey)) {
+      // Azure API keys have different format patterns
+      const azurePatterns = [
+        /^[a-f0-9]{32}$/i, // 32 character hex string
+        /^[a-zA-Z0-9]{32,}$/, // 32+ character alphanumeric
+      ]
 
-    const isValidFormat = officialPatterns.some(pattern => pattern.test(apiKey))
-    if (!isValidFormat) {
-      risks.push({
-        type: 'INVALID_API_KEY_FORMAT',
-        description: 'API key format does not match standard OpenAI patterns',
-        severity: 'MEDIUM',
-        mitigation:
-          'Ensure API key is from the official OpenAI platform (https://platform.openai.com/api-keys)',
-      })
+      const isValidFormat = azurePatterns.some(pattern => pattern.test(azureApiKey))
+      if (!isValidFormat) {
+        risks.push({
+          type: 'INVALID_API_KEY_FORMAT',
+          description: 'Azure API key format does not match expected patterns',
+          severity: 'MEDIUM',
+          mitigation: 'Ensure API key is from the Azure OpenAI service in Azure Portal',
+        })
+      }
+    }
+  } else {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (isNotEmptyString(apiKey)) {
+      const officialPatterns = [
+        /^sk-[a-zA-Z0-9]{48}$/,
+        /^sk-proj-[a-zA-Z0-9]{48}$/,
+        /^sk_[\w-]{48,}$/,
+      ]
+
+      const isValidFormat = officialPatterns.some(pattern => pattern.test(apiKey))
+      if (!isValidFormat) {
+        risks.push({
+          type: 'INVALID_API_KEY_FORMAT',
+          description: 'API key format does not match standard OpenAI patterns',
+          severity: 'MEDIUM',
+          mitigation:
+            'Ensure API key is from the official OpenAI platform (https://platform.openai.com/api-keys)',
+        })
+      }
     }
   }
 
@@ -132,7 +185,7 @@ export function validateAuthenticationMethods(): SecurityValidationResult {
 export function validateCodeSecurity(content: string, filePath: string): SecurityValidationResult {
   const risks: SecurityRisk[] = []
 
-  SECURITY_RISK_PATTERNS.forEach((pattern) => {
+  SECURITY_RISK_PATTERNS.forEach(pattern => {
     const matches = content.match(pattern)
     if (matches) {
       risks.push({
@@ -155,33 +208,71 @@ export function validateCodeSecurity(content: string, filePath: string): Securit
  */
 export function validateConfigurationSecurity(): SecurityValidationResult {
   const risks: SecurityRisk[] = []
+  const aiProvider = process.env.AI_PROVIDER || 'openai'
 
-  // Validate API key format (should start with sk- for OpenAI)
-  const apiKey = process.env.OPENAI_API_KEY
-  if (isNotEmptyString(apiKey)) {
-    if (!apiKey.startsWith('sk-') && !apiKey.startsWith('sk_')) {
-      risks.push({
-        type: 'INVALID_API_KEY_FORMAT',
-        description: 'API key does not follow official OpenAI format',
-        severity: 'MEDIUM',
-        mitigation: 'Ensure OPENAI_API_KEY starts with "sk-" and is from OpenAI platform',
-      })
+  if (aiProvider === 'azure') {
+    // Validate Azure OpenAI configuration
+    const azureApiKey = process.env.AZURE_OPENAI_API_KEY
+    if (isNotEmptyString(azureApiKey)) {
+      // Azure API keys should be 32+ character strings
+      if (azureApiKey.length < 32) {
+        risks.push({
+          type: 'INVALID_API_KEY_FORMAT',
+          description: 'Azure API key appears to be too short',
+          severity: 'MEDIUM',
+          mitigation: 'Ensure AZURE_OPENAI_API_KEY is from Azure OpenAI service',
+        })
+      }
     }
-  }
 
-  // Validate base URL if provided
-  const baseUrl = process.env.OPENAI_API_BASE_URL
-  if (isNotEmptyString(baseUrl)) {
-    const officialDomains = ['api.openai.com', 'openai.azure.com']
-    const isOfficialDomain = officialDomains.some(domain => baseUrl.includes(domain))
+    // Validate Azure endpoint if provided
+    const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT
+    if (isNotEmptyString(azureEndpoint)) {
+      if (!azureEndpoint.includes('openai.azure.com')) {
+        risks.push({
+          type: 'UNOFFICIAL_BASE_URL',
+          description: 'Azure endpoint does not point to official Azure OpenAI service',
+          severity: 'HIGH',
+          mitigation: 'Use official Azure OpenAI endpoints (*.openai.azure.com)',
+        })
+      }
+      if (!azureEndpoint.startsWith('https://')) {
+        risks.push({
+          type: 'UNOFFICIAL_BASE_URL',
+          description: 'Azure endpoint should use HTTPS protocol',
+          severity: 'HIGH',
+          mitigation: 'Ensure AZURE_OPENAI_ENDPOINT starts with "https://"',
+        })
+      }
+    }
+  } else {
+    // Validate OpenAI API key format (should start with sk- for OpenAI)
+    const apiKey = process.env.OPENAI_API_KEY
+    if (isNotEmptyString(apiKey)) {
+      if (!apiKey.startsWith('sk-') && !apiKey.startsWith('sk_')) {
+        risks.push({
+          type: 'INVALID_API_KEY_FORMAT',
+          description: 'API key does not follow official OpenAI format',
+          severity: 'MEDIUM',
+          mitigation: 'Ensure OPENAI_API_KEY starts with "sk-" and is from OpenAI platform',
+        })
+      }
+    }
 
-    if (!isOfficialDomain) {
-      risks.push({
-        type: 'UNOFFICIAL_BASE_URL',
-        description: 'Base URL does not point to official OpenAI endpoints',
-        severity: 'HIGH',
-        mitigation: 'Use official OpenAI API endpoints only (api.openai.com or Azure OpenAI)',
-      })
+    // Validate base URL if provided
+    const baseUrl = process.env.OPENAI_API_BASE_URL
+    if (isNotEmptyString(baseUrl)) {
+      const officialDomains = ['api.openai.com']
+      const isOfficialDomain = officialDomains.some(domain => baseUrl.includes(domain))
+
+      if (!isOfficialDomain) {
+        risks.push({
+          type: 'UNOFFICIAL_BASE_URL',
+          description: 'Base URL does not point to official OpenAI endpoints',
+          severity: 'HIGH',
+          mitigation: 'Use official OpenAI API endpoints only (api.openai.com)',
+        })
+      }
     }
   }
 
