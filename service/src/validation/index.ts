@@ -8,23 +8,23 @@
 // Re-export configuration validator for convenience
 export { ConfigurationValidator } from '../config/validator'
 export type {
-	ConfigurationError,
-	ConfigurationErrorType,
-	MigrationGuidance,
-	MigrationInfo,
-	MigrationStep,
-	Resource,
-	ValidatedConfig,
-	ValidationResult,
+  ConfigurationError,
+  ConfigurationErrorType,
+  MigrationGuidance,
+  MigrationInfo,
+  MigrationStep,
+  Resource,
+  ValidatedConfig,
+  ValidationResult,
 } from '../config/validator'
 
 export { CleanupValidator } from './cleanup-validator'
 export type {
-	CleanupSummary,
-	CleanupValidationConfig,
-	CleanupValidationResult,
-	CleanupViolation,
-	ViolationType,
+  CleanupSummary,
+  CleanupValidationConfig,
+  CleanupValidationResult,
+  CleanupViolation,
+  ViolationType,
 } from './cleanup-validator'
 
 export { runCleanupValidation } from './run-cleanup-validation'
