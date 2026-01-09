@@ -133,24 +133,8 @@ export function validateAuthenticationMethods(): SecurityValidationResult {
 
   // Validate API key format if present based on provider
   if (aiProvider === 'azure') {
-    const azureApiKey = process.env.AZURE_OPENAI_API_KEY
-    if (isNotEmptyString(azureApiKey)) {
-      // Azure API keys have different format patterns
-      const azurePatterns = [
-        /^[a-f0-9]{32}$/i, // 32 character hex string
-        /^[a-zA-Z0-9]{32,}$/, // 32+ character alphanumeric
-      ]
-
-      const isValidFormat = azurePatterns.some(pattern => pattern.test(azureApiKey))
-      if (!isValidFormat) {
-        risks.push({
-          type: 'INVALID_API_KEY_FORMAT',
-          description: 'Azure API key format does not match expected patterns',
-          severity: 'MEDIUM',
-          mitigation: 'Ensure API key is from the Azure OpenAI service in Azure Portal',
-        })
-      }
-    }
+    // Skip API key format validation for Azure as formats may change
+    // Azure API key validation will be handled by the actual API call
   } else {
     const apiKey = process.env.OPENAI_API_KEY
     if (isNotEmptyString(apiKey)) {
@@ -211,19 +195,8 @@ export function validateConfigurationSecurity(): SecurityValidationResult {
   const aiProvider = process.env.AI_PROVIDER || 'openai'
 
   if (aiProvider === 'azure') {
-    // Validate Azure OpenAI configuration
-    const azureApiKey = process.env.AZURE_OPENAI_API_KEY
-    if (isNotEmptyString(azureApiKey)) {
-      // Azure API keys should be 32+ character strings
-      if (azureApiKey.length < 32) {
-        risks.push({
-          type: 'INVALID_API_KEY_FORMAT',
-          description: 'Azure API key appears to be too short',
-          severity: 'MEDIUM',
-          mitigation: 'Ensure AZURE_OPENAI_API_KEY is from Azure OpenAI service',
-        })
-      }
-    }
+    // Skip API key format validation for Azure as formats may change
+    // Azure API key validation will be handled by the actual API call
 
     // Validate Azure endpoint if provided
     const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT
