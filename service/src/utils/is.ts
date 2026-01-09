@@ -1,21 +1,21 @@
 export function isNumber<T extends number>(value: T | unknown): value is number {
-	return Object.prototype.toString.call(value) === '[object Number]'
+  return Object.prototype.toString.call(value) === '[object Number]'
 }
 
 export function isString<T extends string>(value: T | unknown): value is string {
-	return Object.prototype.toString.call(value) === '[object String]'
+  return Object.prototype.toString.call(value) === '[object String]'
 }
 
 export function isNotEmptyString(value: unknown): value is string {
-	return typeof value === 'string' && value.length > 0
+  return typeof value === 'string' && value.length > 0
 }
 
 export function isBoolean<T extends boolean>(value: T | unknown): value is boolean {
-	return Object.prototype.toString.call(value) === '[object Boolean]'
+  return Object.prototype.toString.call(value) === '[object Boolean]'
 }
 
 export function isFunction<T extends (...args: unknown[]) => unknown | void | never>(
-	value: T | unknown,
+  value: T | unknown,
 ): value is T {
-	return Object.prototype.toString.call(value) === '[object Function]'
+  return Object.prototype.toString.call(value) === '[object Function]'
 }
