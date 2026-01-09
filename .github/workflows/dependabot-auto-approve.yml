@@ -1,5 +1,5 @@
 # Dependabot auto-approve workflow
-# Automatically approve patch version updates that pass CI checks
+# Automatically label and comment on Dependabot PRs based on update type
 
 name: Dependabot Auto-approve
 
@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   auto-approve:
@@ -25,30 +26,40 @@ jobs:
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
 
-      - name: Auto-approve patch updates
+      - name: Label and comment on patch updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: |
-          echo "Auto-approving patch update: ${{ steps.metadata.outputs.dependency-names }}"
-          gh pr review --approve "$PR_URL" --body "✅ Auto-approved patch version update"
+          echo "Processing patch update: ${{ steps.metadata.outputs.dependency-names }}"
+          gh pr edit "$PR_URL" --add-label "dependencies,patch-update,auto-approve-ready"
+          gh pr comment "$PR_URL" --body "✅ Patch Update Ready for Auto-Approval\n\nThis is a patch version update (e.g., 1.0.0 → 1.0.1) which typically includes:\n- Bug fixes\n- Security patches\n- Non-breaking changes\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.metadata.outputs.update-type }}\n\nThis PR is safe to merge after CI checks pass. 🚀"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add comment to minor updates
+      - name: Label and comment on minor updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: |
-          echo "Adding comment to minor update"
-          gh pr comment "$PR_URL" --body "🔍 This is a minor version update, please review before merging."
+          echo "Processing minor update: ${{ steps.metadata.outputs.dependency-names }}"
+          gh pr edit "$PR_URL" --add-label "dependencies,minor-update,needs-review"
+          gh pr comment "$PR_URL" --body "🔍 Minor Version Update - Review Recommended\n\nThis is a minor version update (e.g., 1.0.0 → 1.1.0) which may include:\n- New features\n- Enhancements\n- Backward-compatible changes\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.metadata.outputs.update-type }}\n\nPlease review the changelog before merging to ensure compatibility. 📋"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add comment to major updates
+      - name: Label and comment on major updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
         run: |
-          echo "Adding comment and labels to major update"
-          gh pr comment "$PR_URL" --body "⚠️ This is a major version update that may contain breaking changes. Please review carefully before merging."
-          gh pr edit "$PR_URL" --add-label "needs-review,breaking-change"
+          echo "Processing major update: ${{ steps.metadata.outputs.dependency-names }}"
+          gh pr edit "$PR_URL" --add-label "dependencies,major-update,needs-review,breaking-change"
+          gh pr comment "$PR_URL" --body "⚠️ Major Version Update - Manual Review Required\n\nThis is a major version update (e.g., 1.0.0 → 2.0.0) which may include:\n- Breaking changes\n- API modifications\n- Removed features\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.metadata.outputs.update-type }}\n\n⚠️ IMPORTANT: Please carefully review the changelog and test thoroughly before merging. This update may require code changes. 🔧"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add general Dependabot label
+        run: |
+          echo "Adding general Dependabot labels"
+          gh pr edit "$PR_URL" --add-label "dependabot"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

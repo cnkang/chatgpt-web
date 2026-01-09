@@ -23,16 +23,11 @@ To reduce PR volume and improve management efficiency, related dependencies are 
 
 ### Automation Workflows
 
-#### Auto-approve (dependabot-auto-approve.yml)
+#### Auto-labeling and Comments (dependabot-auto-approve.yml)
 
-- ✅ **Patch updates**: Auto-approved (e.g., 1.0.0 → 1.0.1)
-- 🔍 **Minor updates**: Review reminder added (e.g., 1.0.0 → 1.1.0)
-- ⚠️ **Major updates**: Warning labels added (e.g., 1.0.0 → 2.0.0)
-
-#### Auto-merge (dependabot-auto-merge.yml) - Optional
-
-- Auto-merge patch and minor updates only after CI checks pass
-- Major updates require manual review
+- ✅ **Patch updates**: Auto-labeled as `auto-approve-ready` with informative comment
+- 🔍 **Minor updates**: Labeled as `needs-review` with changelog reminder
+- ⚠️ **Major updates**: Labeled as `breaking-change` with warning about potential issues
 
 ## Security Considerations
 
@@ -90,11 +85,19 @@ Comment the following commands in PRs:
 2. Confirm Dependabot is enabled in repository settings
 3. View Dependabot logs: Settings → Security → Dependabot
 
-### Auto-merge Failures
+### Auto-labeling Not Working
 
-1. Check CI status
-2. Verify branch protection rules
-3. Validate GitHub Token permissions
+1. Check workflow permissions in repository settings
+2. Ensure Dependabot has access to create PRs
+3. Verify workflow file syntax and triggers
+
+### GitHub Actions Permission Errors
+
+If you see "GitHub Actions is not permitted to approve pull requests":
+
+- This is expected behavior with the default `GITHUB_TOKEN`
+- The workflow uses labeling instead of approval for better compatibility
+- Manually approve PRs labeled as `auto-approve-ready` after reviewing
 
 ## Related Links
 
