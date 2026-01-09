@@ -1,15 +1,15 @@
 import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'chatgpt'
+import type { RequestInfo as NodeRequestInfo, RequestInit as NodeRequestInit } from 'node-fetch'
+import type { ApiModel, ChatContext, ModelConfig } from '../types'
+import type { FetchLike, RequestOptions, SetProxyOptions, UsageResponse } from './types'
 import { ChatGPTAPI } from 'chatgpt'
 import * as dotenv from 'dotenv'
 import httpsProxyAgent from 'https-proxy-agent'
-import 'isomorphic-fetch'
-import type { RequestInfo as NodeRequestInfo, RequestInit as NodeRequestInit } from 'node-fetch'
 import fetch from 'node-fetch'
 import { SocksProxyAgent } from 'socks-proxy-agent'
-import type { ApiModel, ChatContext, ModelConfig } from '../types'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
-import type { FetchLike, RequestOptions, SetProxyOptions, UsageResponse } from './types'
+import 'isomorphic-fetch'
 
 const { HttpsProxyAgent } = httpsProxyAgent
 
@@ -64,31 +64,38 @@ let api: ChatGPTAPI
     if (modelLower.includes('gpt-5.2')) {
       options.maxModelTokens = 200000 // GPT-5.2 has larger context window
       options.maxResponseTokens = 32768
-    } else {
+    }
+    else {
       options.maxModelTokens = 128000 // Other GPT-5.x models
       options.maxResponseTokens = 16384
     }
-  } else if (modelLower.includes('gpt-4')) {
+  }
+  else if (modelLower.includes('gpt-4')) {
     // GPT-4 family models
     if (modelLower.includes('32k')) {
       options.maxModelTokens = 32768
       options.maxResponseTokens = 8192
-    } else if (/-4o-mini/.test(modelLower)) {
+    }
+    else if (/-4o-mini/.test(modelLower)) {
       options.maxModelTokens = 128000
       options.maxResponseTokens = 16384
-    } else if (/-preview|-turbo|o/.test(modelLower)) {
+    }
+    else if (/-preview|-turbo|o/.test(modelLower)) {
       options.maxModelTokens = 128000
       options.maxResponseTokens = 4096
-    } else {
+    }
+    else {
       options.maxModelTokens = 8192
       options.maxResponseTokens = 2048
     }
-  } else if (modelLower === 'model-router' || modelLower.includes('router')) {
+  }
+  else if (modelLower === 'model-router' || modelLower.includes('router')) {
     // Model router - let Azure backend choose the best model
     // Use conservative but flexible limits since we don't know which model will be selected
     options.maxModelTokens = 128000
     options.maxResponseTokens = 16384
-  } else {
+  }
+  else {
     // Default fallback for other models (including future models)
     options.maxModelTokens = 128000
     options.maxResponseTokens = 8192
@@ -96,7 +103,8 @@ let api: ChatGPTAPI
 
   if (isNotEmptyString(openAiApiBaseUrl)) {
     // if find /v1 in OPENAI_API_BASE_URL then use it
-    if (openAiApiBaseUrl.includes('/v1')) options.apiBaseUrl = `${openAiApiBaseUrl}`
+    if (openAiApiBaseUrl.includes('/v1'))
+      options.apiBaseUrl = `${openAiApiBaseUrl}`
     else options.apiBaseUrl = `${openAiApiBaseUrl}/v1`
   }
 
@@ -111,7 +119,8 @@ async function chatReplyProcess(options: RequestOptions) {
   try {
     const sendOptions: SendMessageOptions = { timeoutMs }
 
-    if (isNotEmptyString(systemMessage)) sendOptions.systemMessage = systemMessage
+    if (isNotEmptyString(systemMessage))
+      sendOptions.systemMessage = systemMessage
     sendOptions.completionParams = { model, temperature, top_p }
 
     if (lastContext != null) {
@@ -120,13 +129,14 @@ async function chatReplyProcess(options: RequestOptions) {
 
     const response = await api.sendMessage(message, {
       ...sendOptions,
-      onProgress: partialResponse => {
+      onProgress: (partialResponse) => {
         process?.(partialResponse)
       },
     })
 
     return sendResponse({ type: 'Success', data: response })
-  } catch (error: unknown) {
+  }
+  catch (error: unknown) {
     const code = (error as { statusCode?: number }).statusCode
     global.console.log(error)
     if (typeof code === 'number' && Reflect.has(ErrorCodeMessage, code))
@@ -142,7 +152,8 @@ async function fetchUsage() {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY
   const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
 
-  if (!isNotEmptyString(OPENAI_API_KEY)) return Promise.resolve('-')
+  if (!isNotEmptyString(OPENAI_API_KEY))
+    return Promise.resolve('-')
 
   const API_BASE_URL = isNotEmptyString(OPENAI_API_BASE_URL)
     ? OPENAI_API_BASE_URL
@@ -154,7 +165,7 @@ async function fetchUsage() {
   const urlUsage = `${API_BASE_URL}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`
 
   const headers = {
-    Authorization: `Bearer ${OPENAI_API_KEY}`,
+    'Authorization': `Bearer ${OPENAI_API_KEY}`,
     'Content-Type': 'application/json',
   }
 
@@ -169,11 +180,13 @@ async function fetchUsage() {
       ok: boolean
       json: () => Promise<UsageResponse>
     }
-    if (!useResponse.ok) throw new Error('获取使用量失败')
+    if (!useResponse.ok)
+      throw new Error('获取使用量失败')
     const usageData = (await useResponse.json()) as UsageResponse
     const usage = Math.round(usageData.total_usage) / 100
     return Promise.resolve(usage ? `$${usage}` : '-')
-  } catch (error) {
+  }
+  catch (error) {
     global.console.log(error)
     return Promise.resolve('-')
   }
@@ -192,8 +205,8 @@ function formatDate(): string[] {
 async function chatConfig() {
   const usage = await fetchUsage()
   const httpsProxy = (process.env.HTTPS_PROXY || process.env.ALL_PROXY) ?? '-'
-  const socksProxy =
-    process.env.SOCKS_PROXY_HOST && process.env.SOCKS_PROXY_PORT
+  const socksProxy
+    = process.env.SOCKS_PROXY_HOST && process.env.SOCKS_PROXY_PORT
       ? `${process.env.SOCKS_PROXY_HOST}:${process.env.SOCKS_PROXY_PORT}`
       : '-'
   return sendResponse<ModelConfig>({
@@ -219,7 +232,8 @@ function setupProxy(options: SetProxyOptions) {
       const initWithAgent: NodeRequestInit = { ...(init as NodeRequestInit), agent }
       return fetch(url as NodeRequestInfo, initWithAgent)
     }
-  } else if (isNotEmptyString(process.env.HTTPS_PROXY) || isNotEmptyString(process.env.ALL_PROXY)) {
+  }
+  else if (isNotEmptyString(process.env.HTTPS_PROXY) || isNotEmptyString(process.env.ALL_PROXY)) {
     const httpsProxy = process.env.HTTPS_PROXY || process.env.ALL_PROXY
     if (httpsProxy) {
       const agent = new HttpsProxyAgent(httpsProxy)
@@ -228,7 +242,8 @@ function setupProxy(options: SetProxyOptions) {
         return fetch(url as NodeRequestInfo, initWithAgent)
       }
     }
-  } else {
+  }
+  else {
     options.fetch = (url, init) => {
       return defaultFetch(url, init)
     }
