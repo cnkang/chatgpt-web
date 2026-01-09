@@ -1,0 +1,54 @@
+# Dependabot auto-approve workflow
+# Automatically approve patch version updates that pass CI checks
+
+name: Dependabot Auto-approve
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+
+    # Only execute for PRs created by Dependabot
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: Auto-approve patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        run: |
+          echo "Auto-approving patch update: ${{ steps.metadata.outputs.dependency-names }}"
+          gh pr review --approve "$PR_URL" --body "✅ Auto-approved patch version update"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment to minor updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          echo "Adding comment to minor update"
+          gh pr comment "$PR_URL" --body "🔍 This is a minor version update, please review before merging."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment to major updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          echo "Adding comment and labels to major update"
+          gh pr comment "$PR_URL" --body "⚠️ This is a major version update that may contain breaking changes. Please review carefully before merging."
+          gh pr edit "$PR_URL" --add-label "needs-review,breaking-change"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
