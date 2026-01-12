@@ -1,0 +1,308 @@
+name: Test Matrix
+
+on:
+  schedule:
+    # Run comprehensive tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test-type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - e2e
+          - performance
+          - security
+      packages:
+        description: 'Packages to test (comma-separated, or "all")'
+        required: false
+        default: 'all'
+        type: string
+
+env:
+  NODE_VERSION: '24.x'
+  PNPM_VERSION: '10.28.0'
+
+jobs:
+  # Determine test matrix based on inputs
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.matrix.outputs.packages }}
+      test-types: ${{ steps.matrix.outputs.test-types }}
+    steps:
+      - name: Setup test matrix
+        id: matrix
+        run: |
+          # Determine packages to test
+          if [[ "${{ github.event.inputs.packages }}" == "all" || -z "${{ github.event.inputs.packages }}" ]]; then
+            packages='["web", "api", "shared"]'
+          else
+            # Convert comma-separated string to JSON array
+            packages=$(echo '${{ github.event.inputs.packages }}' | jq -R 'split(",") | map(select(length > 0))')
+          fi
+          
+          # Determine test types to run
+          case "${{ github.event.inputs.test-type }}" in
+            "all")
+              test_types='["unit", "integration", "e2e"]'
+              ;;
+            "unit"|"integration"|"e2e"|"performance"|"security")
+              test_types='["${{ github.event.inputs.test-type }}"]'
+              ;;
+            *)
+              test_types='["unit", "integration"]'
+              ;;
+          esac
+          
+          echo "packages=$packages" >> $GITHUB_OUTPUT
+          echo "test-types=$test_types" >> $GITHUB_OUTPUT
+          
+          echo "Testing packages: $packages"
+          echo "Test types: $test_types"
+
+  # Unit tests for each package
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: setup-matrix
+    if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'unit')
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.setup-matrix.outputs.packages) }}
+        node-version: ['24.x']
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          node-version: ${{ matrix.node-version }}
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+        
+      - name: Build shared packages
+        run: pnpm turbo run build --filter=@chatgpt-web/shared --filter=@chatgpt-web/config
+        
+      - name: Run unit tests for ${{ matrix.package }}
+        run: pnpm turbo run test --filter=@chatgpt-web/${{ matrix.package }} -- --run --reporter=verbose
+        
+      - name: Generate coverage report
+        run: pnpm turbo run test:coverage --filter=@chatgpt-web/${{ matrix.package }}
+        
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./apps/${{ matrix.package }}/coverage/lcov.info
+          flags: ${{ matrix.package }}-unit
+          name: ${{ matrix.package }}-unit-${{ matrix.os }}-${{ matrix.node-version }}
+
+  # Integration tests
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: setup-matrix
+    if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'integration')
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.setup-matrix.outputs.packages) }}
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+        
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+        
+      - name: Build all packages
+        run: pnpm turbo run build
+        
+      - name: Run integration tests for ${{ matrix.package }}
+        env:
+          REDIS_URL: redis://localhost:6379
+          NODE_ENV: test
+        run: pnpm turbo run test:integration --filter=@chatgpt-web/${{ matrix.package }} -- --run
+        
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results-${{ matrix.package }}
+          path: |
+            apps/${{ matrix.package }}/test-results/
+            apps/${{ matrix.package }}/coverage/
+
+  # End-to-end tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: setup-matrix
+    if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'e2e')
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+        
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+        
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+        
+      - name: Build all packages
+        run: pnpm turbo run build
+        
+      - name: Start services for E2E tests
+        run: |
+          # Start API service in background
+          pnpm turbo run start --filter=@chatgpt-web/api &
+          API_PID=$!
+          echo "API_PID=$API_PID" >> $GITHUB_ENV
+          
+          # Start web service in background
+          pnpm turbo run preview --filter=@chatgpt-web/web &
+          WEB_PID=$!
+          echo "WEB_PID=$WEB_PID" >> $GITHUB_ENV
+          
+          # Wait for services to be ready
+          sleep 30
+          
+      - name: Run E2E tests with ${{ matrix.browser }}
+        env:
+          PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
+        run: pnpm turbo run test:e2e --filter=@chatgpt-web/web -- --project=${{ matrix.browser }}
+        
+      - name: Stop services
+        if: always()
+        run: |
+          kill $API_PID || true
+          kill $WEB_PID || true
+          
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-${{ matrix.browser }}
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+
+  # Performance tests
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: setup-matrix
+    if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'performance')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+        
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+        
+      - name: Build all packages
+        run: pnpm turbo run build
+        
+      - name: Run performance tests
+        run: |
+          # API performance tests
+          pnpm turbo run test:performance --filter=@chatgpt-web/api
+          
+          # Web performance tests (Lighthouse CI)
+          pnpm turbo run test:lighthouse --filter=@chatgpt-web/web
+          
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-results
+          path: |
+            apps/api/performance-results/
+            apps/web/lighthouse-results/
+
+  # Security tests
+  security-tests:
+    runs-on: ubuntu-latest
+    needs: setup-matrix
+    if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'security')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js and PNPM
+        uses: ./.github/actions/setup-node-pnpm
+        
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+        
+      - name: Run security audit
+        run: |
+          # PNPM audit
+          pnpm audit --audit-level moderate
+          
+          # Snyk security scan
+          npx snyk test --all-projects
+          
+      - name: Run OWASP ZAP security scan
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: 'http://localhost:3002'
+          
+      - name: Upload security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-test-results
+          path: |
+            security-results/
+            zap-report/
+
+  # Test summary and reporting
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, performance-tests, security-tests]
+    if: always()
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results/
+          
+      - name: Generate test summary
+        run: |
+          echo "## 🧪 Test Matrix Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Run:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests: ${{ needs.unit-tests.result == 'success' && '✅' || needs.unit-tests.result == 'skipped' && '⏭️' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Integration Tests: ${{ needs.integration-tests.result == 'success' && '✅' || needs.integration-tests.result == 'skipped' && '⏭️' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E Tests: ${{ needs.e2e-tests.result == 'success' && '✅' || needs.e2e-tests.result == 'skipped' && '⏭️' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance Tests: ${{ needs.performance-tests.result == 'success' && '✅' || needs.performance-tests.result == 'skipped' && '⏭️' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security Tests: ${{ needs.security-tests.result == 'success' && '✅' || needs.security-tests.result == 'skipped' && '⏭️' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Coverage & Quality:" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage reports uploaded to Codecov" >> $GITHUB_STEP_SUMMARY
+          echo "- Test artifacts available for download" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance baselines recorded" >> $GITHUB_STEP_SUMMARY
