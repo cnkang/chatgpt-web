@@ -7,13 +7,29 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
-.DS_Store
+.pnpm-store
+
+# Build outputs
 dist
 dist-ssr
+build
 coverage
 *.local
 
+# Cache directories
+.turbo
+**/.turbo
+.cache
+.next/cache
+.serena/cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
 /cypress/videos/
 /cypress/screenshots/
 
@@ -27,9 +43,45 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
 
-# Environment variables files
-/service/.env
+# Environment variables files (CRITICAL - NEVER COMMIT THESE)
 .env
-.turbo/
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+/apps/api/.env
+/apps/api/.env.*
+/service/.env
+/service/.env.*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
 
