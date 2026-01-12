@@ -1,0 +1,31 @@
+{
+  "name": "@chatgpt-web/scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Migration and build scripts for ChatGPT Web monorepo",
+  "type": "module",
+  "scripts": {
+    "migrate": "tsx migrate-to-monorepo.ts",
+    "migrate:full": "tsx migration-orchestrator.ts",
+    "migrate:dry-run": "tsx migration-orchestrator.ts --dry-run",
+    "validate": "tsx validate-migration.ts",
+    "validate:post": "tsx post-migration-validation.ts",
+    "rollback": "tsx rollback-migration.ts",
+    "update-config": "tsx update-configurations.ts",
+    "dev-setup": "tsx dev-setup.ts",
+    "optimize-deps": "tsx optimize-dependencies.ts",
+    "validate-deps": "tsx validate-dependencies.ts",
+    "watch": "tsx watch-workspace.ts"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0",
+    "glob": "^11.0.0",
+    "chalk": "^5.3.0",
+    "tsx": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
