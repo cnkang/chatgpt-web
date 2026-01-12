@@ -1,0 +1,24 @@
+{
+  "name": "@chatgpt-web/docs",
+  "version": "1.0.0",
+  "description": "Documentation package for ChatGPT Web monorepo",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Documentation build complete'",
+    "dev": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080",
+		"validate": "NODE_OPTIONS=--no-deprecation markdownlint **/*.md",
+		"lint": "NODE_OPTIONS=--no-deprecation markdownlint **/*.md",
+		"lint:fix": "NODE_OPTIONS=--no-deprecation markdownlint **/*.md --fix",
+    "format": "prettier --write **/*.md",
+    "format:check": "prettier --check **/*.md",
+    "type-check": "echo 'No TypeScript in docs package'",
+    "test": "echo 'No tests in docs package'",
+    "quality": "run-p validate format:check",
+    "quality:fix": "run-s lint:fix format",
+    "clean": "echo 'Nothing to clean in docs package'"
+  },
+  "devDependencies": {
+    "markdownlint-cli": "^0.43.0"
+  }
+}
