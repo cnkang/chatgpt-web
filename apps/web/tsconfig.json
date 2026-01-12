@@ -1,0 +1,23 @@
+{
+  "extends": "../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "incremental": false,
+    "composite": false,
+    "tsBuildInfoFile": null,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "typeRoots": ["./src/typings", "node_modules/@types"],
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/**/*",
+    "src/**/*.vue",
+    "src/typings/**/*.d.ts",
+    "vite.config.ts",
+    "package.json",
+    "src/assets/**/*.json"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

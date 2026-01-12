@@ -1,0 +1,3 @@
+{
+	"extends": "@chatgpt-web/config/prettier.config.js"
+}
