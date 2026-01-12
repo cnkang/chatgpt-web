@@ -170,7 +170,7 @@ securityContext:
 
 ```yaml
 healthcheck:
-  test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3002/api/health']
+  test: [CMD, wget, --no-verbose, --tries=1, --spider, http://localhost:3002/api/health]
   interval: 30s
   timeout: 10s
   retries: 3

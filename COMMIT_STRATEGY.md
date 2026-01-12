@@ -3,6 +3,7 @@
 ## Best Practices for Commits
 
 ### 1. Logical Grouping
+
 Split changes into logical, atomic commits:
 
 ```bash
@@ -25,6 +26,7 @@ git commit -m "chore: remove legacy directories after monorepo migration"
 ```
 
 ### 2. Commit Message Format
+
 Use Conventional Commits format:
 
 ```bash
@@ -51,6 +53,7 @@ git commit -m "chore: update dependencies to latest versions"
 ### 3. Staging Strategy
 
 #### For Large Changes
+
 ```bash
 # Stage specific directories
 git add apps/web/
@@ -67,6 +70,7 @@ git commit -m "chore: centralize configuration in packages/config"
 ```
 
 #### For Mixed Changes
+
 ```bash
 # Use interactive staging
 git add -p  # Review each change individually
@@ -82,6 +86,7 @@ git commit -m "ci: update CI workflows for monorepo"
 ### 4. Files to Never Commit
 
 Ensure these are in `.gitignore`:
+
 ```
 # Dependencies
 node_modules/
@@ -120,6 +125,7 @@ Thumbs.db
 ### 5. Pre-commit Checklist
 
 Before committing:
+
 ```bash
 # 1. Run quality checks
 pnpm quality
@@ -140,6 +146,7 @@ git commit -m "feat: add new feature with proper description"
 ### 6. Commit Size Guidelines
 
 #### ✅ Good Commit Sizes
+
 - Single feature implementation
 - Single bug fix
 - Related configuration changes
@@ -147,6 +154,7 @@ git commit -m "feat: add new feature with proper description"
 - Dependency updates (grouped by type)
 
 #### ❌ Avoid Large Commits
+
 - Multiple unrelated features
 - Mixed feature + refactoring + docs
 - Entire directory restructuring in one commit
@@ -202,6 +210,7 @@ git rebase -i HEAD~3  # For last 3 commits
 ### 9. Commit Verification
 
 Each commit should:
+
 - ✅ Pass all linting checks
 - ✅ Pass all tests
 - ✅ Build successfully
