@@ -1,0 +1,77 @@
+{
+  "name": "@chatgpt-web/api",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChatGPT Web Backend API Service",
+  "author": "Kang Liu",
+  "contributors": [
+    "ChenZhaoYu <chenzhaoyu1994@gmail.com>"
+  ],
+  "keywords": [
+    "chatgpt-web",
+    "chatgpt",
+    "chatbot",
+    "express"
+  ],
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "main": "build/index.js",
+  "scripts": {
+    "start": "esno ./src/index.ts",
+    "dev": "esno watch ./src/index.ts",
+    "dev:debug": "esno watch --inspect=0.0.0.0:9229 ./src/index.ts",
+    "dev:inspect": "esno watch --inspect-brk=0.0.0.0:9229 ./src/index.ts",
+    "prod": "node ./build/index.js",
+    "build": "pnpm clean && tsup",
+    "build:watch": "pnpm clean && tsup --watch",
+    "clean": "rimraf build",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "quality": "run-p type-check lint format:check",
+    "quality:fix": "run-s lint:fix format type-check",
+    "validate-cleanup": "esno ./src/validation/run-cleanup-validation.ts",
+    "common:cleanup": "rimraf node_modules && rimraf pnpm-lock.yaml"
+  },
+  "dependencies": {
+    "@chatgpt-web/shared": "workspace:*",
+    "@types/connect-redis": "^0.0.23",
+    "@types/express-session": "^1.18.2",
+    "@types/jsdom": "^27.0.0",
+    "axios": "^1.13.2",
+    "chatgpt": "^5.2.5",
+    "connect-redis": "^9.0.0",
+    "dompurify": "^3.3.1",
+    "dotenv": "^17.2.3",
+    "esno": "^4.8.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "https-proxy-agent": "^7.0.6",
+    "isomorphic-fetch": "^3.0.0",
+    "jsdom": "^27.4.0",
+    "node-fetch": "^3.3.2",
+    "openai": "^6.15.0",
+    "redis": "^5.10.0",
+    "socks-proxy-agent": "^8.0.5",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@chatgpt-web/config": "workspace:*",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "@vitest/ui": "^4.0.16",
+    "fast-check": "^4.5.3",
+    "tsup": "^8.5.1"
+  }
+}

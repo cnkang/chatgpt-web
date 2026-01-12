@@ -1,0 +1,15 @@
+{
+  "extends": "../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "build",
+    "noEmit": true,
+    "isolatedModules": true,
+    "allowJs": true,
+    "composite": false,
+    "incremental": false,
+    "tsBuildInfoFile": null
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "build"]
+}
