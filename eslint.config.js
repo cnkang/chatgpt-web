@@ -1,7 +1,18 @@
 import antfu from '@antfu/eslint-config'
 
 export default antfu({
-	ignores: ['docker-compose/**', 'kubernetes/**', 'service/build/**', 'dist/**', '.kiro/**'],
+	ignores: [
+		'.github/**',
+		'.serena/**',
+		'apps/**',
+		'packages/**',
+		'tools/**',
+		'docker-compose/**',
+		'kubernetes/**',
+		'service/build/**',
+		'dist/**',
+		'.kiro/**',
+	],
 	typescript: true,
 	vue: true,
 	formatters: {

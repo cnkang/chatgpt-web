@@ -29,10 +29,3 @@ export default defineConfig({
 		],
 	},
 });
-			"**/build/**",
-			"**/.{idea,git,cache,output,temp}/**",
-		],
-		testTimeout: 10000,
-		hookTimeout: 10000,
-	},
-});

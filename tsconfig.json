@@ -29,5 +29,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "dist", "service"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "service", "apps", "packages", "tools"]
 }
