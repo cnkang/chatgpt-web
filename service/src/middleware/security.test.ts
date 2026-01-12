@@ -24,7 +24,7 @@ vi.mock('helmet', () => ({
     return (_req: Request, res: Response, next: NextFunction) => {
       // Simulate helmet setting headers
       if (options.contentSecurityPolicy) {
-        res.setHeader('Content-Security-Policy', "default-src 'self'")
+        res.setHeader('Content-Security-Policy', 'default-src \'self\'')
       }
       if (options.hsts) {
         res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')

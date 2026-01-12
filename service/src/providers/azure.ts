@@ -6,10 +6,10 @@
 
 import { AzureOpenAI } from 'openai'
 import {
-  ErrorType,
   createExternalApiError,
   createNetworkError,
   createTimeoutError,
+  ErrorType,
 } from '../utils/error-handler.js'
 import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
@@ -322,7 +322,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
    * Create a streaming chat completion
    * Automatically uses v1 responses API if enabled for enhanced features
    */
-  async *createStreamingChatCompletion(
+  async* createStreamingChatCompletion(
     request: ChatCompletionRequest,
   ): AsyncIterable<ChatCompletionChunk> {
     this.validateRequest(request)
@@ -338,7 +338,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
   /**
    * Create a streaming completion using the v1 responses API
    */
-  private async *createStreamingResponsesCompletion(
+  private async* createStreamingResponsesCompletion(
     request: ChatCompletionRequest,
   ): AsyncIterable<ChatCompletionChunk> {
     try {
@@ -380,7 +380,6 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       try {
         let buffer = ''
 
-        // eslint-disable-next-line no-await-in-loop
         while (true) {
           // eslint-disable-next-line no-await-in-loop
           const { done, value } = await reader.read()
@@ -440,7 +439,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
   /**
    * Create a streaming completion using traditional chat completions API
    */
-  private async *createTraditionalStreamingCompletion(
+  private async* createTraditionalStreamingCompletion(
     request: ChatCompletionRequest,
   ): AsyncIterable<ChatCompletionChunk> {
     try {

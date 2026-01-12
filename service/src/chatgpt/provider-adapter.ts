@@ -81,7 +81,7 @@ async function chatReplyProcess(options: RequestOptions) {
     if (onProgress) {
       // Use streaming for progress updates
       let fullContent = ''
-      let responseId = `msg-${Date.now()}`
+      const responseId = `msg-${Date.now()}`
 
       for await (const chunk of provider.createStreamingChatCompletion(request)) {
         const choice = chunk.choices[0]

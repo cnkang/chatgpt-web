@@ -5,10 +5,10 @@
 
 import OpenAI from 'openai'
 import {
-  ErrorType,
   createExternalApiError,
   createNetworkError,
   createTimeoutError,
+  ErrorType,
 } from '../utils/error-handler.js'
 import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
@@ -158,7 +158,7 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
   /**
    * Create a streaming chat completion
    */
-  async *createStreamingChatCompletion(
+  async* createStreamingChatCompletion(
     request: ChatCompletionRequest,
   ): AsyncIterable<ChatCompletionChunk> {
     this.validateRequest(request)
