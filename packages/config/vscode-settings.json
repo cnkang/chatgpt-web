@@ -1,0 +1,45 @@
+{
+	"typescript.preferences.quoteStyle": "single",
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit",
+		"source.organizeImports": "explicit"
+	},
+	"eslint.validate": [
+		"javascript",
+		"javascriptreact",
+		"typescript",
+		"typescriptreact",
+		"vue"
+	],
+	"eslint.workingDirectories": [
+		".",
+		"apps/web",
+		"apps/api",
+		"packages/shared",
+		"packages/docs",
+		"packages/config"
+	],
+	"typescript.preferences.importModuleSpecifier": "relative",
+	"vue.codeActions.enabled": true,
+	"vue.complete.casing.tags": "pascal",
+	"vue.complete.casing.props": "camel",
+	"files.associations": {
+		"*.vue": "vue"
+	},
+	"emmet.includeLanguages": {
+		"vue": "html"
+	},
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/build": true,
+		"**/.git": true,
+		"**/pnpm-lock.yaml": true,
+		"**/.turbo": true
+	},
+	"typescript.preferences.includePackageJsonAutoImports": "on",
+	"typescript.suggest.autoImports": true,
+	"typescript.workspaceSymbols.scope": "allOpenProjects"
+}

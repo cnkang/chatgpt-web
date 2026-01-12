@@ -1,0 +1,31 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Launch Web App",
+			"url": "http://localhost:1002",
+			"webRoot": "${workspaceFolder}/apps/web"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Launch API Server",
+			"runtimeExecutable": "${workspaceFolder}/apps/api/node_modules/.bin/esno",
+			"skipFiles": ["<node_internals>/**"],
+			"program": "${workspaceFolder}/apps/api/src/index.ts",
+			"outFiles": ["${workspaceFolder}/apps/api/**/*.js"],
+			"envFile": "${workspaceFolder}/apps/api/.env"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Tests",
+			"program": "${workspaceFolder}/node_modules/.bin/vitest",
+			"args": ["run", "--reporter=verbose"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen"
+		}
+	]
+}

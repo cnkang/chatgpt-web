@@ -1,0 +1,14 @@
+// Shared Prettier configuration for ChatGPT Web monorepo
+export default {
+	semi: false,
+	singleQuote: true,
+	tabWidth: 2,
+	useTabs: false,
+	trailingComma: "all",
+	printWidth: 100,
+	bracketSpacing: true,
+	arrowParens: "avoid",
+	endOfLine: "lf",
+	vueIndentScriptAndStyle: false,
+	htmlWhitespaceSensitivity: "ignore",
+};
