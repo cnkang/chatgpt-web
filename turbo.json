@@ -1,0 +1,81 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**", ".next/**"],
+      "env": ["NODE_ENV"],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "tsconfig.json", "package.json"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"],
+      "env": ["NODE_ENV", "PORT", "VITE_*", "API_*"]
+    },
+    "lint": {
+      "outputs": [],
+      "dependsOn": [],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "eslint.config.js", ".eslintrc*"]
+    },
+    "lint:fix": {
+      "outputs": [],
+      "dependsOn": [],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "eslint.config.js", ".eslintrc*"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.vue",
+        "test/**/*.ts",
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "vitest.config.ts"
+      ]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "test:ui": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "**/*.d.ts", "tsconfig.json", "tsconfig.*.json"]
+    },
+    "quality": {
+      "dependsOn": ["type-check", "lint"],
+      "outputs": []
+    },
+    "quality:fix": {
+      "dependsOn": ["lint:fix"],
+      "outputs": []
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    },
+    "format": {
+      "outputs": [],
+      "dependsOn": [],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "src/**/*.json", ".prettierrc*"]
+    },
+    "format:check": {
+      "outputs": [],
+      "dependsOn": [],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "src/**/*.json", ".prettierrc*"]
+    }
+  },
+  "globalEnv": ["NODE_ENV", "CI"],
+  "ui": "tui",
+  "daemon": true,
+  "cacheDir": ".turbo/cache"
+}

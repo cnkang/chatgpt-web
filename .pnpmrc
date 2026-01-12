@@ -1,2 +1,46 @@
-strict-peer-dependencies=false
+# PNPM Configuration for Development Workflow Optimization
+
+# Performance optimizations
+prefer-offline=true
+fetch-retries=3
+fetch-retry-factor=2
+fetch-retry-mintimeout=10000
+fetch-retry-maxtimeout=60000
+
+# Workspace optimizations
+link-workspace-packages=deep
+prefer-workspace-packages=true
+save-workspace-protocol=rolling
+
+# Dependency management
 auto-install-peers=true
+dedupe-peer-dependents=true
+strict-peer-dependencies=false
+
+# Hoisting optimizations for faster installs
+hoist-pattern[]=*eslint*
+hoist-pattern[]=*prettier*
+hoist-pattern[]=*typescript*
+hoist-pattern[]=*turbo*
+hoist-pattern[]=*vitest*
+hoist-pattern[]=*@types/*
+hoist-pattern[]=*rimraf*
+hoist-pattern[]=*npm-run-all*
+
+# Cache optimizations
+store-dir=~/.pnpm-store
+cache-dir=~/.pnpm-cache
+state-dir=~/.pnpm-state
+
+# Registry optimizations
+registry=https://registry.npmjs.org/
+network-concurrency=16
+child-concurrency=5
+
+# Development optimizations
+enable-pre-post-scripts=true
+shell-emulator=true
+
+# Logging
+loglevel=warn
+progress=true

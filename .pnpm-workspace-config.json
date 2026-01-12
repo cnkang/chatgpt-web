@@ -1,0 +1,60 @@
+{
+  "name": "@chatgpt-web/workspace-config",
+  "description": "PNPM Workspace Dependency Management Configuration",
+  "version": "1.0.0",
+  "config": {
+    "hoistedDependencies": [
+      "eslint",
+      "prettier",
+      "typescript",
+      "vitest",
+      "npm-run-all",
+      "rimraf",
+      "@antfu/eslint-config",
+      "turbo",
+      "husky",
+      "lint-staged"
+    ],
+    "workspacePackages": [
+      "@chatgpt-web/web",
+      "@chatgpt-web/api",
+      "@chatgpt-web/shared",
+      "@chatgpt-web/config",
+      "@chatgpt-web/docs"
+    ],
+    "allowedVersionConflicts": {
+      "@types/node": {
+        "reason": "Different Node.js version requirements between packages",
+        "packages": ["apps/web", "apps/api"]
+      }
+    },
+    "dependencyRules": {
+      "internal": {
+        "protocol": "workspace:*",
+        "description": "All internal dependencies must use workspace protocol"
+      },
+      "external": {
+        "versionPrefix": "^",
+        "description": "External dependencies should use caret ranges for flexibility"
+      },
+      "devDependencies": {
+        "hoistCommon": true,
+        "description": "Common dev dependencies should be hoisted to root"
+      }
+    },
+    "optimization": {
+      "hoisting": {
+        "enabled": true,
+        "patterns": ["*eslint*", "*prettier*", "*typescript*", "*vitest*", "*turbo*"]
+      },
+      "deduplication": {
+        "enabled": true,
+        "strategy": "highest"
+      },
+      "security": {
+        "auditLevel": "moderate",
+        "autoFix": false
+      }
+    }
+  }
+}
