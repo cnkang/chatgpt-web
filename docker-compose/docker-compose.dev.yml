@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Development setup with volume mounts for hot reloading
+  app-dev:
+    container_name: chatgpt-web-dev
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: base  # Use base stage for development
+    ports:
+      - "3002:3002"  # API port
+      - "1002:1002"  # Web dev server port
+    environment:
+      NODE_ENV: development
+      
+      # AI Provider Configuration
+      AI_PROVIDER: openai
+      
+      # OpenAI Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-https://api.openai.com}
+      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-4o}
+      
+      # Security Configuration
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-dev-secret-key}
+      
+      # Rate Limiting
+      MAX_REQUEST_PER_HOUR: ${MAX_REQUEST_PER_HOUR:-0}
+      
+      # Timeout Configuration
+      TIMEOUT_MS: ${TIMEOUT_MS:-60000}
+    volumes:
+      # Mount source code for hot reloading
+      - ../apps:/app/apps
+      - ../packages:/app/packages
+      - ../node_modules:/app/node_modules
+      - ../.env:/app/.env:ro
+    command: ["pnpm", "dev"]
+    restart: unless-stopped
+    networks:
+      - chatgpt-dev
+
+  # Redis for session storage (optional)
+  redis-dev:
+    container_name: redis-dev
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - chatgpt-dev
+
+networks:
+  chatgpt-dev:
+    driver: bridge
+
+volumes:
+  redis_data:
