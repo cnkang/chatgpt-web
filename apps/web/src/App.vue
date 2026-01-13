@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NaiveProvider } from '@/components/common'
+import { LoadingSpinner, NaiveProvider } from '@/components/common'
 import { useLanguage } from '@/hooks/useLanguage'
 import { useTheme } from '@/hooks/useTheme'
 import { NConfigProvider } from 'naive-ui'

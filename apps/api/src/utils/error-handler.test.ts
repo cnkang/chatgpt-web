@@ -355,7 +355,7 @@ describe('error handler', () => {
 
     beforeEach(() => {
       mockServer = {
-        close: vi.fn().mockImplementation((callback) => {
+        close: vi.fn().mockImplementation((callback: (error?: Error) => void) => {
           setTimeout(callback, 10) // Simulate async close
         }),
       }
@@ -438,7 +438,7 @@ describe('error handler', () => {
     })
 
     it('should handle server close errors', async () => {
-      mockServer.close = vi.fn().mockImplementation((callback) => {
+      mockServer.close = vi.fn().mockImplementation((callback: (error?: Error) => void) => {
         callback(new Error('Close error'))
       })
 

@@ -19,4 +19,4 @@ export interface ModelConfig {
   usage?: string
 }
 
-export type ApiModel = 'ChatGPTAPI' | undefined
+export type ApiModel = 'ChatGPTAPI' | 'AzureOpenAI' | undefined

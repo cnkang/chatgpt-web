@@ -90,16 +90,36 @@ pnpm build:shared
 
 ### 5. Development Mode
 
-Start all services in development mode:
+Start services in development mode:
 
 ```bash
+# Recommended: Start core services only (frontend + backend)
+pnpm dev:core
+
+# Alternative: Start all services including documentation
 pnpm dev
+
+# Individual services
+pnpm dev:web    # Frontend only
+pnpm dev:api    # Backend only
 ```
+
+**Development Command Guide:**
+
+- **`pnpm dev:core`** - **Recommended for daily development**
+  - Starts frontend (port 1002) and backend (port 3002)
+  - Faster startup and cleaner console output
+  - No documentation server
+
+- **`pnpm dev`** - **Full development environment**
+  - Starts all services including documentation server (port 8080)
+  - Use when you need access to documentation
 
 This will start:
 
 - Frontend development server on http://localhost:1002
 - Backend API server on http://localhost:3002
+- Documentation server on http://localhost:8080 (with `pnpm dev` only)
 
 ### 6. Production Build
 
@@ -135,6 +155,7 @@ chatgpt-web/
 ```bash
 # Development
 pnpm dev                 # Start all services in development mode
+pnpm dev:core           # Start core services only (frontend + backend) - Recommended
 pnpm dev:web            # Start only frontend
 pnpm dev:api            # Start only backend
 

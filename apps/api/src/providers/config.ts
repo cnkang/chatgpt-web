@@ -3,26 +3,26 @@
  */
 
 import type {
-    AIConfig,
-    AppConfiguration,
-    AzureOpenAIConfig,
-    BaseProviderConfig,
-    DevelopmentConfig,
-    OpenAIConfig,
-    SecurityConfig,
-    ServerConfig,
+  AIConfig,
+  AppConfiguration,
+  AzureOpenAIConfig,
+  BaseProviderConfig,
+  DevelopmentConfig,
+  OpenAIConfig,
+  SecurityConfig,
+  ServerConfig,
 } from '@chatgpt-web/shared'
 
 // Re-export types for convenience
 export type {
-    AIConfig,
-    AppConfiguration,
-    AzureOpenAIConfig,
-    BaseProviderConfig,
-    DevelopmentConfig,
-    OpenAIConfig,
-    SecurityConfig,
-    ServerConfig
+  AIConfig,
+  AppConfiguration,
+  AzureOpenAIConfig,
+  BaseProviderConfig,
+  DevelopmentConfig,
+  OpenAIConfig,
+  SecurityConfig,
+  ServerConfig,
 }
 
 /**
@@ -123,6 +123,19 @@ export class ConfigurationManager {
    * Load configuration from environment variables
    */
   private loadConfiguration(): AppConfiguration {
+    const provider = (process.env.AI_PROVIDER as 'openai' | 'azure') || 'openai'
+    const azureDeployment = process.env.AZURE_OPENAI_DEPLOYMENT || ''
+
+    // 如果是Azure提供商且没有设置DEFAULT_MODEL，使用部署名作为默认模型
+    let defaultModel = process.env.DEFAULT_MODEL
+    if (!defaultModel) {
+      if (provider === 'azure' && azureDeployment) {
+        defaultModel = azureDeployment
+      } else {
+        defaultModel = 'gpt-4o'
+      }
+    }
+
     return {
       server: {
         port: Number.parseInt(process.env.PORT || '3002', 10),
@@ -133,8 +146,8 @@ export class ConfigurationManager {
         },
       },
       ai: {
-        provider: (process.env.AI_PROVIDER as 'openai' | 'azure') || 'openai',
-        defaultModel: process.env.DEFAULT_MODEL || 'gpt-4o',
+        provider,
+        defaultModel,
         enableReasoning: process.env.ENABLE_REASONING === 'true',
         timeout: Number.parseInt(process.env.TIMEOUT_MS || '100000', 10),
         openai: {
@@ -145,7 +158,7 @@ export class ConfigurationManager {
         azure: {
           apiKey: process.env.AZURE_OPENAI_API_KEY || '',
           endpoint: process.env.AZURE_OPENAI_ENDPOINT || '',
-          deployment: process.env.AZURE_OPENAI_DEPLOYMENT || '',
+          deployment: azureDeployment,
           apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-15-preview',
           useResponsesAPI: process.env.AZURE_OPENAI_USE_RESPONSES_API === 'true',
         },

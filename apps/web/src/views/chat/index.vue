@@ -3,7 +3,7 @@ import { fetchChatAPIProcess } from '@/api'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
-import { useChatStore, usePromptStore } from '@/store'
+import { useChatStore } from '@/store'
 import type {
 	Chat,
 	ConversationRequest,
@@ -11,13 +11,11 @@ import type {
 } from '@chatgpt-web/shared'
 import { toPng } from 'html-to-image'
 import {
-	NAutoComplete,
 	NButton,
 	NInput,
 	useDialog,
 	useMessage,
 } from 'naive-ui'
-import { storeToRefs } from 'pinia'
 import type { Ref } from 'vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -65,10 +63,6 @@ const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
 
 // 添加PromptStore
-const promptStore = usePromptStore()
-
-// 使用storeToRefs，保证store修改后，联想部分能够重新渲染
-const { promptList: promptTemplate } = storeToRefs(promptStore)
 
 // 未知原因刷新页面，loading 状态不会重置，手动重置
 dataSources.value.forEach((item: Chat, index: number) => {
@@ -397,33 +391,6 @@ function handleStop() {
 
 // 可优化部分
 // 搜索选项计算，这里使用value作为索引项，所以当出现重复value时渲染异常(多项同时出现选中效果)
-// 理想状态下其实应该是key作为索引项,但官方的renderOption会出现问题，所以就需要value反renderLabel实现
-const searchOptions = computed(() => {
-	if (prompt.value.startsWith('/')) {
-		return promptTemplate.value
-			.filter((item: { key: string }) =>
-				item.key
-					.toLowerCase()
-					.includes(prompt.value.substring(1).toLowerCase()),
-			)
-			.map((obj: { value: string }) => {
-				return {
-					label: obj.value,
-					value: obj.value,
-				}
-			})
-	} else {
-		return []
-	}
-})
-
-// value反渲染key
-function renderOption(option: { label: string }) {
-	for (const i of promptTemplate.value) {
-		if (i.value === option.label) return [i.key]
-	}
-	return []
-}
 
 const placeholder = computed(() => {
 	if (isMobile.value) return t('chat.placeholderMobile')
@@ -517,17 +484,17 @@ onUnmounted(() => {
 		<footer :class="footerClass">
 			<div class="w-full max-w-screen-xl m-auto">
 				<div class="flex items-center justify-between space-x-2">
-					<HoverButton v-if="!isMobile" @click="handleClear">
+					<HoverButton v-if="!isMobile" :tooltip="t('chat.clearChatTooltip')" @click="handleClear">
 						<span class="text-xl text-[#4f555e] dark:text-white">
 							<SvgIcon icon="ri:delete-bin-line" />
 						</span>
 					</HoverButton>
-					<HoverButton v-if="!isMobile" @click="handleExport">
+					<HoverButton v-if="!isMobile" :tooltip="t('chat.exportImageTooltip')" @click="handleExport">
 						<span class="text-xl text-[#4f555e] dark:text-white">
 							<SvgIcon icon="ri:download-2-line" />
 						</span>
 					</HoverButton>
-					<HoverButton @click="toggleUsingContext">
+					<HoverButton :tooltip="t('chat.contextModeTooltip')" @click="toggleUsingContext">
 						<span
 							class="text-xl"
 							:class="{
@@ -538,25 +505,14 @@ onUnmounted(() => {
 							<SvgIcon icon="ri:chat-history-line" />
 						</span>
 					</HoverButton>
-					<NAutoComplete
+					<NInput
+						ref="inputRef"
 						v-model:value="prompt"
-						:options="searchOptions"
-						:render-label="renderOption"
-					>
-						<template #default="{ handleInput, handleBlur, handleFocus }">
-							<NInput
-								ref="inputRef"
-								v-model:value="prompt"
-								type="textarea"
-								:placeholder="placeholder"
-								:autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }"
-								@input="handleInput"
-								@focus="handleFocus"
-								@blur="handleBlur"
-								@keypress="handleEnter"
-							/>
-						</template>
-					</NAutoComplete>
+						type="textarea"
+						:placeholder="placeholder"
+						:autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }"
+						@keypress="handleEnter"
+					/>
 					<NButton
 						type="primary"
 						:disabled="buttonDisabled"
@@ -567,6 +523,7 @@ onUnmounted(() => {
 								<SvgIcon icon="ri:send-plane-fill" />
 							</span>
 						</template>
+						<span v-if="!isMobile" class="ml-1">{{ t('chat.send') }}</span>
 					</NButton>
 				</div>
 			</div>

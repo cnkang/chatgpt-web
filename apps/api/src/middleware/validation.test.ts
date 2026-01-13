@@ -20,7 +20,7 @@ import {
 // Mock DOMPurify
 vi.mock('dompurify', () => ({
   default: vi.fn().mockImplementation(() => ({
-    sanitize: vi.fn().mockImplementation((input) => {
+    sanitize: vi.fn().mockImplementation((input: string) => {
       // Simple mock sanitization - remove script tags
       return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     }),

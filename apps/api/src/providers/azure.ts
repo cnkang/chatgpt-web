@@ -6,22 +6,22 @@
 
 import { AzureOpenAI } from 'openai'
 import {
-    ErrorType,
-    createExternalApiError,
-    createNetworkError,
-    createTimeoutError,
+  createExternalApiError,
+  createNetworkError,
+  createTimeoutError,
+  ErrorType,
 } from '../utils/error-handler.js'
 import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
 import { retryWithBackoff } from '../utils/retry.js'
 import type {
-    AIProvider,
-    ChatCompletionChunk,
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatMessage,
-    ReasoningStep,
-    UsageInfo,
+  AIProvider,
+  ChatCompletionChunk,
+  ChatCompletionRequest,
+  ChatCompletionResponse,
+  ChatMessage,
+  ReasoningStep,
+  UsageInfo,
 } from './base.js'
 import { BaseAIProvider } from './base.js'
 import type { AzureOpenAIConfig } from './config.js'
@@ -512,7 +512,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       await this.client.chat.completions.create({
         model: this.config.deployment,
         messages: [{ role: 'user', content: 'test' }],
-        max_tokens: 1,
+        max_tokens: 10,
       })
 
       return true
