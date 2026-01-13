@@ -72,6 +72,8 @@ const defaultSecurityConfig: SecurityConfig = {
  * Creates Helmet security middleware with custom configuration
  */
 export function createSecurityHeaders(config: SecurityConfig = defaultSecurityConfig) {
+  const isDevelopment = process.env.NODE_ENV === 'development'
+
   return helmet({
     contentSecurityPolicy: config.helmet.contentSecurityPolicy
       ? {
@@ -81,13 +83,16 @@ export function createSecurityHeaders(config: SecurityConfig = defaultSecurityCo
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", 'data:', 'blob:'],
             fontSrc: ["'self'", 'data:'],
-            connectSrc: ["'self'", 'https:', 'wss:'],
+            connectSrc: isDevelopment
+              ? ["'self'", 'https:', 'wss:', 'http://localhost:*', 'ws://localhost:*']
+              : ["'self'", 'https:', 'wss:'],
             workerSrc: ["'self'", 'blob:'],
             childSrc: ["'self'", 'blob:'],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"],
             frameAncestors: ["'none'"],
+            scriptSrcAttr: ["'none'"],
             upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
           },
         }
@@ -101,7 +106,7 @@ export function createSecurityHeaders(config: SecurityConfig = defaultSecurityCo
         }
       : false,
     noSniff: true,
-    xssFilter: true,
+    xssFilter: false, // Deprecated, replaced by CSP
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     permittedCrossDomainPolicies: false,
   })

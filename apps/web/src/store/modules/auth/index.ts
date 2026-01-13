@@ -4,13 +4,13 @@ import { defineStore } from 'pinia'
 import { getToken, removeToken, setToken } from './helper'
 
 interface SessionResponse {
-	auth: boolean
-	model: 'ChatGPTAPI'
+	auth: boolean;
+	model: 'ChatGPTAPI' | 'AzureOpenAI';
 }
 
 export interface AuthState {
-	token: string | undefined
-	session: SessionResponse | null
+	token: string | undefined;
+	session: SessionResponse | null;
 }
 
 export const useAuthStore = defineStore('auth-store', {
@@ -21,7 +21,10 @@ export const useAuthStore = defineStore('auth-store', {
 
 	getters: {
 		isChatGPTAPI(state): boolean {
-			return state.session?.model === 'ChatGPTAPI'
+			return (
+				state.session?.model === 'ChatGPTAPI' ||
+				state.session?.model === 'AzureOpenAI'
+			)
 		},
 	},
 

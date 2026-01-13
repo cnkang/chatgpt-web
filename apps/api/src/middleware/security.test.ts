@@ -5,6 +5,8 @@
 
 import type { NextFunction, Request, Response } from 'express'
 import type { Session } from 'express-session'
+import type { HelmetOptions } from 'helmet'
+import type { Options as ExpressRateLimitOptions } from 'express-rate-limit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createCorsMiddleware,
@@ -21,7 +23,7 @@ type MockResponse = Partial<Response>
 
 // Mock external dependencies
 vi.mock('helmet', () => ({
-  default: vi.fn().mockImplementation(options => {
+  default: vi.fn().mockImplementation((options: HelmetOptions) => {
     return (_req: Request, res: Response, next: NextFunction) => {
       // Simulate helmet setting headers
       if (options.contentSecurityPolicy) {
@@ -38,12 +40,18 @@ vi.mock('helmet', () => ({
 }))
 
 vi.mock('express-rate-limit', () => ({
-  rateLimit: vi.fn().mockImplementation(options => {
+  rateLimit: vi.fn().mockImplementation((options: ExpressRateLimitOptions) => {
     return (req: Request, _res: Response, next: NextFunction) => {
       // Simulate rate limiting logic
       const requestCount = (req as RequestWithCount).requestCount || 0
-      if (requestCount >= options.max) {
-        return options.handler(req, _res)
+      const limitValue =
+        typeof options.max === 'number'
+          ? options.max
+          : typeof options.limit === 'number'
+          ? options.limit
+          : 0
+      if (requestCount >= limitValue) {
+        return options.handler(req, _res, () => undefined, options)
       }
       next()
     }
@@ -237,7 +245,7 @@ describe('security middleware', () => {
 
     it('should sanitize API keys in response', () => {
       const originalJson = vi.fn()
-      mockRes.json = vi.fn().mockImplementation(function (this: Response, body) {
+      mockRes.json = vi.fn().mockImplementation(function (this: Response, body: unknown) {
         return originalJson.call(this, body)
       })
 
@@ -261,7 +269,7 @@ describe('security middleware', () => {
 
     it('should handle nested objects with API keys', () => {
       const originalJson = vi.fn()
-      mockRes.json = vi.fn().mockImplementation(function (this: Response, body) {
+      mockRes.json = vi.fn().mockImplementation(function (this: Response, body: unknown) {
         return originalJson.call(this, body)
       })
 
@@ -296,7 +304,7 @@ describe('security middleware', () => {
 
     it('should handle arrays with sensitive data', () => {
       const originalJson = vi.fn()
-      mockRes.json = vi.fn().mockImplementation(function (this: Response, body) {
+      mockRes.json = vi.fn().mockImplementation(function (this: Response, body: unknown) {
         return originalJson.call(this, body)
       })
 
@@ -388,7 +396,7 @@ describe('security middleware', () => {
       mockReq.method = 'POST'
       mockReq.url = '/api/chat'
       Object.defineProperty(mockReq, 'ip', { value: '192.168.1.1', writable: true })
-      mockReq.get = vi.fn().mockImplementation(header => {
+      mockReq.get = vi.fn().mockImplementation((header: string) => {
         if (header === 'User-Agent') return 'Test Browser'
         return undefined
       })
@@ -410,7 +418,7 @@ describe('security middleware', () => {
 
     it('should log response on finish', () => {
       let finishCallback: (() => void) | undefined
-      mockRes.on = vi.fn().mockImplementation((event, callback) => {
+      mockRes.on = vi.fn().mockImplementation((event: string, callback: () => void) => {
         if (event === 'finish') {
           finishCallback = callback
         }

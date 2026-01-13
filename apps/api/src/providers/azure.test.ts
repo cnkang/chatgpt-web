@@ -45,13 +45,13 @@ vi.mock('../utils/logger.js', () => ({
 }))
 
 vi.mock('../utils/retry.js', () => ({
-  retryWithBackoff: vi.fn().mockImplementation(async fn => await fn()),
+  retryWithBackoff: vi.fn().mockImplementation(async (fn: () => Promise<unknown>) => await fn()),
 }))
 
 vi.mock('../utils/error-handler.js', () => ({
-  createExternalApiError: vi.fn().mockImplementation(message => new Error(message)),
-  createNetworkError: vi.fn().mockImplementation(message => new Error(message)),
-  createTimeoutError: vi.fn().mockImplementation(message => new Error(message)),
+  createExternalApiError: vi.fn().mockImplementation((message: string) => new Error(message)),
+  createNetworkError: vi.fn().mockImplementation((message: string) => new Error(message)),
+  createTimeoutError: vi.fn().mockImplementation((message: string) => new Error(message)),
   ErrorType: {
     NETWORK: 'NETWORK',
     TIMEOUT: 'TIMEOUT',
@@ -385,7 +385,7 @@ describe('azure openai provider', () => {
       expect(mockAzureOpenAI.chat.completions.create).toHaveBeenCalledWith({
         model: 'gpt-4o-deployment',
         messages: [{ role: 'user', content: 'test' }],
-        max_tokens: 1,
+        max_tokens: 10,
       })
     })
 

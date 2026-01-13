@@ -41,14 +41,14 @@ export const ChatMessageSchema = z.object({
 
 export const ChatContextSchema = z
   .object({
-    conversationId: z.string().uuid().optional(),
-    parentMessageId: z.string().uuid().optional(),
+    conversationId: z.string().optional(),
+    parentMessageId: z.string().optional(),
   })
   .optional()
 
 export const ConversationRequestSchema = z.object({
-  conversationId: z.string().uuid().optional(),
-  parentMessageId: z.string().uuid().optional(),
+  conversationId: z.string().optional(),
+  parentMessageId: z.string().optional(),
 })
 
 export const ChatSchema = z.object({
@@ -95,7 +95,7 @@ export const ApiResponseSchema = z.object({
 export const RequestPropsSchema = z.object({
   prompt: z.string().trim().min(1),
   options: ChatContextSchema,
-  systemMessage: z.string().trim(),
+  systemMessage: z.string().trim().optional(),
   temperature: z.number().min(0).max(2).optional(),
   top_p: z.number().min(0).max(1).optional(),
 })

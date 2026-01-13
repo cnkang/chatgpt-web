@@ -13,14 +13,50 @@ git pull origin main
 # Install any new dependencies
 pnpm install
 
-# Start development servers
-pnpm dev
+# Start development servers (recommended)
+pnpm dev:core
 ```
 
-This starts:
+### Development Commands
 
-- Frontend dev server: <http://localhost:1002>
-- Backend API server: <http://localhost:3002>
+The project provides several development commands for different scenarios:
+
+```bash
+# Start both frontend and backend (recommended for development)
+pnpm dev:core
+
+# Start all services including documentation
+pnpm dev
+
+# Start only frontend (port 1002)
+pnpm dev:web
+
+# Start only backend (port 3002)
+pnpm dev:api
+```
+
+**Command Usage Guidelines:**
+
+- **`pnpm dev:core`** - **Recommended for daily development**
+  - Starts only essential frontend and backend services
+  - Faster startup time
+  - Cleaner console output
+  - No unnecessary documentation server
+
+- **`pnpm dev`** - **For full development environment**
+  - Starts all services including documentation server
+  - Use when you need to access documentation at http://localhost:8080
+  - May have more verbose console output due to multiple services
+
+- **Individual commands** - **For debugging and focused development**
+  - `pnpm dev:web` - Frontend only development
+  - `pnpm dev:api` - Backend only development
+
+### Service Ports
+
+- **Frontend Web Interface**: http://localhost:1002
+- **Backend API Service**: http://localhost:3002
+- **Documentation Server**: http://localhost:8080 (only with `pnpm dev`)
 
 ### 2. Making Changes
 

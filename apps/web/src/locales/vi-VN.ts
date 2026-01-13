@@ -30,7 +30,8 @@ export default {
 	chat: {
 		newChatButton: 'Tạo hội thoại',
 		newChatTitle: 'Tạo hội thoại',
-		placeholder: 'Hỏi tôi bất cứ điều gì...(Shift + Enter = ngắt dòng, "/" to trigger prompts)',
+		placeholder:
+			'Hỏi tôi bất cứ điều gì...(Shift + Enter = ngắt dòng, "/" to trigger prompts)',
 		placeholderMobile: 'Hỏi tôi bất cứ điều gì...',
 		copy: 'Sao chép',
 		copied: 'Đã sao chép',
@@ -38,8 +39,10 @@ export default {
 		copyFailed: 'Sao chép thất bại',
 		clearChat: 'Clear Chat',
 		clearChatConfirm: 'Bạn có chắc chắn xóa cuộc trò chuyện này?',
+		clearHistory: 'Xóa lịch sử',
 		exportImage: 'Xuất hình ảnh',
-		exportImageConfirm: 'Bạn có chắc chắn xuất cuộc trò chuyện này sang png không?',
+		exportImageConfirm:
+			'Bạn có chắc chắn xuất cuộc trò chuyện này sang png không?',
 		exportSuccess: 'Xuất thành công',
 		exportFailed: 'Xuất thất bại',
 		usingContext: 'Context Mode',
@@ -54,6 +57,11 @@ export default {
 		preview: 'Xem trước',
 		showRawText: 'Hiển thị dưới dạng văn bản thô',
 		thinking: 'Đang suy nghĩ...',
+		send: 'Gửi tin nhắn',
+		clearChatTooltip: 'Xóa cuộc trò chuyện hiện tại',
+		exportImageTooltip: 'Xuất cuộc trò chuyện thành hình ảnh',
+		contextModeTooltip: 'Chuyển đổi chế độ ngữ cảnh',
+		clearHistoryTooltip: 'Xóa tất cả lịch sử trò chuyện',
 	},
 	setting: {
 		setting: 'Cài đặt',
@@ -87,26 +95,9 @@ export default {
 		migrationStep3: 'Xóa bất kỳ cấu hình API_REVERSE_PROXY nào',
 		getAPIKey: 'Lấy khóa API của bạn tại đây',
 		openSource: 'Dự án này được mở nguồn tại',
-		freeMIT: 'miễn phí và dựa trên giấy phép MIT, không có bất kỳ hình thức hành vi trả phí nào!',
+		freeMIT:
+			'miễn phí và dựa trên giấy phép MIT, không có bất kỳ hình thức hành vi trả phí nào!',
 		stars:
 			'Nếu bạn thấy dự án này hữu ích, vui lòng cho tôi một Star trên GitHub hoặc tài trợ một chút, cảm ơn bạn!',
-	},
-	store: {
-		siderButton: 'Prompt Store',
-		local: 'Local',
-		online: 'Online',
-		title: 'Tiêu đề',
-		description: 'Miêu tả',
-		clearStoreConfirm: 'Cho dù để xóa dữ liệu?',
-		importPlaceholder: 'Vui lòng dán dữ liệu JSON vào đây',
-		addRepeatTitleTips: 'Tiêu đề trùng lặp, vui lòng nhập lại',
-		addRepeatContentTips: 'Nội dung trùng lặp: {msg}, vui lòng nhập lại',
-		editRepeatTitleTips: 'Xung đột tiêu đề, vui lòng sửa lại',
-		editRepeatContentTips: 'Xung đột nội dung {msg} , vui lòng sửa đổi lại',
-		importError: 'Key value mismatch',
-		importRepeatTitle: 'Tiêu đề liên tục bị bỏ qua: {msg}',
-		importRepeatContent: 'Nội dung liên tục bị bỏ qua: {msg}',
-		onlineImportWarning: 'Lưu ý: Vui lòng kiểm tra nguồn tệp JSON!',
-		downloadError: 'Vui lòng kiểm tra trạng thái mạng và tính hợp lệ của tệp JSON',
 	},
 }

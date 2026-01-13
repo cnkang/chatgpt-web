@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
-import { NButton, NLayoutSider, useDialog } from 'naive-ui'
-import { computed, ref, watch } from 'vue'
-import { PromptStore, SvgIcon } from '@/components/common'
+
+import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 import { useAppStore, useChatStore } from '@/store'
+import { NButton, NLayoutSider, useDialog } from 'naive-ui'
+import { computed, watch } from 'vue'
 import Footer from './Footer.vue'
 import List from './List.vue'
 
@@ -15,12 +16,15 @@ const chatStore = useChatStore()
 const dialog = useDialog()
 
 const { isMobile } = useBasicLayout()
-const show = ref(false)
 
 const collapsed = computed(() => appStore.siderCollapsed)
 
 function handleAdd() {
-	chatStore.addHistory({ title: t('chat.newChatTitle'), uuid: Date.now(), isEdit: false })
+	chatStore.addHistory({
+		title: t('chat.newChatTitle'),
+		uuid: Date.now(),
+		isEdit: false,
+	})
 	if (isMobile.value) appStore.setSiderCollapsed(true)
 }
 
@@ -62,7 +66,7 @@ const mobileSafeArea = computed(() => {
 
 watch(
 	isMobile,
-	val => {
+	(val) => {
 		appStore.setSiderCollapsed(val)
 	},
 	{
@@ -88,21 +92,31 @@ watch(
 			<main class="flex flex-col flex-1 min-h-0">
 				<div class="p-4">
 					<NButton dashed block @click="handleAdd">
-						{{ $t('chat.newChatButton') }}
+						{{ $t("chat.newChatButton") }}
 					</NButton>
 				</div>
 				<div class="flex-1 min-h-0 pb-4 overflow-hidden">
 					<List />
 				</div>
-				<div class="flex items-center p-4 space-x-4">
-					<div class="flex-1">
-						<NButton block @click="show = true">
-							{{ $t('store.siderButton') }}
-						</NButton>
-					</div>
-					<NButton @click="handleClearAll">
-						<SvgIcon icon="ri:close-circle-line" />
-					</NButton>
+				<div class="flex items-center justify-center p-4">
+					<HoverButton
+						:tooltip="t('chat.clearHistoryTooltip')"
+						class="clear-history-btn"
+						@click="handleClearAll"
+					>
+						<div class="flex items-center space-x-1.5">
+							<SvgIcon
+								icon="ri:delete-bin-line"
+								class="w-4 h-4 text-gray-400 hover:text-red-400 transition-colors duration-200"
+							/>
+							<span
+								v-if="!isMobile && !collapsed"
+								class="text-xs text-gray-500 hover:text-red-500 transition-colors duration-200 font-normal"
+							>
+								{{ t('chat.clearHistory') }}
+							</span>
+						</div>
+					</HoverButton>
 				</div>
 			</main>
 			<Footer />
@@ -115,5 +129,22 @@ watch(
 			@click="handleUpdateCollapsed"
 		/>
 	</template>
-	<PromptStore v-model:visible="show" />
 </template>
+
+<style scoped>
+.clear-history-btn {
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+}
+
+.clear-history-btn:hover {
+  opacity: 1;
+  background-color: rgba(243, 244, 246, 0.5);
+}
+
+.dark .clear-history-btn:hover {
+  background-color: rgba(31, 41, 55, 0.5);
+}
+</style>

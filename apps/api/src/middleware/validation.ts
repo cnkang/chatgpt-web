@@ -6,13 +6,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import type { ZodSchema } from 'zod'
 
-import DOMPurify from 'dompurify'
-import { JSDOM } from 'jsdom'
-
-// Initialize DOMPurify with JSDOM for server-side usage
-const window = new JSDOM('').window
-const purify = DOMPurify(window as unknown as Window & typeof globalThis)
-
 /**
  * Validation error response interface
  */
@@ -29,17 +22,11 @@ interface ValidationErrorResponse {
 
 /**
  * Sanitizes string input to prevent XSS attacks
+ * Simplified version without DOMPurify for better Node.js 24 compatibility
  */
 function sanitizeString(input: string): string {
-  // First pass: DOMPurify sanitization
-  let sanitized = purify.sanitize(input, {
-    ALLOWED_TAGS: [], // No HTML tags allowed
-    ALLOWED_ATTR: [], // No attributes allowed
-    KEEP_CONTENT: true, // Keep text content
-  })
-
-  // Second pass: Additional sanitization for common XSS patterns
-  sanitized = sanitized
+  // Basic sanitization without external dependencies
+  const sanitized = input
     .replace(/javascript:/gi, '') // Remove javascript: protocols
     .replace(/data:/gi, '') // Remove data: protocols
     .replace(/vbscript:/gi, '') // Remove vbscript: protocols
@@ -47,6 +34,15 @@ function sanitizeString(input: string): string {
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
     .replace(/<!--[\s\S]*?-->/g, '') // Remove HTML comments
     .replace(/<[^>]*>/g, '') // Remove any remaining tags
+    .replace(/[<>&]/g, match => {
+      // HTML entity encoding for dangerous characters (except quotes to retain readability)
+      const entities: Record<string, string> = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '&': '&amp;',
+      }
+      return entities[match] || match
+    })
 
   return sanitized.trim()
 }
@@ -93,6 +89,12 @@ export function validateBody<T>(schema: ZodSchema<T>) {
           code: err.code,
         }))
 
+        // Log validation errors for debugging
+        console.error('Validation failed:', {
+          body: req.body,
+        errors,
+        })
+
         const response: ValidationErrorResponse = {
           status: 'Fail',
           message: 'Validation failed',
@@ -106,8 +108,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       // Replace request body with validated and sanitized data
       req.body = result.data
       next()
-    }
-    catch {
+    } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
         message: 'Validation error occurred',
@@ -151,8 +152,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       // Replace query with validated and sanitized data
       req.query = result.data as Request['query']
       next()
-    }
-    catch {
+    } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
         message: 'Query validation error occurred',
@@ -196,8 +196,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       // Replace params with validated and sanitized data
       req.params = result.data as Record<string, string>
       next()
-    }
-    catch {
+    } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
         message: 'Parameter validation error occurred',
@@ -242,8 +241,7 @@ export function validateHeaders<T>(schema: ZodSchema<T>) {
       }
 
       next()
-    }
-    catch {
+    } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
         message: 'Header validation error occurred',
@@ -266,19 +264,17 @@ export function sanitizeRequest(req: Request, res: Response, next: NextFunction)
       req.body = sanitizeObject(req.body)
     }
 
-    // Sanitize query parameters
     if (req.query) {
       req.query = sanitizeObject(req.query) as Request['query']
     }
 
-    // Sanitize path parameters
     if (req.params) {
       req.params = sanitizeObject(req.params) as Record<string, string>
     }
 
     next()
-  }
-  catch {
+  } catch (error) {
+    console.error('Sanitization error:', error)
     const response: ValidationErrorResponse = {
       status: 'Fail',
       message: 'Request sanitization failed',

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { LoadingSpinner } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useAppStore, useAuthStore, useChatStore } from '@/store'
 import { NLayout, NLayoutContent } from 'naive-ui'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import Permission from './Permission.vue'
 import Sider from './sider/index.vue'
 
 const router = useRouter()
