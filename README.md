@@ -231,6 +231,36 @@ pnpm bootstrap
 
 ## Run in Test Environment
 
+### Development Commands
+
+The project provides several development commands for different scenarios:
+
+```shell
+# Start both frontend and backend (recommended for development)
+pnpm dev:core
+
+# Start all services including documentation
+pnpm dev
+
+# Start only frontend (port 1002)
+pnpm dev:web
+
+# Start only backend (port 3002)
+pnpm dev:api
+```
+
+**Recommended Development Workflow:**
+
+1. **For daily development**: Use `pnpm dev:core` to start only the essential frontend and backend services
+2. **For full development**: Use `pnpm dev` to start all services including documentation server
+3. **For debugging**: Use individual commands (`pnpm dev:web` or `pnpm dev:api`) to start services separately
+
+### Service Ports
+
+- **Frontend Web Interface**: http://localhost:1002
+- **Backend API Service**: http://localhost:3002
+- **Documentation Server**: http://localhost:8080 (when using `pnpm dev`)
+
 ### Backend Service
 
 Enter the folder `/service` and run the following commands
@@ -244,7 +274,7 @@ pnpm start
 Run the following commands at the root directory
 
 ```shell
-pnpm dev
+pnpm dev:core
 ```
 
 ## Environment Variables

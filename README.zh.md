@@ -111,7 +111,7 @@
 
 ### Node
 
-`node` 需要 `^16 || ^18 || ^19` 版本（`node >= 14` 需要安装 [fetch polyfill](https://github.com/developit/unfetch#usage-as-a-polyfill)），使用 [nvm](https://github.com/nvm-sh/nvm) 可管理本地多个 `node` 版本
+`node` 需要 `^24` 版本，使用 [nvm](https://github.com/nvm-sh/nvm) 可管理本地多个 `node` 版本
 
 ```shell
 node -v
@@ -163,7 +163,35 @@ pnpm bootstrap
 
 ## 测试环境运行
 
-### 后端服务
+### 推荐开发方式
+
+根目录下运行以下命令启动前端和后端服务：
+
+```shell
+pnpm dev:core
+```
+
+这将启动：
+
+- 前端服务：http://localhost:1002
+- 后端服务：http://localhost:3002
+
+### 其他开发命令
+
+```shell
+# 启动所有服务（包括文档服务器）
+pnpm dev
+
+# 仅启动前端服务
+pnpm dev:web
+
+# 仅启动后端服务
+pnpm dev:api
+```
+
+### 传统方式（分别启动）
+
+#### 后端服务
 
 进入文件夹 `/service` 运行以下命令
 
@@ -171,12 +199,12 @@ pnpm bootstrap
 pnpm start
 ```
 
-### 前端网页
+#### 前端网页
 
 根目录下运行以下命令
 
 ```shell
-pnpm dev
+pnpm dev:web
 ```
 
 ## 环境变量

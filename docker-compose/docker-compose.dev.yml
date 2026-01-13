@@ -7,36 +7,75 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-      target: base  # Use base stage for development
     ports:
       - "3002:3002"  # API port
-      - "1002:1002"  # Web dev server port
+      - "1002:1002"  # Web dev server port (if running web dev server)
     environment:
       NODE_ENV: development
       
-      # AI Provider Configuration
-      AI_PROVIDER: openai
+      # ===========================================
+      # Provider Configuration
+      # ===========================================
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
       
+      # ===========================================
       # OpenAI Configuration
+      # ===========================================
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-https://api.openai.com}
-      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-4o}
+      
+      # ===========================================
+      # Azure OpenAI Configuration
+      # ===========================================
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-02-15-preview}
+      AZURE_OPENAI_USE_RESPONSES_API: ${AZURE_OPENAI_USE_RESPONSES_API:-true}
+      
+      # ===========================================
+      # Model Configuration
+      # ===========================================
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
       
       # Security Configuration
       AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-dev-secret-key}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret}
       
-      # Rate Limiting
+      # ===========================================
+      # Rate Limiting (Disabled for Development)
+      # ===========================================
       MAX_REQUEST_PER_HOUR: ${MAX_REQUEST_PER_HOUR:-0}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-3600000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-0}
       
-      # Timeout Configuration
+      # ===========================================
+      # Performance Configuration
+      # ===========================================
       TIMEOUT_MS: ${TIMEOUT_MS:-60000}
+      RETRY_MAX_ATTEMPTS: ${RETRY_MAX_ATTEMPTS:-3}
+      RETRY_BASE_DELAY: ${RETRY_BASE_DELAY:-1000}
+      
+      # ===========================================
+      # Reasoning Models Configuration
+      # ===========================================
+      ENABLE_REASONING_MODELS: ${ENABLE_REASONING_MODELS:-true}
+      REASONING_MODEL_TIMEOUT_MS: ${REASONING_MODEL_TIMEOUT_MS:-120000}
+      
+      # ===========================================
+      # Development Configuration
+      # ===========================================
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      ENABLE_REQUEST_LOGGING: ${ENABLE_REQUEST_LOGGING:-true}
+      ENABLE_SECURITY_HEADERS: ${ENABLE_SECURITY_HEADERS:-false}
+      
     volumes:
       # Mount source code for hot reloading
       - ../apps:/app/apps
       - ../packages:/app/packages
       - ../node_modules:/app/node_modules
       - ../.env:/app/.env:ro
-    command: ["pnpm", "dev"]
+    command: ["sh", "-c", "cd apps/api && pnpm dev"]
     restart: unless-stopped
     networks:
       - chatgpt-dev
