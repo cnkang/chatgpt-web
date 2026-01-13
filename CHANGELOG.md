@@ -1,3 +1,71 @@
+## v3.0.1
+
+`2026-01-13`
+
+### 🎯 User Interface Improvements
+
+#### PromptStore Feature Removal
+
+- **Removed PromptStore Component**: Eliminated the "提示词商店" (Prompt Store) feature for a cleaner, more focused interface
+- **Simplified Chat Input**: Replaced autocomplete input with standard textarea for better user experience
+- **Cleaner Sidebar**: Removed PromptStore button from sidebar navigation
+- **Reduced Dependencies**: Removed unused NAutoComplete component and related dependencies
+
+#### Development Experience Enhancements
+
+- **New Development Commands**: Added `pnpm dev:core` for starting only essential services (frontend + backend)
+- **Improved Documentation Server**: Documentation server now runs only when explicitly needed
+- **Cleaner Console Output**: Reduced noise from unnecessary services during development
+- **Better Service Management**: Clear separation between core services and optional documentation
+
+### 🛠 Technical Changes
+
+#### Frontend Optimizations
+
+- **Component Cleanup**: Removed PromptStore-related components and state management
+- **Import Optimization**: Cleaned up unused imports and dependencies
+- **Translation Updates**: Removed PromptStore-related translations from all language files
+- **State Management**: Simplified store structure by removing prompt module
+
+#### Development Workflow
+
+- **Enhanced Scripts**: New `dev:core` script for focused development
+- **Service Ports**: Clear documentation of service ports (Web: 1002, API: 3002, Docs: 8080)
+- **Documentation Updates**: Updated all development guides with new command structure
+
+### 📚 Documentation Updates
+
+- **README Improvements**: Updated development commands and workflow instructions
+- **Development Guide**: Enhanced workflow documentation with command usage guidelines
+- **Setup Guide**: Improved monorepo setup instructions with new development commands
+
+### 🔧 Configuration Changes
+
+- **Package Scripts**: Added `dev:core` script to root package.json
+- **Documentation Service**: Modified docs package to avoid unnecessary Python server startup
+- **Turbo Configuration**: Maintained existing Turbo configuration for compatibility
+
+### ⚡ Performance Improvements
+
+- **Faster Development Startup**: `pnpm dev:core` starts only essential services
+- **Reduced Resource Usage**: No unnecessary documentation server during development
+- **Cleaner Build Process**: Removed unused components from build pipeline
+
+### 📋 Migration Notes
+
+For developers upgrading from previous versions:
+
+1. **New Development Command**: Use `pnpm dev:core` for daily development instead of `pnpm dev`
+2. **PromptStore Removal**: Any custom integrations with PromptStore will need to be removed
+3. **Updated Documentation**: Review updated development workflow documentation
+
+### 🎉 Benefits
+
+- **Cleaner Interface**: Simplified chat interface without prompt autocomplete distractions
+- **Faster Development**: Quicker startup time with essential services only
+- **Better Focus**: Developers can focus on core functionality without unnecessary features
+- **Improved Maintainability**: Reduced codebase complexity and dependencies
+
 ## v3.0.0
 
 `2026-01-09`
