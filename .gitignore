@@ -85,3 +85,5 @@ pids
 # Yarn Integrity file
 .yarn-integrity
 
+*.log
+.log
