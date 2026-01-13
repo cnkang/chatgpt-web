@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@chatgpt-web/shared": "workspace:*",
-    "@iconify/vue": "^4.1.2",
+    "@iconify/vue": "^5.0.0",
     "@vscode/markdown-it-katex": "^1.0.0",
     "@vueuse/core": "^12.0.0",
     "crypto-js": "^4.2.0",
