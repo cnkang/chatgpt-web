@@ -98,7 +98,7 @@ jobs:
         run: pnpm turbo run test:coverage --filter=@chatgpt-web/${{ matrix.package }}
         
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           file: ./apps/${{ matrix.package }}/coverage/lcov.info
           flags: ${{ matrix.package }}-unit
