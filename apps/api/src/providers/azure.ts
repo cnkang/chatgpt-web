@@ -59,6 +59,18 @@ interface AzureResponsesResponse {
   }
 }
 
+// Azure v1 Responses API streaming event types
+interface AzureResponsesStreamEvent {
+  type: string
+  response_id?: string
+  item_id?: string
+  output_index?: number
+  content_index?: number
+  delta?: string
+  text?: string
+  [key: string]: unknown
+}
+
 interface AzureResponsesStreamChunk {
   id: string
   object: string
@@ -360,6 +372,12 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       // v1 Responses API uses OpenAI v1 format and does not require api-version parameter
       const url = `${this.config.endpoint}/openai/v1/responses`
 
+      logger.debug('Azure v1 Responses API request', {
+        url,
+        model: request.model,
+        messageCount: request.messages.length,
+      })
+
       const headers = {
         'Content-Type': 'application/json',
         'api-key': this.config.apiKey,
@@ -371,22 +389,38 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
         body: JSON.stringify(responsesRequest),
       })
 
+      logger.debug('Azure v1 Responses API response', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+      })
+
       if (!response.ok) {
         const errorText = await response.text()
+        logger.error('Azure v1 Responses API error', {
+          status: response.status,
+          error: errorText,
+        })
         throw new Error(
           `Azure OpenAI v1 Responses API streaming error: ${response.status} ${errorText}`,
         )
       }
 
       if (!response.body) {
+        logger.error('Azure v1 Responses API: No response body')
         throw new Error('No response body for streaming')
       }
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
+      logger.debug('Azure v1 Responses API: Starting stream processing')
+
       try {
         let buffer = ''
+        let chunkCount = 0
+        let responseId = ''
+        let currentModel = request.model
 
         // eslint-disable-next-line no-await-in-loop
         while (true) {
@@ -394,19 +428,44 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
           const { done, value } = await reader.read()
 
           if (done) {
+            logger.debug('Azure v1 Responses API: Stream completed', { chunkCount })
             // Process any remaining data in buffer
             if (buffer.trim()) {
               const lines = buffer.split('\n')
               for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  const data = line.slice(6).trim()
+                const trimmedLine = line.trim()
+                if (trimmedLine.startsWith('data: ')) {
+                  const data = trimmedLine.slice(6).trim()
                   if (data && data !== '[DONE]') {
                     try {
-                      const parsed: AzureResponsesStreamChunk = JSON.parse(data)
-                      yield this.convertFromResponsesStreamChunk(parsed)
-                    } catch {
-                      // Skip invalid JSON lines
+                      const event: AzureResponsesStreamEvent = JSON.parse(data)
+                      const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
+                      if (chunk) {
+                        yield chunk
+                        chunkCount++
+                      }
+                      // Track response ID from first event
+                      if (event.response_id) {
+                        responseId = event.response_id
+                      }
+                    } catch (error) {
+                      logger.warn('Failed to parse final chunk', { line: trimmedLine, error })
                     }
+                  }
+                } else if (trimmedLine && !trimmedLine.startsWith('event:')) {
+                  // Handle events without "data:" prefix (some Azure implementations)
+                  try {
+                    const event: AzureResponsesStreamEvent = JSON.parse(trimmedLine)
+                    const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
+                    if (chunk) {
+                      yield chunk
+                      chunkCount++
+                    }
+                    if (event.response_id) {
+                      responseId = event.response_id
+                    }
+                  } catch {
+                    // Not JSON, skip
                   }
                 }
               }
@@ -423,15 +482,56 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
 
             // Process complete lines
             for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6).trim()
-                if (data === '[DONE]') break
+              const trimmedLine = line.trim()
+              if (!trimmedLine) continue
+
+              if (trimmedLine.startsWith('data: ')) {
+                const data = trimmedLine.slice(6).trim()
+                if (data === '[DONE]') {
+                  logger.debug('Azure v1 Responses API: Received [DONE]')
+                  break
+                }
 
                 try {
-                  const parsed: AzureResponsesStreamChunk = JSON.parse(data)
-                  yield this.convertFromResponsesStreamChunk(parsed)
+                  const event: AzureResponsesStreamEvent = JSON.parse(data)
+                  logger.debug('Azure v1 event received', { type: event.type, delta: event.delta })
+
+                  const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
+                  if (chunk) {
+                    yield chunk
+                    chunkCount++
+                  }
+
+                  // Track response ID from first event
+                  if (event.response_id) {
+                    responseId = event.response_id
+                  }
+                } catch (error) {
+                  logger.warn('Failed to parse stream chunk', { line: trimmedLine, error })
+                }
+              } else if (trimmedLine.startsWith('event:')) {
+                // SSE event type line, skip
+                continue
+              } else {
+                // Handle events without "data:" prefix
+                try {
+                  const event: AzureResponsesStreamEvent = JSON.parse(trimmedLine)
+                  logger.debug('Azure v1 event received (no prefix)', {
+                    type: event.type,
+                    delta: event.delta,
+                  })
+
+                  const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
+                  if (chunk) {
+                    yield chunk
+                    chunkCount++
+                  }
+
+                  if (event.response_id) {
+                    responseId = event.response_id
+                  }
                 } catch {
-                  // Skip invalid JSON lines
+                  // Not JSON, skip
                 }
               }
             }
@@ -472,7 +572,67 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
   }
 
   /**
+   * Convert Azure v1 Responses API event to internal chunk format
+   * Azure returns events with different types:
+   * - response.created: Initial response created
+   * - response.output_item.added: Output item added
+   * - response.content_part.added: Content part added
+   * - response.output_text.delta: Actual text content (this is what we need)
+   * - response.output_text.done: Text output completed
+   * - response.done: Response completed
+   */
+  private convertAzureEventToChunk(
+    event: AzureResponsesStreamEvent,
+    responseId: string,
+    model: string,
+  ): ChatCompletionChunk | null {
+    // Only process events that contain actual content
+    if (event.type === 'response.output_text.delta' && event.delta) {
+      return {
+        id: responseId || `azure-${Date.now()}`,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model,
+        choices: [
+          {
+            index: event.output_index ?? 0,
+            delta: {
+              role: 'assistant',
+              content: event.delta,
+            },
+            finishReason: undefined,
+          },
+        ],
+      }
+    }
+
+    // Handle completion events
+    if (event.type === 'response.done' || event.type === 'response.output_text.done') {
+      return {
+        id: responseId || `azure-${Date.now()}`,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model,
+        choices: [
+          {
+            index: 0,
+            delta: {
+              role: 'assistant',
+              content: '',
+            },
+            finishReason: 'stop',
+          },
+        ],
+      }
+    }
+
+    // Ignore other event types (response.created, response.output_item.added, etc.)
+    return null
+  }
+
+  /**
    * Convert Azure v1 responses API streaming chunk to internal format
+   * This is kept for backward compatibility but Azure actually returns events in a different format
    */
   private convertFromResponsesStreamChunk(chunk: AzureResponsesStreamChunk): ChatCompletionChunk {
     return {
