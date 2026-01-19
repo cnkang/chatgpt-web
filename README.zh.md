@@ -6,8 +6,8 @@
 
 [English](README.md)
 
-![cover](./docs/c1.png)
-![cover2](./docs/c2.png)
+![cover](./docs/images/screenshots/c1.png)
+![cover2](./docs/images/screenshots/c2.png)
 
 - [ChatGPT Web](#chatgpt-web)
   - [介绍](#介绍)
@@ -263,7 +263,7 @@ pnpm dev:web
 
 #### Docker 参数示例
 
-![docker](./docs/docker.png)
+![docker](./docs/images/diagrams/docker.png)
 
 #### Docker build & Run
 

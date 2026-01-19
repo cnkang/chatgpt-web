@@ -6,8 +6,8 @@
 
 [中文](README.zh.md)
 
-![cover](./docs/c1.png)
-![cover2](./docs/c2.png)
+![cover](./docs/images/screenshots/c1.png)
+![cover2](./docs/images/screenshots/c2.png)
 
 - [ChatGPT Web](#chatgpt-web)
   - [Introduction](#introduction)
@@ -404,7 +404,7 @@ RETRY_MAX_ATTEMPTS=3
 
 #### Docker Parameter Examples
 
-![docker](./docs/docker.png)
+![docker](./docs/images/diagrams/docker.png)
 
 #### Docker build & Run
 
