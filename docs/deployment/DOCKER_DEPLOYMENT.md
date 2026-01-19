@@ -14,21 +14,37 @@ The Docker image contains both frontend and backend in a single container:
 
 ## Environment Configuration
 
-### Frontend Build-Time Variables
+### Frontend Build-Time Variables (IMPORTANT!)
 
-The frontend is built with these environment variables (configured in `apps/web/.env.production`):
+**Critical**: Frontend environment variables are **build-time only** and must be set during Docker image build, not at runtime.
+
+The frontend is built with these environment variables:
 
 ```bash
 # API endpoint - MUST use relative path for same-origin deployment
 VITE_GLOB_API_URL=/api
 
-# Not used in production (proxy handles routing)
-VITE_APP_API_BASE_URL=http://localhost:3002/
-
 # Feature flags
 VITE_GLOB_OPEN_LONG_REPLY=false
 VITE_GLOB_APP_PWA=false
 ```
+
+**Why build-time only?**
+
+- Vite bundles these values into the JavaScript files during `pnpm build`
+- The generated static files (HTML/JS/CSS) have these values hardcoded
+- Setting these in App Runner or Docker runtime **will not work**
+
+**How to configure:**
+
+1. **Default**: The Dockerfile sets `VITE_GLOB_API_URL=/api` automatically
+2. **Custom**: Use Docker build args to override:
+   ```bash
+   docker build \
+     --build-arg VITE_GLOB_API_URL=/api \
+     --build-arg VITE_GLOB_APP_PWA=true \
+     -t chatgpt-web:latest .
+   ```
 
 **Important**: The frontend uses `/api` as a relative path, which means API requests go to the same origin as the frontend. This avoids CORS issues.
 
