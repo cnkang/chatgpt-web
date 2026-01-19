@@ -357,7 +357,8 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
         stream: true,
       }
 
-      const url = `${this.config.endpoint}/openai/v1/responses?api-version=${this.config.apiVersion}`
+      // v1 Responses API uses OpenAI v1 format and does not require api-version parameter
+      const url = `${this.config.endpoint}/openai/v1/responses`
 
       const headers = {
         'Content-Type': 'application/json',
@@ -546,7 +547,8 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
   private async makeResponsesAPICall(
     request: AzureResponsesRequest,
   ): Promise<AzureResponsesResponse> {
-    const url = `${this.config.endpoint}/openai/v1/responses?api-version=${this.config.apiVersion}`
+    // v1 Responses API uses OpenAI v1 format and does not require api-version parameter
+    const url = `${this.config.endpoint}/openai/v1/responses`
 
     const headers = {
       'Content-Type': 'application/json',
