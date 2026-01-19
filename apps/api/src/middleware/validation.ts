@@ -92,7 +92,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
         // Log validation errors for debugging
         console.error('Validation failed:', {
           body: req.body,
-        errors,
+          errors,
         })
 
         const response: ValidationErrorResponse = {
@@ -264,12 +264,46 @@ export function sanitizeRequest(req: Request, res: Response, next: NextFunction)
       req.body = sanitizeObject(req.body)
     }
 
-    if (req.query) {
-      req.query = sanitizeObject(req.query) as Request['query']
+    // Sanitize query parameters - use Object.defineProperty to handle read-only properties
+    if (req.query && Object.keys(req.query).length > 0) {
+      try {
+        const sanitizedQuery = sanitizeObject(req.query) as Request['query']
+        Object.defineProperty(req, 'query', {
+          value: sanitizedQuery,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        })
+      } catch (queryError) {
+        // If query is truly read-only, sanitize in place
+        Object.keys(req.query).forEach(key => {
+          const value = req.query[key]
+          if (typeof value === 'string') {
+            ;(req.query as any)[key] = sanitizeString(value)
+          }
+        })
+      }
     }
 
-    if (req.params) {
-      req.params = sanitizeObject(req.params) as Record<string, string>
+    // Sanitize params - use Object.defineProperty to handle read-only properties
+    if (req.params && Object.keys(req.params).length > 0) {
+      try {
+        const sanitizedParams = sanitizeObject(req.params) as Record<string, string>
+        Object.defineProperty(req, 'params', {
+          value: sanitizedParams,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        })
+      } catch (paramsError) {
+        // If params is truly read-only, sanitize in place
+        Object.keys(req.params).forEach(key => {
+          const value = req.params[key]
+          if (typeof value === 'string') {
+            req.params[key] = sanitizeString(value)
+          }
+        })
+      }
     }
 
     next()
