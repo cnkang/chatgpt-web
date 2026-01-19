@@ -3,6 +3,11 @@
 # Build frontend (apps/web)
 FROM node:24-alpine AS frontend
 
+# Build arguments for frontend configuration
+ARG VITE_GLOB_API_URL=/api
+ARG VITE_GLOB_OPEN_LONG_REPLY=false
+ARG VITE_GLOB_APP_PWA=false
+
 RUN npm install pnpm -g
 
 WORKDIR /app
@@ -19,7 +24,11 @@ COPY ./apps/web ./apps/web
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build frontend with production environment
+# Build frontend with environment variables from build args
+ENV VITE_GLOB_API_URL=${VITE_GLOB_API_URL}
+ENV VITE_GLOB_OPEN_LONG_REPLY=${VITE_GLOB_OPEN_LONG_REPLY}
+ENV VITE_GLOB_APP_PWA=${VITE_GLOB_APP_PWA}
+
 RUN cd apps/web && pnpm build
 
 # Build backend (apps/api)
