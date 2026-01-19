@@ -420,7 +420,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
         let buffer = ''
         let chunkCount = 0
         let responseId = ''
-        let currentModel = request.model
+        const currentModel = request.model
 
         // eslint-disable-next-line no-await-in-loop
         while (true) {
@@ -431,44 +431,47 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
             logger.debug('Azure v1 Responses API: Stream completed', { chunkCount })
             // Process any remaining data in buffer
             if (buffer.trim()) {
-              const lines = buffer.split('\n')
-              for (const line of lines) {
-                const trimmedLine = line.trim()
-                if (trimmedLine.startsWith('data: ')) {
-                  const data = trimmedLine.slice(6).trim()
-                  if (data && data !== '[DONE]') {
+                const lines = buffer.split('\n')
+                for (const line of lines) {
+                  const trimmedLine = line.trim()
+                  if (trimmedLine.startsWith('data: ')) {
+                    const data = trimmedLine.slice(6).trim()
+                    if (data && data !== '[DONE]') {
+                      try {
+                        const payload = JSON.parse(data)
+                        const converted = this.convertAzureResponsesPayloadToChunk(
+                          payload,
+                          responseId,
+                          currentModel,
+                        )
+                        if (converted.chunk) {
+                          yield converted.chunk
+                          chunkCount++
+                        }
+                        responseId = converted.responseId
+                      } catch (error) {
+                        logger.warn('Failed to parse final chunk', { line: trimmedLine, error })
+                      }
+                    }
+                  } else if (trimmedLine && !trimmedLine.startsWith('event:')) {
+                    // Handle events without "data:" prefix (some Azure implementations)
                     try {
-                      const event: AzureResponsesStreamEvent = JSON.parse(data)
-                      const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
-                      if (chunk) {
-                        yield chunk
+                      const payload = JSON.parse(trimmedLine)
+                      const converted = this.convertAzureResponsesPayloadToChunk(
+                        payload,
+                        responseId,
+                        currentModel,
+                      )
+                      if (converted.chunk) {
+                        yield converted.chunk
                         chunkCount++
                       }
-                      // Track response ID from first event
-                      if (event.response_id) {
-                        responseId = event.response_id
-                      }
-                    } catch (error) {
-                      logger.warn('Failed to parse final chunk', { line: trimmedLine, error })
+                      responseId = converted.responseId
+                    } catch {
+                      // Not JSON, skip
                     }
-                  }
-                } else if (trimmedLine && !trimmedLine.startsWith('event:')) {
-                  // Handle events without "data:" prefix (some Azure implementations)
-                  try {
-                    const event: AzureResponsesStreamEvent = JSON.parse(trimmedLine)
-                    const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
-                    if (chunk) {
-                      yield chunk
-                      chunkCount++
-                    }
-                    if (event.response_id) {
-                      responseId = event.response_id
-                    }
-                  } catch {
-                    // Not JSON, skip
                   }
                 }
-              }
             }
             break
           }
@@ -493,19 +496,23 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
                 }
 
                 try {
-                  const event: AzureResponsesStreamEvent = JSON.parse(data)
-                  logger.debug('Azure v1 event received', { type: event.type, delta: event.delta })
+                  const payload = JSON.parse(data)
+                  if (!this.isResponsesStreamChunk(payload)) {
+                    const event = payload as AzureResponsesStreamEvent
+                    logger.debug('Azure v1 event received', { type: event.type, delta: event.delta })
+                  }
 
-                  const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
-                  if (chunk) {
-                    yield chunk
+                  const converted = this.convertAzureResponsesPayloadToChunk(
+                    payload,
+                    responseId,
+                    currentModel,
+                  )
+                  if (converted.chunk) {
+                    yield converted.chunk
                     chunkCount++
                   }
 
-                  // Track response ID from first event
-                  if (event.response_id) {
-                    responseId = event.response_id
-                  }
+                  responseId = converted.responseId
                 } catch (error) {
                   logger.warn('Failed to parse stream chunk', { line: trimmedLine, error })
                 }
@@ -515,21 +522,26 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
               } else {
                 // Handle events without "data:" prefix
                 try {
-                  const event: AzureResponsesStreamEvent = JSON.parse(trimmedLine)
-                  logger.debug('Azure v1 event received (no prefix)', {
-                    type: event.type,
-                    delta: event.delta,
-                  })
+                  const payload = JSON.parse(trimmedLine)
+                  if (!this.isResponsesStreamChunk(payload)) {
+                    const event = payload as AzureResponsesStreamEvent
+                    logger.debug('Azure v1 event received (no prefix)', {
+                      type: event.type,
+                      delta: event.delta,
+                    })
+                  }
 
-                  const chunk = this.convertAzureEventToChunk(event, responseId, currentModel)
-                  if (chunk) {
-                    yield chunk
+                  const converted = this.convertAzureResponsesPayloadToChunk(
+                    payload,
+                    responseId,
+                    currentModel,
+                  )
+                  if (converted.chunk) {
+                    yield converted.chunk
                     chunkCount++
                   }
 
-                  if (event.response_id) {
-                    responseId = event.response_id
-                  }
+                  responseId = converted.responseId
                 } catch {
                   // Not JSON, skip
                 }
@@ -628,6 +640,36 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
 
     // Ignore other event types (response.created, response.output_item.added, etc.)
     return null
+  }
+
+  private convertAzureResponsesPayloadToChunk(
+    payload: unknown,
+    responseId: string,
+    model: string,
+  ): { chunk: ChatCompletionChunk | null; responseId: string } {
+    if (this.isResponsesStreamChunk(payload)) {
+      const chunk = this.convertFromResponsesStreamChunk(payload)
+      return {
+        chunk,
+        responseId: payload.id || responseId,
+      }
+    }
+
+    const event = payload as AzureResponsesStreamEvent
+    const chunk = this.convertAzureEventToChunk(event, responseId, model)
+    return {
+      chunk,
+      responseId: event.response_id ?? responseId,
+    }
+  }
+
+  private isResponsesStreamChunk(value: unknown): value is AzureResponsesStreamChunk {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'choices' in value &&
+      Array.isArray((value as AzureResponsesStreamChunk).choices)
+    )
   }
 
   /**
