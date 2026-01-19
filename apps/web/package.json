@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@chatgpt-web/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/crypto-js": "^4.2.2",
     "@types/markdown-it": "^14.1.2",
     "@types/markdown-it-link-attributes": "^3.0.5",
