@@ -69,7 +69,7 @@
   "devDependencies": {
     "@chatgpt-web/config": "workspace:*",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.0.9",
     "@vitest/ui": "^4.0.17",
     "fast-check": "^4.5.3",
     "tsup": "^8.5.1",
