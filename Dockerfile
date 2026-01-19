@@ -19,7 +19,7 @@ COPY ./apps/web ./apps/web
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build frontend
+# Build frontend with production environment
 RUN cd apps/web && pnpm build
 
 # Build backend (apps/api)
