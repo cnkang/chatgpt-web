@@ -274,7 +274,7 @@ export function sanitizeRequest(req: Request, res: Response, next: NextFunction)
           enumerable: true,
           configurable: true,
         })
-      } catch (queryError) {
+      } catch {
         // If query is truly read-only, sanitize in place
         Object.keys(req.query).forEach(key => {
           const value = req.query[key]
@@ -295,7 +295,7 @@ export function sanitizeRequest(req: Request, res: Response, next: NextFunction)
           enumerable: true,
           configurable: true,
         })
-      } catch (paramsError) {
+      } catch {
         // If params is truly read-only, sanitize in place
         Object.keys(req.params).forEach(key => {
           const value = req.params[key]
