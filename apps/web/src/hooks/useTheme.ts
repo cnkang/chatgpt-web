@@ -31,6 +31,7 @@ export function useTheme() {
 		dark => {
 			if (dark) document.documentElement.classList.add('dark')
 			else document.documentElement.classList.remove('dark')
+			document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
 		},
 		{ immediate: true },
 	)
