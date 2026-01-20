@@ -9,6 +9,21 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover"
     />
+    <script>
+      ;(() => {
+        try {
+          const rawSetting = localStorage.getItem('appSetting')
+          const stored = rawSetting ? JSON.parse(rawSetting) : null
+          const theme = stored?.data?.theme
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isDark = theme === 'dark' || (theme === 'auto' && prefersDark)
+          const root = document.documentElement
+          if (isDark) root.classList.add('dark')
+          else root.classList.remove('dark')
+          root.style.colorScheme = isDark ? 'dark' : 'light'
+        } catch {}
+      })()
+    </script>
     <!-- Content Security Policy for Mermaid and other dynamic libraries -->
     <meta
       http-equiv="Content-Security-Policy"
