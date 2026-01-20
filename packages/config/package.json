@@ -6,7 +6,7 @@
 	"description": "Shared configuration files for ChatGPT Web monorepo",
 	"main": "index.js",
 	"scripts": {
-		"build": "echo 'Configuration package build complete'",
+		"build": "node -e \"const fs = require('fs'); fs.mkdirSync('dist', { recursive: true }); fs.writeFileSync('dist/.placeholder', ''); console.log('Configuration package build complete');\"",
 		"dev": "echo 'Configuration package in development mode'",
 		"lint": "echo 'No linting needed for config package'",
 		"lint:fix": "echo 'No linting needed for config package'",
