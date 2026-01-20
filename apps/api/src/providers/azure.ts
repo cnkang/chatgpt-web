@@ -26,6 +26,11 @@ import type {
 import { BaseAIProvider } from './base.js'
 import type { AzureOpenAIConfig } from './config.js'
 
+const isTestEnv =
+  process.env.NODE_ENV === 'test'
+  || process.env.VITEST === 'true'
+  || Boolean(process.env.VITEST_WORKER_ID)
+
 // Azure v1 Responses API interfaces
 interface AzureResponsesRequest {
   model: string
@@ -720,7 +725,9 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
 
       return true
     } catch (error) {
-      console.error('Azure OpenAI configuration validation failed:', error)
+      if (!isTestEnv) {
+        console.error('Azure OpenAI configuration validation failed:', error)
+      }
       return false
     }
   }

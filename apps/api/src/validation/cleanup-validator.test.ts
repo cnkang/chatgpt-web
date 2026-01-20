@@ -5,6 +5,8 @@ import { promisify } from 'node:util'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { CleanupValidator } from './cleanup-validator'
 
+const shouldLogWarnings = process.env.CI !== 'true' && process.env.CI !== '1'
+
 const writeFile = promisify(fs.writeFile)
 const mkdir = promisify(fs.mkdir)
 
@@ -24,7 +26,9 @@ describe('cleanupValidator', () => {
       await fs.promises.rm(tempDir, { recursive: true, force: true })
     }
     catch (error) {
-      console.warn(`Failed to clean up temp directory: ${error}`)
+      if (shouldLogWarnings) {
+        console.warn(`Failed to clean up temp directory: ${error}`)
+      }
     }
   })
 
@@ -323,7 +327,7 @@ describe('cleanupValidator Integration', () => {
     const result = await validator.validateCleanup()
 
     // Log results for debugging
-    if (!result.isClean) {
+    if (!result.isClean && shouldLogWarnings) {
       console.warn(CleanupValidator.generateReport(result))
     }
 
@@ -343,7 +347,7 @@ describe('cleanupValidator Integration', () => {
 
     // This should be true after cleanup is complete
     // For development, we'll log the result
-    if (!hasNoUnofficialAPI) {
+    if (!hasNoUnofficialAPI && shouldLogWarnings) {
       const result = await validator.validateCleanup()
       const unofficialViolations = result.violations.filter(
         v => v.type === 'unofficial_api_import' || v.type === 'unofficial_api_usage',
@@ -363,7 +367,7 @@ describe('cleanupValidator Integration', () => {
     const hasNoDeprecatedConfig = await validator.validateNoDeprecatedConfigVars()
 
     // Log any deprecated config violations for debugging
-    if (!hasNoDeprecatedConfig) {
+    if (!hasNoDeprecatedConfig && shouldLogWarnings) {
       const result = await validator.validateCleanup()
       const configViolations = result.violations.filter(
         v =>
