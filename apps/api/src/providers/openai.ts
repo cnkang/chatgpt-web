@@ -25,6 +25,11 @@ import type {
 import { BaseAIProvider } from './base.js'
 import type { OpenAIConfig } from './config.js'
 
+const isTestEnv =
+  process.env.NODE_ENV === 'test'
+  || process.env.VITEST === 'true'
+  || Boolean(process.env.VITEST_WORKER_ID)
+
 /**
  * OpenAI Provider Implementation
  * Uses the official OpenAI SDK for v1 API compatibility
@@ -239,7 +244,9 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
       await this.client.models.list()
       return true
     } catch (error) {
-      console.error('OpenAI configuration validation failed:', error)
+      if (!isTestEnv) {
+        console.error('OpenAI configuration validation failed:', error)
+      }
       return false
     }
   }

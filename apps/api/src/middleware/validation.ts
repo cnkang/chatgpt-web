@@ -6,6 +6,11 @@
 import type { NextFunction, Request, Response } from 'express'
 import type { ZodSchema } from 'zod'
 
+const isTestEnv =
+  process.env.NODE_ENV === 'test'
+  || process.env.VITEST === 'true'
+  || Boolean(process.env.VITEST_WORKER_ID)
+
 /**
  * Validation error response interface
  */
@@ -90,10 +95,12 @@ export function validateBody<T>(schema: ZodSchema<T>) {
         }))
 
         // Log validation errors for debugging
-        console.error('Validation failed:', {
-          body: req.body,
-          errors,
-        })
+        if (!isTestEnv) {
+          console.error('Validation failed:', {
+            body: req.body,
+            errors,
+          })
+        }
 
         const response: ValidationErrorResponse = {
           status: 'Fail',
@@ -308,7 +315,9 @@ export function sanitizeRequest(req: Request, res: Response, next: NextFunction)
 
     next()
   } catch (error) {
-    console.error('Sanitization error:', error)
+    if (!isTestEnv) {
+      console.error('Sanitization error:', error)
+    }
     const response: ValidationErrorResponse = {
       status: 'Fail',
       message: 'Request sanitization failed',
