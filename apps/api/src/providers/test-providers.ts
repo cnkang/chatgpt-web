@@ -46,8 +46,7 @@ async function testProviders() {
     log(`   Model ${aiConfig.defaultModel} supported: ${isSupported}`)
 
     log('\n✅ All basic tests passed!')
-  }
-  catch (error) {
+  } catch (error) {
     console.error('\n❌ Provider test failed:', error)
   }
 }

@@ -132,8 +132,7 @@ export function expectToThrow<T>(fn: () => T): boolean {
   try {
     fn()
     return false // Should have thrown
-  }
-  catch {
+  } catch {
     return true // Correctly threw an error
   }
 }
@@ -145,8 +144,7 @@ export async function expectToThrowAsync<T>(fn: () => Promise<T>): Promise<boole
   try {
     await fn()
     return false // Should have thrown
-  }
-  catch {
+  } catch {
     return true // Correctly threw an error
   }
 }
