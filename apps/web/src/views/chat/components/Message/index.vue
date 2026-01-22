@@ -10,11 +10,11 @@ import AvatarComponent from './Avatar.vue'
 import TextComponent from './Text.vue'
 
 interface Props {
-	dateTime?: string
-	text?: string
-	inversion?: boolean
-	error?: boolean
-	loading?: boolean
+	dateTime?: string;
+	text?: string;
+	inversion?: boolean;
+	error?: boolean;
+	loading?: boolean;
 }
 
 // Use reactive props destructuring (Vue 3.5+ feature)
@@ -22,8 +22,8 @@ const { dateTime, text, inversion, error, loading } = defineProps<Props>()
 
 // Use defineEmits with modern syntax
 const emit = defineEmits<{
-	regenerate: []
-	delete: []
+	regenerate: [];
+	delete: [];
 }>()
 
 const { isMobile } = useBasicLayout()
@@ -54,7 +54,9 @@ const options = computed(() => {
 		common.unshift({
 			label: asRawText.value ? t('chat.preview') : t('chat.showRawText'),
 			key: 'toggleRenderType',
-			icon: iconRender({ icon: asRawText.value ? 'ic:outline-code-off' : 'ic:outline-code' }),
+			icon: iconRender({
+				icon: asRawText.value ? 'ic:outline-code-off' : 'ic:outline-code',
+			}),
 		})
 	}
 
@@ -101,11 +103,20 @@ async function handleCopy() {
 		>
 			<AvatarComponent :image="inversion" />
 		</div>
-		<div class="overflow-hidden text-sm" :class="[inversion ? 'items-end' : 'items-start']">
-			<p class="text-xs text-[#b4bbc4]" :class="[inversion ? 'text-right' : 'text-left']">
+		<div
+			class="overflow-hidden text-sm"
+			:class="[inversion ? 'items-end' : 'items-start']"
+		>
+			<p
+				class="text-xs text-[#b4bbc4]"
+				:class="[inversion ? 'text-right' : 'text-left']"
+			>
 				{{ dateTime }}
 			</p>
-			<div class="flex items-end gap-1 mt-2" :class="[inversion ? 'flex-row-reverse' : 'flex-row']">
+			<div
+				class="flex items-end gap-1 mt-2"
+				:class="[inversion ? 'flex-row-reverse' : 'flex-row']"
+			>
 				<TextComponent
 					:inversion="inversion"
 					:error="error"
