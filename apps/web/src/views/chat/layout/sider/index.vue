@@ -113,7 +113,7 @@ watch(
 								v-if="!isMobile && !collapsed"
 								class="text-xs text-gray-500 hover:text-red-500 transition-colors duration-200 font-normal"
 							>
-								{{ t('chat.clearHistory') }}
+								{{ t("chat.clearHistory") }}
 							</span>
 						</div>
 					</HoverButton>

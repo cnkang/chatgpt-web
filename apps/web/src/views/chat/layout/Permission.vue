@@ -6,7 +6,7 @@ import { NButton, NInput, NModal, useMessage } from 'naive-ui'
 import { computed, ref } from 'vue'
 
 interface Props {
-	visible: boolean
+	visible: boolean;
 }
 
 defineProps<Props>()
@@ -53,17 +53,30 @@ function handlePress(event: KeyboardEvent) {
 		<div class="p-10 bg-white rounded dark:bg-slate-800">
 			<div class="space-y-4">
 				<header class="space-y-2">
-					<h2 class="text-2xl font-bold text-center text-slate-800 dark:text-neutral-200">
-403
-</h2>
+					<h2
+						class="text-2xl font-bold text-center text-slate-800 dark:text-neutral-200"
+					>
+						403
+					</h2>
 					<p class="text-base text-center text-slate-500 dark:text-slate-500">
-						{{ $t('common.unauthorizedTips') }}
+						{{ $t("common.unauthorizedTips") }}
 					</p>
 					<Icon403 class="w-[200px] m-auto" />
 				</header>
-				<NInput v-model:value="token" type="password" placeholder="" @keypress="handlePress" />
-				<NButton block type="primary" :disabled="disabled" :loading="loading" @click="handleVerify">
-					{{ $t('common.verify') }}
+				<NInput
+					v-model:value="token"
+					type="password"
+					placeholder=""
+					@keypress="handlePress"
+				/>
+				<NButton
+					block
+					type="primary"
+					:disabled="disabled"
+					:loading="loading"
+					@click="handleVerify"
+				>
+					{{ $t("common.verify") }}
 				</NButton>
 			</div>
 		</div>
