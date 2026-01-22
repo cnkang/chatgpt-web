@@ -28,17 +28,17 @@ jobs:
     if: github.event.inputs.action == 'analyze' || github.event.inputs.action == 'cleanup'
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
-        
+
       - name: Analyze cache patterns
         run: |
           echo "## 📊 Cache Analysis Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Analysis Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Analyze PNPM store size
           store_path=$(pnpm store path)
           if [ -d "$store_path" ]; then
@@ -47,7 +47,7 @@ jobs:
             echo "- Location: \`$store_path\`" >> $GITHUB_STEP_SUMMARY
             echo "- Size: $store_size" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Analyze Turborepo cache
           if [ -d ".turbo" ]; then
             turbo_size=$(du -sh .turbo | cut -f1)
@@ -56,7 +56,7 @@ jobs:
             echo "- Size: $turbo_size" >> $GITHUB_STEP_SUMMARY
             echo "- Cache entries: $cache_entries" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Analyze node_modules
           total_nm_size=0
           for nm in node_modules apps/*/node_modules packages/*/node_modules; do
@@ -78,10 +78,10 @@ jobs:
         cache-type: [dependencies, build, test]
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
-        
+
       - name: Warm ${{ matrix.cache-type }} cache
         run: |
           case "${{ matrix.cache-type }}" in
@@ -101,7 +101,7 @@ jobs:
               pnpm turbo run test --run
               ;;
           esac
-          
+
       - name: Cache warming summary
         run: |
           echo "✅ ${{ matrix.cache-type }} cache warmed successfully" >> $GITHUB_STEP_SUMMARY
@@ -112,32 +112,32 @@ jobs:
     if: github.event.inputs.action == 'cleanup' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
-        
+
       - name: Clean PNPM store
         run: |
           echo "Cleaning PNPM store..."
           pnpm store prune
-          
+
       - name: Clean Turborepo cache
         run: |
           echo "Cleaning Turborepo cache..."
           # Keep only last 7 days of cache
           find .turbo/cache -name "*.tar.zst" -mtime +7 -delete 2>/dev/null || true
-          
+
       - name: Clean node_modules
         run: |
           echo "Cleaning node_modules..."
           # Remove node_modules to force fresh install
           rm -rf node_modules apps/*/node_modules packages/*/node_modules
-          
+
       - name: Reinstall dependencies
         run: |
           echo "Reinstalling dependencies..."
           pnpm install --frozen-lockfile --prefer-offline
-          
+
       - name: Cleanup summary
         run: |
           echo "## 🧹 Cache Cleanup Complete" >> $GITHUB_STEP_SUMMARY
@@ -160,17 +160,17 @@ jobs:
     if: github.event.inputs.action == 'purge-all'
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Purge all caches
         run: |
           echo "⚠️ PURGING ALL CACHES - This will slow down next CI runs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Remove all local caches
           rm -rf node_modules apps/*/node_modules packages/*/node_modules
           rm -rf .turbo
           rm -rf ~/.pnpm-store
-          
+
           echo "### Purged:" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ All node_modules directories" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Turborepo cache" >> $GITHUB_STEP_SUMMARY
