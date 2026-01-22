@@ -98,38 +98,38 @@ graph TB
 
 ```typescript
 interface AIProvider {
-	readonly name: string
-	readonly supportedModels: string[]
-	readonly supportsStreaming: boolean
-	readonly supportsReasoning: boolean
+  readonly name: string
+  readonly supportedModels: string[]
+  readonly supportsStreaming: boolean
+  readonly supportsReasoning: boolean
 
-	createChatCompletion: (request: ChatCompletionRequest) => Promise<ChatCompletionResponse>
-	createStreamingChatCompletion: (
-		request: ChatCompletionRequest,
-	) => AsyncIterable<ChatCompletionChunk>
-	validateConfiguration: () => Promise<boolean>
-	getUsageInfo: () => Promise<UsageInfo>
+  createChatCompletion: (request: ChatCompletionRequest) => Promise<ChatCompletionResponse>
+  createStreamingChatCompletion: (
+    request: ChatCompletionRequest,
+  ) => AsyncIterable<ChatCompletionChunk>
+  validateConfiguration: () => Promise<boolean>
+  getUsageInfo: () => Promise<UsageInfo>
 }
 
 interface ChatCompletionRequest {
-	messages: ChatMessage[]
-	model: string
-	temperature?: number
-	maxTokens?: number
-	stream?: boolean
-	reasoningMode?: boolean
+  messages: ChatMessage[]
+  model: string
+  temperature?: number
+  maxTokens?: number
+  stream?: boolean
+  reasoningMode?: boolean
 }
 
 interface ChatMessage {
-	role: 'system' | 'user' | 'assistant'
-	content: string
-	reasoning?: ReasoningStep[]
+  role: 'system' | 'user' | 'assistant'
+  content: string
+  reasoning?: ReasoningStep[]
 }
 
 interface ReasoningStep {
-	step: number
-	thought: string
-	confidence: number
+  step: number
+  thought: string
+  confidence: number
 }
 ```
 
@@ -137,31 +137,31 @@ interface ReasoningStep {
 
 ```typescript
 interface AppConfiguration {
-	server: ServerConfig
-	ai: AIConfig
-	security: SecurityConfig
-	development: DevelopmentConfig
+  server: ServerConfig
+  ai: AIConfig
+  security: SecurityConfig
+  development: DevelopmentConfig
 }
 
 interface AIConfig {
-	provider: 'openai' | 'azure'
-	openai?: OpenAIConfig
-	azure?: AzureOpenAIConfig
-	defaultModel: string
-	enableReasoning: boolean
+  provider: 'openai' | 'azure'
+  openai?: OpenAIConfig
+  azure?: AzureOpenAIConfig
+  defaultModel: string
+  enableReasoning: boolean
 }
 
 interface OpenAIConfig {
-	apiKey: string
-	baseUrl?: string
-	organization?: string
+  apiKey: string
+  baseUrl?: string
+  organization?: string
 }
 
 interface AzureOpenAIConfig {
-	apiKey: string
-	endpoint: string
-	deployment: string
-	apiVersion: string
+  apiKey: string
+  endpoint: string
+  deployment: string
+  apiVersion: string
 }
 ```
 
@@ -171,16 +171,16 @@ interface AzureOpenAIConfig {
 
 ```typescript
 class AIProviderFactory {
-	static create(config: AIConfig): AIProvider {
-		switch (config.provider) {
-			case 'openai':
-				return new OpenAIProvider(config.openai!)
-			case 'azure':
-				return new AzureOpenAIProvider(config.azure!)
-			default:
-				throw new Error(`Unsupported provider: ${config.provider}`)
-		}
-	}
+  static create(config: AIConfig): AIProvider {
+    switch (config.provider) {
+      case 'openai':
+        return new OpenAIProvider(config.openai!)
+      case 'azure':
+        return new AzureOpenAIProvider(config.azure!)
+      default:
+        throw new Error(`Unsupported provider: ${config.provider}`)
+    }
+  }
 }
 ```
 
@@ -188,43 +188,43 @@ class AIProviderFactory {
 
 ```typescript
 class OpenAIProvider implements AIProvider {
-	private client: OpenAI
+  private client: OpenAI
 
-	constructor(config: OpenAIConfig) {
-		this.client = new OpenAI({
-			apiKey: config.apiKey,
-			baseURL: config.baseUrl,
-			organization: config.organization,
-		})
-	}
+  constructor(config: OpenAIConfig) {
+    this.client = new OpenAI({
+      apiKey: config.apiKey,
+      baseURL: config.baseUrl,
+      organization: config.organization,
+    })
+  }
 
-	async createChatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
-		const response = await this.client.chat.completions.create({
-			model: request.model,
-			messages: request.messages,
-			temperature: request.temperature,
-			max_tokens: request.maxTokens,
-			stream: false,
-		})
+  async createChatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
+    const response = await this.client.chat.completions.create({
+      model: request.model,
+      messages: request.messages,
+      temperature: request.temperature,
+      max_tokens: request.maxTokens,
+      stream: false,
+    })
 
-		return this.transformResponse(response)
-	}
+    return this.transformResponse(response)
+  }
 
-	async *createStreamingChatCompletion(
-		request: ChatCompletionRequest,
-	): AsyncIterable<ChatCompletionChunk> {
-		const stream = await this.client.chat.completions.create({
-			model: request.model,
-			messages: request.messages,
-			temperature: request.temperature,
-			max_tokens: request.maxTokens,
-			stream: true,
-		})
+  async *createStreamingChatCompletion(
+    request: ChatCompletionRequest,
+  ): AsyncIterable<ChatCompletionChunk> {
+    const stream = await this.client.chat.completions.create({
+      model: request.model,
+      messages: request.messages,
+      temperature: request.temperature,
+      max_tokens: request.maxTokens,
+      stream: true,
+    })
 
-		for await (const chunk of stream) {
-			yield this.transformChunk(chunk)
-		}
-	}
+    for await (const chunk of stream) {
+      yield this.transformChunk(chunk)
+    }
+  }
 }
 ```
 
@@ -232,18 +232,18 @@ class OpenAIProvider implements AIProvider {
 
 ```typescript
 class AzureOpenAIProvider implements AIProvider {
-	private client: AzureOpenAI
+  private client: AzureOpenAI
 
-	constructor(config: AzureOpenAIConfig) {
-		this.client = new AzureOpenAI({
-			apiKey: config.apiKey,
-			endpoint: config.endpoint,
-			deployment: config.deployment,
-			apiVersion: config.apiVersion,
-		})
-	}
+  constructor(config: AzureOpenAIConfig) {
+    this.client = new AzureOpenAI({
+      apiKey: config.apiKey,
+      endpoint: config.endpoint,
+      deployment: config.deployment,
+      apiVersion: config.apiVersion,
+    })
+  }
 
-	// Similar implementation with Azure-specific handling
+  // Similar implementation with Azure-specific handling
 }
 ```
 
@@ -253,47 +253,47 @@ class AzureOpenAIProvider implements AIProvider {
 
 ```typescript
 export const useChatStore = defineStore('chat', () => {
-	const conversations = ref<Conversation[]>([])
-	const currentConversation = ref<Conversation | null>(null)
-	const isLoading = ref(false)
-	const provider = ref<AIProvider>('openai')
-	const model = ref<string>('gpt-4o')
-	const reasoningEnabled = ref(false)
+  const conversations = ref<Conversation[]>([])
+  const currentConversation = ref<Conversation | null>(null)
+  const isLoading = ref(false)
+  const provider = ref<AIProvider>('openai')
+  const model = ref<string>('gpt-4o')
+  const reasoningEnabled = ref(false)
 
-	const sendMessage = async (content: string) => {
-		if (!currentConversation.value) return
+  const sendMessage = async (content: string) => {
+    if (!currentConversation.value) return
 
-		const userMessage: ChatMessage = {
-			role: 'user',
-			content,
-			timestamp: Date.now(),
-		}
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content,
+      timestamp: Date.now(),
+    }
 
-		currentConversation.value.messages.push(userMessage)
-		isLoading.value = true
+    currentConversation.value.messages.push(userMessage)
+    isLoading.value = true
 
-		try {
-			const response = await chatAPI.sendMessage({
-				messages: currentConversation.value.messages,
-				model: model.value,
-				reasoningMode: reasoningEnabled.value,
-			})
+    try {
+      const response = await chatAPI.sendMessage({
+        messages: currentConversation.value.messages,
+        model: model.value,
+        reasoningMode: reasoningEnabled.value,
+      })
 
-			currentConversation.value.messages.push(response)
-		} catch (error) {
-			handleError(error)
-		} finally {
-			isLoading.value = false
-		}
-	}
+      currentConversation.value.messages.push(response)
+    } catch (error) {
+      handleError(error)
+    } finally {
+      isLoading.value = false
+    }
+  }
 
-	return {
-		conversations: readonly(conversations),
-		currentConversation: readonly(currentConversation),
-		isLoading: readonly(isLoading),
-		sendMessage,
-		// ... other actions
-	}
+  return {
+    conversations: readonly(conversations),
+    currentConversation: readonly(currentConversation),
+    isLoading: readonly(isLoading),
+    sendMessage,
+    // ... other actions
+  }
 })
 ```
 
@@ -306,11 +306,11 @@ import { useReasoningDisplay } from '@/composables/useReasoningDisplay'
 import { useChatStore } from '@/stores/chat'
 
 interface Props {
-	conversationId?: string
+  conversationId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	conversationId: undefined,
+  conversationId: undefined,
 })
 
 const chatStore = useChatStore()
@@ -320,71 +320,71 @@ const messageInput = ref('')
 const isComposing = ref(false)
 
 const canSend = computed(
-	() => messageInput.value.trim().length > 0 && !chatStore.isLoading && !isComposing.value,
+  () => messageInput.value.trim().length > 0 && !chatStore.isLoading && !isComposing.value,
 )
 
 async function handleSend() {
-	if (!canSend.value) return
+  if (!canSend.value) return
 
-	const content = messageInput.value.trim()
-	messageInput.value = ''
+  const content = messageInput.value.trim()
+  messageInput.value = ''
 
-	await chatStore.sendMessage(content)
+  await chatStore.sendMessage(content)
 }
 
 // Watch for conversation changes
 watch(
-	() => props.conversationId,
-	newId => {
-		if (newId) {
-			chatStore.loadConversation(newId)
-		}
-	},
-	{ immediate: true },
+  () => props.conversationId,
+  newId => {
+    if (newId) {
+      chatStore.loadConversation(newId)
+    }
+  },
+  { immediate: true },
 )
 </script>
 
 <template>
-	<div class="chat-container">
-		<div class="messages-container">
-			<div
-				v-for="message in chatStore.currentConversation?.messages"
-				:key="message.id"
-				class="message"
-				:class="message.role"
-			>
-				<div class="message-content">
-					{{ message.content }}
-				</div>
+  <div class="chat-container">
+    <div class="messages-container">
+      <div
+        v-for="message in chatStore.currentConversation?.messages"
+        :key="message.id"
+        class="message"
+        :class="message.role"
+      >
+        <div class="message-content">
+          {{ message.content }}
+        </div>
 
-				<!-- Reasoning Steps Display -->
-				<div v-if="message.reasoning && displayReasoning" class="reasoning-steps">
-					<h4>Reasoning Process:</h4>
-					<div
-						v-for="step in formatReasoningSteps(message.reasoning)"
-						:key="step.step"
-						class="reasoning-step"
-					>
-						<span class="step-number">{{ step.step }}</span>
-						<span class="step-thought">{{ step.thought }}</span>
-						<span class="step-confidence">{{ step.confidence }}%</span>
-					</div>
-				</div>
-			</div>
-		</div>
+        <!-- Reasoning Steps Display -->
+        <div v-if="message.reasoning && displayReasoning" class="reasoning-steps">
+          <h4>Reasoning Process:</h4>
+          <div
+            v-for="step in formatReasoningSteps(message.reasoning)"
+            :key="step.step"
+            class="reasoning-step"
+          >
+            <span class="step-number">{{ step.step }}</span>
+            <span class="step-thought">{{ step.thought }}</span>
+            <span class="step-confidence">{{ step.confidence }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-		<div class="input-container">
-			<textarea
-				v-model="messageInput"
-				:disabled="chatStore.isLoading"
-				placeholder="Type your message..."
-				@keydown.enter.exact.prevent="handleSend"
-				@compositionstart="isComposing = true"
-				@compositionend="isComposing = false"
-			/>
-			<button :disabled="!canSend" @click="handleSend">Send</button>
-		</div>
-	</div>
+    <div class="input-container">
+      <textarea
+        v-model="messageInput"
+        :disabled="chatStore.isLoading"
+        placeholder="Type your message..."
+        @keydown.enter.exact.prevent="handleSend"
+        @compositionstart="isComposing = true"
+        @compositionend="isComposing = false"
+      />
+      <button :disabled="!canSend" @click="handleSend">Send</button>
+    </div>
+  </div>
 </template>
 ```
 
@@ -394,45 +394,45 @@ watch(
 
 ```typescript
 interface Conversation {
-	id: string
-	title: string
-	messages: ChatMessage[]
-	createdAt: number
-	updatedAt: number
-	model: string
-	provider: AIProvider
-	settings: ConversationSettings
+  id: string
+  title: string
+  messages: ChatMessage[]
+  createdAt: number
+  updatedAt: number
+  model: string
+  provider: AIProvider
+  settings: ConversationSettings
 }
 
 interface ConversationSettings {
-	temperature: number
-	maxTokens: number
-	systemMessage?: string
-	reasoningEnabled: boolean
+  temperature: number
+  maxTokens: number
+  systemMessage?: string
+  reasoningEnabled: boolean
 }
 
 interface ChatMessage {
-	id: string
-	role: 'system' | 'user' | 'assistant'
-	content: string
-	timestamp: number
-	reasoning?: ReasoningStep[]
-	metadata?: MessageMetadata
+  id: string
+  role: 'system' | 'user' | 'assistant'
+  content: string
+  timestamp: number
+  reasoning?: ReasoningStep[]
+  metadata?: MessageMetadata
 }
 
 interface MessageMetadata {
-	model: string
-	provider: string
-	tokenCount?: number
-	processingTime?: number
-	cost?: number
+  model: string
+  provider: string
+  tokenCount?: number
+  processingTime?: number
+  cost?: number
 }
 
 interface ReasoningStep {
-	step: number
-	thought: string
-	confidence: number
-	duration?: number
+  step: number
+  thought: string
+  confidence: number
+  duration?: number
 }
 ```
 
@@ -440,25 +440,25 @@ interface ReasoningStep {
 
 ```typescript
 interface SystemConfiguration {
-	version: string
-	nodeVersion: string
-	environment: 'development' | 'production' | 'test'
-	features: FeatureFlags
-	limits: SystemLimits
+  version: string
+  nodeVersion: string
+  environment: 'development' | 'production' | 'test'
+  features: FeatureFlags
+  limits: SystemLimits
 }
 
 interface FeatureFlags {
-	reasoningModels: boolean
-	azureOpenAI: boolean
-	streamingResponses: boolean
-	conversationExport: boolean
+  reasoningModels: boolean
+  azureOpenAI: boolean
+  streamingResponses: boolean
+  conversationExport: boolean
 }
 
 interface SystemLimits {
-	maxConversations: number
-	maxMessagesPerConversation: number
-	maxTokensPerRequest: number
-	rateLimitPerHour: number
+  maxConversations: number
+  maxMessagesPerConversation: number
+  maxTokensPerRequest: number
+  rateLimitPerHour: number
 }
 ```
 
@@ -582,13 +582,13 @@ _For any_ rate limit or quota exceeded condition from AI providers, the system s
 
 ```typescript
 interface ErrorResponse {
-	error: {
-		code: string
-		message: string
-		details?: Record<string, any>
-		timestamp: number
-		requestId: string
-	}
+  error: {
+    code: string
+    message: string
+    details?: Record<string, any>
+    timestamp: number
+    requestId: string
+  }
 }
 ```
 
@@ -596,11 +596,11 @@ interface ErrorResponse {
 
 ```typescript
 interface RetryConfig {
-	maxAttempts: number
-	baseDelay: number
-	maxDelay: number
-	backoffMultiplier: number
-	retryableErrors: string[]
+  maxAttempts: number
+  baseDelay: number
+  maxDelay: number
+  backoffMultiplier: number
+  retryableErrors: string[]
 }
 ```
 
