@@ -1,6 +1,7 @@
 # 建议的开发命令
 
 ## 项目依赖安装
+
 ```bash
 # 安装前端依赖（在项目根目录）
 pnpm bootstrap
@@ -10,6 +11,7 @@ cd service && pnpm install
 ```
 
 ## 开发服务器
+
 ```bash
 # 启动前端开发服务器（在项目根目录）
 pnpm dev
@@ -21,6 +23,7 @@ cd service && pnpm start
 ```
 
 ## 构建和打包
+
 ```bash
 # 构建前端（在项目根目录）
 pnpm build
@@ -33,6 +36,7 @@ cd service && pnpm prod
 ```
 
 ## 代码质量检查
+
 ```bash
 # 前端代码检查和格式化（在项目根目录）
 pnpm lint              # ESLint 检查
@@ -54,6 +58,7 @@ cd service && pnpm quality:fix
 ```
 
 ## 测试
+
 ```bash
 # 后端测试（在 service 目录）
 cd service && pnpm test          # 运行测试
@@ -62,6 +67,7 @@ cd service && pnpm test:ui       # UI 测试界面
 ```
 
 ## Git 和提交
+
 ```bash
 # Git 基本操作
 git status
@@ -74,6 +80,7 @@ git push
 ```
 
 ## 清理和重置
+
 ```bash
 # 清理前端依赖
 pnpm common:cleanup
@@ -86,6 +93,7 @@ cd service && pnpm clean
 ```
 
 ## Docker 相关
+
 ```bash
 # 构建 Docker 镜像
 docker build -t chatgpt-web .
@@ -98,6 +106,7 @@ cd docker-compose && docker-compose up -d
 ```
 
 ## 系统工具命令 (macOS/Darwin)
+
 ```bash
 # 文件操作
 ls -la                 # 列出文件
@@ -120,6 +129,7 @@ pnpm -v             # 查看 pnpm 版本
 ```
 
 ## 环境配置
+
 ```bash
 # 检查 Node.js 版本（需要 24+）
 node -v
