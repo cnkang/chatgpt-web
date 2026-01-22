@@ -306,14 +306,14 @@ describe('validation middleware', () => {
   describe('validateHeaders', () => {
     const headersSchema = z.object({
       'content-type': z.string(),
-      'authorization': z.string().optional(),
+      authorization: z.string().optional(),
       'x-api-key': z.string().optional(),
     })
 
     it('should validate and pass valid headers', () => {
       mockReq.headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer token123',
+        Authorization: 'Bearer token123',
         'X-API-Key': 'api-key-123',
       }
 
@@ -345,7 +345,7 @@ describe('validation middleware', () => {
     it('should normalize header names to lowercase', () => {
       mockReq.headers = {
         'Content-Type': 'application/json',
-        'AUTHORIZATION': 'Bearer token123',
+        AUTHORIZATION: 'Bearer token123',
       }
 
       const middleware = validateHeaders(headersSchema)

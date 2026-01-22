@@ -29,8 +29,7 @@ describe('startup Validation - Deprecated Configuration Handling', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('OPENAI_ACCESS_TOKEN')
         expect(errorMessage).toContain('API_REVERSE_PROXY')
@@ -43,8 +42,7 @@ describe('startup Validation - Deprecated Configuration Handling', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('Migration Steps')
         expect(errorMessage).toContain('Remove')
@@ -58,8 +56,7 @@ describe('startup Validation - Deprecated Configuration Handling', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('https://platform.openai.com/api-keys')
       }
@@ -71,8 +68,7 @@ describe('startup Validation - Deprecated Configuration Handling', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('migrate to the official OpenAI API')
         expect(errorMessage).toContain('OPENAI_API_KEY')

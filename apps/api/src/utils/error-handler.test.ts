@@ -28,7 +28,7 @@ describe('error handler', () => {
   let mockReq: Partial<Request>
   let mockRes: Partial<Response>
   let mockNext: NextFunction
-  let consoleSpy: { error: ReturnType<typeof vi.spyOn>, warn: ReturnType<typeof vi.spyOn> }
+  let consoleSpy: { error: ReturnType<typeof vi.spyOn>; warn: ReturnType<typeof vi.spyOn> }
 
   beforeEach(() => {
     vi.clearAllMocks()

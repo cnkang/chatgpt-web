@@ -24,8 +24,7 @@ describe('cleanupValidator', () => {
     // Clean up temporary directory
     try {
       await fs.promises.rm(tempDir, { recursive: true, force: true })
-    }
-    catch (error) {
+    } catch (error) {
       if (shouldLogWarnings) {
         console.warn(`Failed to clean up temp directory: ${error}`)
       }
@@ -107,9 +106,9 @@ const config = {
 
       const configViolations = result.violations.filter(
         v =>
-          v.type === 'deprecated_config_var'
-          || v.type === 'access_token_reference'
-          || v.type === 'reverse_proxy_reference',
+          v.type === 'deprecated_config_var' ||
+          v.type === 'access_token_reference' ||
+          v.type === 'reverse_proxy_reference',
       )
       expect(configViolations.length).toBeGreaterThan(0)
     })
@@ -371,9 +370,9 @@ describe('cleanupValidator Integration', () => {
       const result = await validator.validateCleanup()
       const configViolations = result.violations.filter(
         v =>
-          v.type === 'deprecated_config_var'
-          || v.type === 'access_token_reference'
-          || v.type === 'reverse_proxy_reference',
+          v.type === 'deprecated_config_var' ||
+          v.type === 'access_token_reference' ||
+          v.type === 'reverse_proxy_reference',
       )
       console.warn('Deprecated config violations found:', configViolations)
     }

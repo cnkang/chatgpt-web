@@ -48,8 +48,8 @@ vi.mock('express-rate-limit', () => ({
         typeof options.max === 'number'
           ? options.max
           : typeof options.limit === 'number'
-          ? options.limit
-          : 0
+            ? options.limit
+            : 0
       if (requestCount >= limitValue) {
         return options.handler(req, _res, () => undefined, options)
       }

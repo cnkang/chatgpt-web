@@ -300,7 +300,7 @@ describe('azure openai provider', () => {
 
       // Mock async iterator
       const mockStream = {
-        async* [Symbol.asyncIterator]() {
+        async *[Symbol.asyncIterator]() {
           for (const chunk of mockChunks) {
             yield chunk
           }
@@ -347,7 +347,7 @@ describe('azure openai provider', () => {
       ]
 
       const mockStream = {
-        async* [Symbol.asyncIterator]() {
+        async *[Symbol.asyncIterator]() {
           for (const chunk of mockChunks) {
             yield chunk
           }
