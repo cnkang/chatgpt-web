@@ -76,8 +76,7 @@ describe('configurationValidator - Deprecated Configuration Rejection', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('migrate to the official OpenAI API')
         expect(errorMessage).toContain('OPENAI_API_KEY')
@@ -91,8 +90,7 @@ describe('configurationValidator - Deprecated Configuration Rejection', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('Deprecated')
         expect(errorMessage).toContain('API_REVERSE_PROXY')
@@ -105,8 +103,7 @@ describe('configurationValidator - Deprecated Configuration Rejection', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('Migration Steps')
         expect(errorMessage).toContain('Remove')
@@ -151,8 +148,7 @@ describe('configurationValidator - Deprecated Configuration Rejection', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const errorMessage = (error as Error).message
         expect(errorMessage).toContain('OPENAI_API_KEY')
         expect(errorMessage).toContain('https://platform.openai.com/api-keys')

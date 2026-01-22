@@ -79,8 +79,7 @@ describe('configuration Validation Integration', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const message = (error as Error).message
         expect(message).toContain('OPENAI_ACCESS_TOKEN')
         expect(message).toContain('Migration')
@@ -97,8 +96,7 @@ describe('configuration Validation Integration', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         expect.fail('Should have thrown an error')
-      }
-      catch (error) {
+      } catch (error) {
         const message = (error as Error).message
         expect(message).toContain('API_REVERSE_PROXY')
         expect(message).toContain('Migration')
@@ -308,8 +306,7 @@ describe('configuration Validation Integration', () => {
       let startupError: Error | null = null
       try {
         ConfigurationValidator.validateEnvironment()
-      }
-      catch (error) {
+      } catch (error) {
         startupError = error as Error
       }
 
@@ -329,8 +326,7 @@ describe('configuration Validation Integration', () => {
       try {
         ConfigurationValidator.validateEnvironment()
         config = ConfigurationValidator.getValidatedConfig()
-      }
-      catch (error) {
+      } catch (error) {
         startupError = error as Error
       }
 
@@ -458,8 +454,7 @@ describe('configuration Validation Properties', () => {
 
       if (apiKeyValue === undefined || apiKeyValue === null) {
         delete process.env.OPENAI_API_KEY
-      }
-      else {
+      } else {
         process.env.OPENAI_API_KEY = apiKeyValue
       }
 

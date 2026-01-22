@@ -34,7 +34,7 @@ class MockOpenAIProvider implements AIProvider {
     }
   }
 
-  async* createStreamingChatCompletion(): AsyncIterable<ChatCompletionChunk> {
+  async *createStreamingChatCompletion(): AsyncIterable<ChatCompletionChunk> {
     yield {
       id: 'test',
       object: 'chat.completion.chunk',
@@ -79,7 +79,7 @@ class MockAzureProvider implements AIProvider {
     }
   }
 
-  async* createStreamingChatCompletion(): AsyncIterable<ChatCompletionChunk> {
+  async *createStreamingChatCompletion(): AsyncIterable<ChatCompletionChunk> {
     yield {
       id: 'test-azure',
       object: 'chat.completion.chunk',
