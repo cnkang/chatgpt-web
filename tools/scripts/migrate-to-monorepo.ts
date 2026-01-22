@@ -2,10 +2,10 @@
 
 /**
  * Monorepo Migration Script
- * 
+ *
  * This script automates the migration of the ChatGPT Web project from its current
  * structure to a modern monorepo architecture using PNPM workspaces.
- * 
+ *
  * Features:
  * - Preserves git history during file moves
  * - Updates import paths automatically
@@ -55,7 +55,7 @@ class MonorepoMigrator {
   async migrate(): Promise<void> {
     try {
       this.log('Starting monorepo migration...')
-      
+
       if (this.config.createBackup) {
         await this.createBackup()
       }
@@ -65,13 +65,12 @@ class MonorepoMigrator {
       await this.migrateFiles()
       await this.updateImportPaths()
       await this.updateConfigurationFiles()
-      
+
       if (this.config.validateAfterMigration) {
         await this.validatePostMigration()
       }
 
       this.log('Migration completed successfully!')
-      
     } catch (error) {
       this.log(`Migration failed: ${error}`)
       if (this.config.createBackup) {
@@ -83,13 +82,13 @@ class MonorepoMigrator {
 
   private async createBackup(): Promise<void> {
     this.log('Creating backup...')
-    
+
     if (existsSync(this.backupDir)) {
       rmSync(this.backupDir, { recursive: true, force: true })
     }
-    
+
     mkdirSync(this.backupDir, { recursive: true })
-    
+
     // Backup critical files and directories
     const backupItems = [
       'package.json',
@@ -101,14 +100,14 @@ class MonorepoMigrator {
       'pnpm-workspace.yaml',
       'turbo.json',
       'tsconfig.json',
-      'tsconfig.base.json'
+      'tsconfig.base.json',
     ]
 
     for (const item of backupItems) {
       if (existsSync(item)) {
         const backupPath = join(this.backupDir, item)
         mkdirSync(dirname(backupPath), { recursive: true })
-        
+
         if (item.endsWith('/')) {
           execSync(`cp -r "${item}" "${backupPath}"`)
         } else {
@@ -146,7 +145,9 @@ class MonorepoMigrator {
     // Check for uncommitted changes
     const gitStatus = execSync('git status --porcelain', { encoding: 'utf8' })
     if (gitStatus.trim() && !this.config.dryRun) {
-      throw new Error('Uncommitted changes detected. Please commit or stash changes before migration.')
+      throw new Error(
+        'Uncommitted changes detected. Please commit or stash changes before migration.',
+      )
     }
 
     this.log('Pre-migration validation passed')
@@ -155,13 +156,7 @@ class MonorepoMigrator {
   private async createPackageStructure(): Promise<void> {
     this.log('Creating package structure...')
 
-    const packages = [
-      'apps/web',
-      'apps/api', 
-      'packages/shared',
-      'packages/docs',
-      'packages/config'
-    ]
+    const packages = ['apps/web', 'apps/api', 'packages/shared', 'packages/docs', 'packages/config']
 
     for (const pkg of packages) {
       if (!this.config.dryRun) {
@@ -190,7 +185,11 @@ class MonorepoMigrator {
       { source: 'service/package.json', destination: 'apps/api/package.json', type: 'update' },
       { source: 'service/tsconfig.json', destination: 'apps/api/tsconfig.json', type: 'update' },
       { source: 'service/tsup.config.ts', destination: 'apps/api/tsup.config.ts', type: 'move' },
-      { source: 'service/vitest.config.ts', destination: 'apps/api/vitest.config.ts', type: 'move' },
+      {
+        source: 'service/vitest.config.ts',
+        destination: 'apps/api/vitest.config.ts',
+        type: 'move',
+      },
       { source: 'service/.env.example', destination: 'apps/api/.env.example', type: 'move' },
 
       // Documentation files
@@ -199,12 +198,16 @@ class MonorepoMigrator {
       { source: 'README.zh.md', destination: 'packages/docs/README.zh.md', type: 'move' },
       { source: 'CHANGELOG.md', destination: 'packages/docs/CHANGELOG.md', type: 'move' },
       { source: 'CONTRIBUTING.md', destination: 'packages/docs/CONTRIBUTING.md', type: 'move' },
-      { source: 'CONTRIBUTING.en.md', destination: 'packages/docs/CONTRIBUTING.en.md', type: 'move' },
+      {
+        source: 'CONTRIBUTING.en.md',
+        destination: 'packages/docs/CONTRIBUTING.en.md',
+        type: 'move',
+      },
 
       // Configuration files
       { source: 'eslint.config.js', destination: 'packages/config/eslint.config.js', type: 'move' },
       { source: '.prettierrc', destination: 'packages/config/.prettierrc', type: 'move' },
-      { source: '.prettierignore', destination: 'packages/config/.prettierignore', type: 'move' }
+      { source: '.prettierignore', destination: 'packages/config/.prettierignore', type: 'move' },
     ]
 
     for (const mapping of fileMappings) {
@@ -240,7 +243,7 @@ class MonorepoMigrator {
       } else {
         execSync(`mv "${source}" "${destination}"`)
       }
-      
+
       this.rollbackActions.push(() => {
         if (existsSync(destination)) {
           execSync(`mv "${destination}" "${source}"`)
@@ -248,7 +251,7 @@ class MonorepoMigrator {
       })
     } else if (type === 'copy') {
       execSync(`cp -r "${source}" "${destination}"`)
-      
+
       this.rollbackActions.push(() => {
         if (existsSync(destination)) {
           rmSync(destination, { recursive: true, force: true })
@@ -261,7 +264,7 @@ class MonorepoMigrator {
 
   private async updatePackageJson(source: string, destination: string): Promise<void> {
     const packageJson = JSON.parse(readFileSync(source, 'utf8'))
-    
+
     // Update package.json based on destination
     if (destination.includes('apps/web')) {
       packageJson.name = '@chatgpt-web/web'
@@ -280,10 +283,10 @@ class MonorepoMigrator {
     this.log('Updating import paths...')
 
     const packages = ['apps/web', 'apps/api']
-    
+
     for (const pkg of packages) {
       const files = await glob(`${pkg}/src/**/*.{ts,js,vue}`, { ignore: 'node_modules/**' })
-      
+
       for (const file of files) {
         await this.updateFileImports(file)
       }
@@ -318,7 +321,7 @@ class MonorepoMigrator {
 
     // Update root package.json for monorepo
     await this.updateRootPackageJson()
-    
+
     // Create shared package.json files
     await this.createSharedPackageJson()
     await this.createDocsPackageJson()
@@ -327,22 +330,22 @@ class MonorepoMigrator {
 
   private async updateRootPackageJson(): Promise<void> {
     const packageJson = JSON.parse(readFileSync('package.json', 'utf8'))
-    
+
     packageJson.name = '@chatgpt-web/root'
     packageJson.private = true
     packageJson.workspaces = ['apps/*', 'packages/*', 'tools/*']
-    
+
     // Update scripts for monorepo
     packageJson.scripts = {
       ...packageJson.scripts,
-      'dev': 'turbo run dev --parallel',
-      'build': 'turbo run build',
-      'test': 'turbo run test',
-      'lint': 'turbo run lint',
+      dev: 'turbo run dev --parallel',
+      build: 'turbo run build',
+      test: 'turbo run test',
+      lint: 'turbo run lint',
       'type-check': 'turbo run type-check',
-      'clean': 'turbo run clean && rm -rf node_modules */node_modules',
-      'migrate': 'tsx tools/scripts/migrate-to-monorepo.ts',
-      'validate': 'tsx tools/scripts/validate-migration.ts'
+      clean: 'turbo run clean && rm -rf node_modules */node_modules',
+      migrate: 'tsx tools/scripts/migrate-to-monorepo.ts',
+      validate: 'tsx tools/scripts/validate-migration.ts',
     }
 
     if (!this.config.dryRun) {
@@ -362,24 +365,24 @@ class MonorepoMigrator {
         dev: 'tsup --watch',
         test: 'vitest --run',
         'test:watch': 'vitest',
-        'type-check': 'tsc --noEmit'
+        'type-check': 'tsc --noEmit',
       },
       dependencies: {
-        zod: '^3.22.4'
+        zod: '^3.22.4',
       },
       devDependencies: {
         '@types/node': '^20.10.0',
         tsup: '^8.0.0',
         typescript: '^5.3.0',
-        vitest: '^1.0.0'
+        vitest: '^1.0.0',
       },
       exports: {
         '.': {
           import: './dist/index.js',
           require: './dist/index.cjs',
-          types: './dist/index.d.ts'
-        }
-      }
+          types: './dist/index.d.ts',
+        },
+      },
     }
 
     if (!this.config.dryRun) {
@@ -392,7 +395,7 @@ class MonorepoMigrator {
       name: '@chatgpt-web/docs',
       version: '1.0.0',
       description: 'Documentation for ChatGPT Web monorepo',
-      private: true
+      private: true,
     }
 
     if (!this.config.dryRun) {
@@ -409,8 +412,8 @@ class MonorepoMigrator {
       exports: {
         './eslint': './eslint.config.js',
         './prettier': './.prettierrc',
-        './tsconfig': './tsconfig.base.json'
-      }
+        './tsconfig': './tsconfig.base.json',
+      },
     }
 
     if (!this.config.dryRun) {
@@ -427,7 +430,7 @@ class MonorepoMigrator {
       'apps/api/package.json',
       'packages/shared/package.json',
       'packages/docs/package.json',
-      'packages/config/package.json'
+      'packages/config/package.json',
     ]
 
     for (const pkg of expectedPackages) {
@@ -498,12 +501,12 @@ class MonorepoMigrator {
 // CLI interface
 async function main() {
   const args = process.argv.slice(2)
-  
+
   const config: MigrationConfig = {
     dryRun: args.includes('--dry-run'),
     preserveGitHistory: !args.includes('--no-git-history'),
     createBackup: !args.includes('--no-backup'),
-    validateAfterMigration: !args.includes('--no-validation')
+    validateAfterMigration: !args.includes('--no-validation'),
   }
 
   console.log('Monorepo Migration Script')
@@ -515,7 +518,7 @@ async function main() {
   console.log('')
 
   const migrator = new MonorepoMigrator(config)
-  
+
   try {
     await migrator.migrate()
     console.log('\n✅ Migration completed successfully!')

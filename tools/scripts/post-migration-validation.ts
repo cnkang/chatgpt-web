@@ -2,7 +2,7 @@
 
 /**
  * Post-Migration Validation Script
- * 
+ *
  * This script provides comprehensive validation after monorepo migration:
  * - Validates all build processes work
  * - Tests cross-package dependencies
@@ -64,7 +64,7 @@ class PostMigrationValidator {
       description: 'Validate monorepo package structure',
       test: this.validatePackageStructure.bind(this),
       required: true,
-      category: 'structure'
+      category: 'structure',
     })
 
     this.tests.push({
@@ -72,7 +72,7 @@ class PostMigrationValidator {
       description: 'Validate PNPM workspace configuration',
       test: this.validateWorkspaceConfig.bind(this),
       required: true,
-      category: 'structure'
+      category: 'structure',
     })
 
     // Build system tests
@@ -81,7 +81,7 @@ class PostMigrationValidator {
       description: 'Test dependency installation',
       test: this.testDependencyInstallation.bind(this),
       required: true,
-      category: 'build'
+      category: 'build',
     })
 
     this.tests.push({
@@ -89,7 +89,7 @@ class PostMigrationValidator {
       description: 'Test shared package build',
       test: this.testSharedPackageBuild.bind(this),
       required: true,
-      category: 'build'
+      category: 'build',
     })
 
     this.tests.push({
@@ -97,7 +97,7 @@ class PostMigrationValidator {
       description: 'Test API package build',
       test: this.testApiPackageBuild.bind(this),
       required: true,
-      category: 'build'
+      category: 'build',
     })
 
     this.tests.push({
@@ -105,7 +105,7 @@ class PostMigrationValidator {
       description: 'Test web package build',
       test: this.testWebPackageBuild.bind(this),
       required: true,
-      category: 'build'
+      category: 'build',
     })
 
     this.tests.push({
@@ -113,7 +113,7 @@ class PostMigrationValidator {
       description: 'Test Turborepo coordinated build',
       test: this.testTurborepooBuild.bind(this),
       required: true,
-      category: 'build'
+      category: 'build',
     })
 
     // Dependency tests
@@ -122,7 +122,7 @@ class PostMigrationValidator {
       description: 'Test cross-package import resolution',
       test: this.testCrossPackageImports.bind(this),
       required: true,
-      category: 'dependencies'
+      category: 'dependencies',
     })
 
     this.tests.push({
@@ -130,7 +130,7 @@ class PostMigrationValidator {
       description: 'Test shared type usage across packages',
       test: this.testSharedTypeUsage.bind(this),
       required: true,
-      category: 'dependencies'
+      category: 'dependencies',
     })
 
     this.tests.push({
@@ -138,7 +138,7 @@ class PostMigrationValidator {
       description: 'Test dependency resolution correctness',
       test: this.testDependencyResolution.bind(this),
       required: true,
-      category: 'dependencies'
+      category: 'dependencies',
     })
 
     // Development workflow tests
@@ -147,7 +147,7 @@ class PostMigrationValidator {
       description: 'Test TypeScript type checking across packages',
       test: this.testTypeChecking.bind(this),
       required: true,
-      category: 'development'
+      category: 'development',
     })
 
     this.tests.push({
@@ -155,7 +155,7 @@ class PostMigrationValidator {
       description: 'Test ESLint across all packages',
       test: this.testLinting.bind(this),
       required: false,
-      category: 'development'
+      category: 'development',
     })
 
     this.tests.push({
@@ -163,7 +163,7 @@ class PostMigrationValidator {
       description: 'Test execution across packages',
       test: this.testTestExecution.bind(this),
       required: false,
-      category: 'development'
+      category: 'development',
     })
 
     this.tests.push({
@@ -171,7 +171,7 @@ class PostMigrationValidator {
       description: 'Test development server startup',
       test: this.testDevServerStartup.bind(this),
       required: false,
-      category: 'development'
+      category: 'development',
     })
 
     // Deployment tests
@@ -180,7 +180,7 @@ class PostMigrationValidator {
       description: 'Test Docker build with monorepo',
       test: this.testDockerBuild.bind(this),
       required: false,
-      category: 'deployment'
+      category: 'deployment',
     })
 
     this.tests.push({
@@ -188,36 +188,35 @@ class PostMigrationValidator {
       description: 'Test production build optimization',
       test: this.testProductionBuild.bind(this),
       required: true,
-      category: 'deployment'
+      category: 'deployment',
     })
   }
 
   private async runTest(test: ValidationTest): Promise<void> {
     console.log(`🧪 Running: ${test.description}...`)
-    
+
     const startTime = Date.now()
-    
+
     try {
       const passed = await test.test()
       const duration = Date.now() - startTime
-      
+
       this.results.push({
         name: test.name,
         passed,
-        duration
+        duration,
       })
 
       const status = passed ? '✅' : '❌'
       console.log(`   ${status} ${test.name} (${duration}ms)`)
-      
     } catch (error) {
       const duration = Date.now() - startTime
-      
+
       this.results.push({
         name: test.name,
         passed: false,
         error: String(error),
-        duration
+        duration,
       })
 
       console.log(`   ❌ ${test.name} failed: ${error} (${duration}ms)`)
@@ -229,14 +228,14 @@ class PostMigrationValidator {
     const requiredPaths = [
       'apps/web/package.json',
       'apps/web/src',
-      'apps/api/package.json', 
+      'apps/api/package.json',
       'apps/api/src',
       'packages/shared/package.json',
       'packages/shared/src',
       'packages/docs/package.json',
       'packages/config/package.json',
       'pnpm-workspace.yaml',
-      'turbo.json'
+      'turbo.json',
     ]
 
     for (const path of requiredPaths) {
@@ -254,11 +253,11 @@ class PostMigrationValidator {
     }
 
     const config = readFileSync('pnpm-workspace.yaml', 'utf8')
-    
+
     if (!config.includes('apps/*')) {
       throw new Error('Workspace config missing apps/* pattern')
     }
-    
+
     if (!config.includes('packages/*')) {
       throw new Error('Workspace config missing packages/* pattern')
     }
@@ -269,9 +268,9 @@ class PostMigrationValidator {
   // Build system tests
   private async testDependencyInstallation(): Promise<boolean> {
     try {
-      execSync('pnpm install --frozen-lockfile', { 
+      execSync('pnpm install --frozen-lockfile', {
         stdio: 'pipe',
-        timeout: 120000 // 2 minutes timeout
+        timeout: 120000, // 2 minutes timeout
       })
       return true
     } catch (error) {
@@ -281,16 +280,16 @@ class PostMigrationValidator {
 
   private async testSharedPackageBuild(): Promise<boolean> {
     try {
-      execSync('pnpm --filter @chatgpt-web/shared build', { 
+      execSync('pnpm --filter @chatgpt-web/shared build', {
         stdio: 'pipe',
-        timeout: 60000
+        timeout: 60000,
       })
-      
+
       // Check if build output exists
       if (!existsSync('packages/shared/dist')) {
         throw new Error('Shared package build output not found')
       }
-      
+
       return true
     } catch (error) {
       throw new Error(`Shared package build failed: ${error}`)
@@ -299,16 +298,16 @@ class PostMigrationValidator {
 
   private async testApiPackageBuild(): Promise<boolean> {
     try {
-      execSync('pnpm --filter @chatgpt-web/api build', { 
+      execSync('pnpm --filter @chatgpt-web/api build', {
         stdio: 'pipe',
-        timeout: 60000
+        timeout: 60000,
       })
-      
+
       // Check if build output exists
       if (!existsSync('apps/api/build')) {
         throw new Error('API package build output not found')
       }
-      
+
       return true
     } catch (error) {
       throw new Error(`API package build failed: ${error}`)
@@ -317,16 +316,16 @@ class PostMigrationValidator {
 
   private async testWebPackageBuild(): Promise<boolean> {
     try {
-      execSync('pnpm --filter @chatgpt-web/web build', { 
+      execSync('pnpm --filter @chatgpt-web/web build', {
         stdio: 'pipe',
-        timeout: 120000
+        timeout: 120000,
       })
-      
+
       // Check if build output exists
       if (!existsSync('apps/web/dist')) {
         throw new Error('Web package build output not found')
       }
-      
+
       return true
     } catch (error) {
       throw new Error(`Web package build failed: ${error}`)
@@ -335,9 +334,9 @@ class PostMigrationValidator {
 
   private async testTurborepooBuild(): Promise<boolean> {
     try {
-      execSync('pnpm build', { 
+      execSync('pnpm build', {
         stdio: 'pipe',
-        timeout: 180000 // 3 minutes for full build
+        timeout: 180000, // 3 minutes for full build
       })
       return true
     } catch (error) {
@@ -348,10 +347,7 @@ class PostMigrationValidator {
   // Dependency tests
   private async testCrossPackageImports(): Promise<boolean> {
     // Test that packages can import from shared
-    const testFiles = [
-      'apps/web/src',
-      'apps/api/src'
-    ]
+    const testFiles = ['apps/web/src', 'apps/api/src']
 
     for (const dir of testFiles) {
       if (!existsSync(dir)) continue
@@ -377,7 +373,9 @@ class PostMigrationValidator {
     // Check if shared package exports types
     if (!existsSync('packages/shared/src/index.ts')) {
       // Create a basic index.ts if it doesn't exist
-      writeFileSync('packages/shared/src/index.ts', `
+      writeFileSync(
+        'packages/shared/src/index.ts',
+        `
 // Shared types and utilities
 export interface ChatMessage {
   id: string
@@ -395,7 +393,8 @@ export interface ApiResponse<T> {
 export const validateApiKey = (key: string): boolean => {
   return key.startsWith('sk-') && key.length > 20
 }
-`)
+`,
+      )
     }
 
     return true
@@ -414,9 +413,9 @@ export const validateApiKey = (key: string): boolean => {
   // Development workflow tests
   private async testTypeChecking(): Promise<boolean> {
     try {
-      execSync('pnpm type-check', { 
+      execSync('pnpm type-check', {
         stdio: 'pipe',
-        timeout: 120000
+        timeout: 120000,
       })
       return true
     } catch (error) {
@@ -426,9 +425,9 @@ export const validateApiKey = (key: string): boolean => {
 
   private async testLinting(): Promise<boolean> {
     try {
-      execSync('pnpm lint', { 
+      execSync('pnpm lint', {
         stdio: 'pipe',
-        timeout: 60000
+        timeout: 60000,
       })
       return true
     } catch (error) {
@@ -440,9 +439,9 @@ export const validateApiKey = (key: string): boolean => {
 
   private async testTestExecution(): Promise<boolean> {
     try {
-      execSync('pnpm test --run', { 
+      execSync('pnpm test --run', {
         stdio: 'pipe',
-        timeout: 120000
+        timeout: 120000,
       })
       return true
     } catch (error) {
@@ -456,7 +455,7 @@ export const validateApiKey = (key: string): boolean => {
     // This is a complex test that would require starting servers and checking they respond
     // For now, we'll just check that the dev scripts exist
     const packages = ['apps/web/package.json', 'apps/api/package.json']
-    
+
     for (const pkgPath of packages) {
       if (existsSync(pkgPath)) {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
@@ -477,9 +476,9 @@ export const validateApiKey = (key: string): boolean => {
 
     try {
       // Test Docker build (dry run)
-      execSync('docker build --dry-run .', { 
+      execSync('docker build --dry-run .', {
         stdio: 'pipe',
-        timeout: 30000
+        timeout: 30000,
       })
       return true
     } catch (error) {
@@ -493,19 +492,15 @@ export const validateApiKey = (key: string): boolean => {
     try {
       // Clean previous builds
       execSync('pnpm clean', { stdio: 'pipe' })
-      
+
       // Run production build
-      execSync('pnpm build', { 
+      execSync('pnpm build', {
         stdio: 'pipe',
-        timeout: 180000
+        timeout: 180000,
       })
 
       // Verify build outputs
-      const buildOutputs = [
-        'packages/shared/dist',
-        'apps/api/build',
-        'apps/web/dist'
-      ]
+      const buildOutputs = ['packages/shared/dist', 'apps/api/build', 'apps/web/dist']
 
       for (const output of buildOutputs) {
         if (!existsSync(output)) {
@@ -527,13 +522,13 @@ export const validateApiKey = (key: string): boolean => {
 
     // Calculate category statistics
     const categories: Record<string, { passed: number; total: number }> = {}
-    
+
     for (const test of this.tests) {
       if (!categories[test.category]) {
         categories[test.category] = { passed: 0, total: 0 }
       }
       categories[test.category].total++
-      
+
       const result = this.results.find(r => r.name === test.name)
       if (result?.passed) {
         categories[test.category].passed++
@@ -574,7 +569,7 @@ export const validateApiKey = (key: string): boolean => {
       failed,
       skipped,
       results: this.results,
-      categories
+      categories,
     }
   }
 }
@@ -582,10 +577,10 @@ export const validateApiKey = (key: string): boolean => {
 // CLI interface
 async function main() {
   const validator = new PostMigrationValidator()
-  
+
   try {
     const report = await validator.validate()
-    
+
     if (!report.passed) {
       console.log('\n⚠️  Post-migration validation failed. Please address the issues above.')
       process.exit(1)

@@ -2,7 +2,7 @@
 
 /**
  * Configuration Update Script
- * 
+ *
  * This script automates the update of configuration files for the monorepo structure:
  * - Updates TypeScript configurations with project references
  * - Updates ESLint and Prettier configurations
@@ -45,85 +45,85 @@ class ConfigurationUpdater {
     this.updates.push({
       file: 'tsconfig.base.json',
       updater: this.updateBaseTsConfig.bind(this),
-      description: 'Update base TypeScript configuration for monorepo'
+      description: 'Update base TypeScript configuration for monorepo',
     })
 
     this.updates.push({
       file: 'apps/web/tsconfig.json',
       updater: this.updateWebTsConfig.bind(this),
-      description: 'Update web app TypeScript configuration'
+      description: 'Update web app TypeScript configuration',
     })
 
     this.updates.push({
-      file: 'apps/api/tsconfig.json', 
+      file: 'apps/api/tsconfig.json',
       updater: this.updateApiTsConfig.bind(this),
-      description: 'Update API TypeScript configuration'
+      description: 'Update API TypeScript configuration',
     })
 
     this.updates.push({
       file: 'packages/shared/tsconfig.json',
       updater: this.updateSharedTsConfig.bind(this),
-      description: 'Create shared package TypeScript configuration'
+      description: 'Create shared package TypeScript configuration',
     })
 
     // Build configurations
     this.updates.push({
       file: 'turbo.json',
       updater: this.updateTurboConfig.bind(this),
-      description: 'Update Turborepo configuration'
+      description: 'Update Turborepo configuration',
     })
 
     this.updates.push({
       file: 'packages/shared/tsup.config.ts',
       updater: this.createSharedTsupConfig.bind(this),
-      description: 'Create shared package build configuration'
+      description: 'Create shared package build configuration',
     })
 
     // Package configurations
     this.updates.push({
       file: 'apps/web/vite.config.ts',
       updater: this.updateViteConfig.bind(this),
-      description: 'Update Vite configuration for monorepo'
+      description: 'Update Vite configuration for monorepo',
     })
 
     // ESLint configurations
     this.updates.push({
       file: 'packages/config/eslint.config.js',
       updater: this.createSharedEslintConfig.bind(this),
-      description: 'Create shared ESLint configuration'
+      description: 'Create shared ESLint configuration',
     })
 
     // Docker configuration
     this.updates.push({
       file: 'Dockerfile',
       updater: this.updateDockerfile.bind(this),
-      description: 'Update Dockerfile for monorepo structure'
+      description: 'Update Dockerfile for monorepo structure',
     })
 
     // Kiro steering documents
     this.updates.push({
       file: '.kiro/steering/structure.md',
       updater: this.updateKiroStructure.bind(this),
-      description: 'Update Kiro structure guidance'
+      description: 'Update Kiro structure guidance',
     })
 
     this.updates.push({
       file: '.kiro/steering/tech.md',
       updater: this.updateKiroTech.bind(this),
-      description: 'Update Kiro tech guidance'
+      description: 'Update Kiro tech guidance',
     })
 
     // Serena memory files
     this.updates.push({
       file: '.serena/memories/project_overview.md',
       updater: this.updateSerenaProjectOverview.bind(this),
-      description: 'Update Serena project overview'
+      description: 'Update Serena project overview',
     })
 
     this.updates.push({
       file: '.serena/memories/architecture_patterns.md',
       updater: this.updateSerenaArchitecture.bind(this),
-      description: 'Update Serena architecture patterns'
+      description: 'Update Serena architecture patterns',
     })
   }
 
@@ -132,19 +132,18 @@ class ConfigurationUpdater {
 
     try {
       let content = ''
-      
+
       if (existsSync(update.file)) {
         content = readFileSync(update.file, 'utf8')
       }
 
       const updatedContent = update.updater(content)
-      
+
       // Ensure directory exists
       mkdirSync(dirname(update.file), { recursive: true })
-      
+
       writeFileSync(update.file, updatedContent)
       this.log.push(`✅ Updated: ${update.file}`)
-      
     } catch (error) {
       this.log.push(`❌ Failed to update ${update.file}: ${error}`)
       console.error(`   Error: ${error}`)
@@ -172,13 +171,9 @@ class ConfigurationUpdater {
         noImplicitReturns: true,
         declaration: true,
         declarationMap: true,
-        composite: true
+        composite: true,
       },
-      references: [
-        { path: './packages/shared' },
-        { path: './apps/web' },
-        { path: './apps/api' }
-      ]
+      references: [{ path: './packages/shared' }, { path: './apps/web' }, { path: './apps/api' }],
     }
 
     return JSON.stringify(config, null, 2)
@@ -190,19 +185,12 @@ class ConfigurationUpdater {
       compilerOptions: {
         baseUrl: '.',
         paths: {
-          '@/*': ['./src/*']
+          '@/*': ['./src/*'],
         },
-        types: ['vite/client', 'node']
+        types: ['vite/client', 'node'],
       },
-      include: [
-        'src/**/*.ts',
-        'src/**/*.d.ts',
-        'src/**/*.tsx',
-        'src/**/*.vue'
-      ],
-      references: [
-        { path: '../../packages/shared' }
-      ]
+      include: ['src/**/*.ts', 'src/**/*.d.ts', 'src/**/*.tsx', 'src/**/*.vue'],
+      references: [{ path: '../../packages/shared' }],
     }
 
     return JSON.stringify(config, null, 2)
@@ -219,18 +207,11 @@ class ConfigurationUpdater {
         esModuleInterop: true,
         outDir: './build',
         rootDir: './src',
-        types: ['node']
+        types: ['node'],
       },
-      include: [
-        'src/**/*.ts'
-      ],
-      exclude: [
-        'node_modules',
-        'build'
-      ],
-      references: [
-        { path: '../../packages/shared' }
-      ]
+      include: ['src/**/*.ts'],
+      exclude: ['node_modules', 'build'],
+      references: [{ path: '../../packages/shared' }],
     }
 
     return JSON.stringify(config, null, 2)
@@ -244,15 +225,10 @@ class ConfigurationUpdater {
         rootDir: './src',
         declaration: true,
         declarationMap: true,
-        composite: true
+        composite: true,
       },
-      include: [
-        'src/**/*.ts'
-      ],
-      exclude: [
-        'node_modules',
-        'dist'
-      ]
+      include: ['src/**/*.ts'],
+      exclude: ['node_modules', 'dist'],
     }
 
     return JSON.stringify(config, null, 2)
@@ -264,27 +240,27 @@ class ConfigurationUpdater {
       pipeline: {
         build: {
           dependsOn: ['^build'],
-          outputs: ['dist/**', 'build/**', '.next/**']
+          outputs: ['dist/**', 'build/**', '.next/**'],
         },
         dev: {
           cache: false,
-          persistent: true
+          persistent: true,
         },
         lint: {
-          outputs: []
+          outputs: [],
         },
         test: {
           dependsOn: ['^build'],
-          outputs: []
+          outputs: [],
         },
         'type-check': {
           dependsOn: ['^build'],
-          outputs: []
+          outputs: [],
         },
         clean: {
-          cache: false
-        }
-      }
+          cache: false,
+        },
+      },
     }
 
     return JSON.stringify(config, null, 2)
@@ -320,11 +296,13 @@ export default defineConfig({
             '@': resolve(__dirname, 'src'),
             '@chatgpt-web/shared': resolve(__dirname, '../../packages/shared/src')
           }
-        }`
+        }`,
       )
     }
 
-    return updatedContent || `import { defineConfig } from 'vite'
+    return (
+      updatedContent ||
+      `import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
@@ -341,6 +319,7 @@ export default defineConfig({
   }
 })
 `
+    )
   }
 
   private createSharedEslintConfig(content: string): string {
@@ -1056,7 +1035,7 @@ This architecture provides a robust, scalable foundation that enables:
 // CLI interface
 async function main() {
   const updater = new ConfigurationUpdater()
-  
+
   try {
     await updater.updateAll()
   } catch (error) {
