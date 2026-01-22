@@ -10,12 +10,7 @@ import type {
 	ConversationResponse,
 } from '@chatgpt-web/shared'
 import { toPng } from 'html-to-image'
-import {
-	NButton,
-	NInput,
-	useDialog,
-	useMessage,
-} from 'naive-ui'
+import { NButton, NInput, useDialog, useMessage } from 'naive-ui'
 import type { Ref } from 'vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -68,6 +63,15 @@ const inputRef = ref<Ref | null>(null)
 dataSources.value.forEach((item: Chat, index: number) => {
 	if (item.loading) updateChatSome(+uuid, index, { loading: false })
 })
+
+function isAbortError(error: unknown): boolean {
+	if (!(error instanceof Error)) return false
+	return (
+		error.name === 'AbortError' ||
+		error.message === 'canceled' ||
+		error.message.toLowerCase().includes('aborted')
+	)
+}
 
 function handleSubmit() {
 	onConversation()
@@ -169,7 +173,7 @@ async function onConversation() {
 	} catch (error: unknown) {
 		const errorMessage = (error as Error)?.message ?? t('common.wrong')
 
-		if (error instanceof Error && error.message === 'canceled') {
+		if (isAbortError(error)) {
 			updateChatSome(+uuid, dataSources.value.length - 1, {
 				loading: false,
 			})
@@ -282,7 +286,7 @@ async function onRegenerate(index: number) {
 		}
 		await fetchChatAPIOnce()
 	} catch (error: unknown) {
-		if ((error as Error).message === 'canceled') {
+		if (isAbortError(error)) {
 			updateChatSome(+uuid, index, {
 				loading: false,
 			})
@@ -413,7 +417,7 @@ const footerClass = computed(() => {
 			'pr-3',
 			'overflow-hidden',
 		]
-}
+	}
 	return classes
 })
 
@@ -484,17 +488,28 @@ onUnmounted(() => {
 		<footer :class="footerClass">
 			<div class="w-full max-w-screen-xl m-auto">
 				<div class="flex items-center justify-between space-x-2">
-					<HoverButton v-if="!isMobile" :tooltip="t('chat.clearChatTooltip')" @click="handleClear">
+					<HoverButton
+						v-if="!isMobile"
+						:tooltip="t('chat.clearChatTooltip')"
+						@click="handleClear"
+					>
 						<span class="text-xl text-[#4f555e] dark:text-white">
 							<SvgIcon icon="ri:delete-bin-line" />
 						</span>
 					</HoverButton>
-					<HoverButton v-if="!isMobile" :tooltip="t('chat.exportImageTooltip')" @click="handleExport">
+					<HoverButton
+						v-if="!isMobile"
+						:tooltip="t('chat.exportImageTooltip')"
+						@click="handleExport"
+					>
 						<span class="text-xl text-[#4f555e] dark:text-white">
 							<SvgIcon icon="ri:download-2-line" />
 						</span>
 					</HoverButton>
-					<HoverButton :tooltip="t('chat.contextModeTooltip')" @click="toggleUsingContext">
+					<HoverButton
+						:tooltip="t('chat.contextModeTooltip')"
+						@click="toggleUsingContext"
+					>
 						<span
 							class="text-xl"
 							:class="{
@@ -523,7 +538,7 @@ onUnmounted(() => {
 								<SvgIcon icon="ri:send-plane-fill" />
 							</span>
 						</template>
-						<span v-if="!isMobile" class="ml-1">{{ t('chat.send') }}</span>
+						<span v-if="!isMobile" class="ml-1">{{ t("chat.send") }}</span>
 					</NButton>
 				</div>
 			</div>

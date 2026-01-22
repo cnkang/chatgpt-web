@@ -6,7 +6,7 @@ import { NAvatar } from 'naive-ui'
 import { computed } from 'vue'
 
 interface Props {
-	image?: boolean
+	image?: boolean;
 }
 
 // Use reactive props destructuring (Vue 3.5+ feature)

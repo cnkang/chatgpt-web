@@ -4,10 +4,10 @@ import { nextTick, ref } from 'vue'
 type ScrollElement = HTMLDivElement | null
 
 interface ScrollReturn {
-	scrollRef: Ref<ScrollElement>
-	scrollToBottom: () => Promise<void>
-	scrollToTop: () => Promise<void>
-	scrollToBottomIfAtBottom: () => Promise<void>
+	scrollRef: Ref<ScrollElement>;
+	scrollToBottom: () => Promise<void>;
+	scrollToTop: () => Promise<void>;
+	scrollToBottomIfAtBottom: () => Promise<void>;
 }
 
 export function useScroll(): ScrollReturn {
@@ -15,7 +15,8 @@ export function useScroll(): ScrollReturn {
 
 	const scrollToBottom = async () => {
 		await nextTick()
-		if (scrollRef.value) scrollRef.value.scrollTop = scrollRef.value.scrollHeight
+		if (scrollRef.value)
+			scrollRef.value.scrollTop = scrollRef.value.scrollHeight
 	}
 
 	const scrollToTop = async () => {
@@ -28,8 +29,11 @@ export function useScroll(): ScrollReturn {
 		if (scrollRef.value) {
 			const threshold = 100 // Threshold, indicating the distance threshold to the bottom of the scroll bar.
 			const distanceToBottom =
-				scrollRef.value.scrollHeight - scrollRef.value.scrollTop - scrollRef.value.clientHeight
-			if (distanceToBottom <= threshold) scrollRef.value.scrollTop = scrollRef.value.scrollHeight
+				scrollRef.value.scrollHeight -
+				scrollRef.value.scrollTop -
+				scrollRef.value.clientHeight
+			if (distanceToBottom <= threshold)
+				scrollRef.value.scrollTop = scrollRef.value.scrollHeight
 		}
 	}
 
