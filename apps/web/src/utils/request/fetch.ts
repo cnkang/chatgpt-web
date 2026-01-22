@@ -6,27 +6,27 @@ import { useAuthStore } from '@/store'
  */
 
 export interface FetchProgressEvent {
-	loaded: number
-	total?: number
-	lengthComputable: boolean
-	responseText?: string // For streaming compatibility with existing code
+	loaded: number;
+	total?: number;
+	lengthComputable: boolean;
+	responseText?: string; // For streaming compatibility with existing code
 }
 
 export interface FetchOption {
-	url: string
-	data?: unknown
-	method?: string
-	headers?: Record<string, string>
-	onDownloadProgress?: (progressEvent: FetchProgressEvent) => void
-	signal?: AbortSignal
-	beforeRequest?: () => void
-	afterRequest?: () => void
+	url: string;
+	data?: unknown;
+	method?: string;
+	headers?: Record<string, string>;
+	onDownloadProgress?: (progressEvent: FetchProgressEvent) => void;
+	signal?: AbortSignal;
+	beforeRequest?: () => void;
+	afterRequest?: () => void;
 }
 
 export interface Response<T = unknown> {
-	data: T
-	message: string | null
-	status: string
+	data: T;
+	message: string | null;
+	status: string;
 }
 
 /**
@@ -40,13 +40,45 @@ async function fetchWithStreaming<T>(
 	const response = await fetch(url, options)
 
 	if (!response.ok) {
-		throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+		const rawText = await response.text()
+		let errorPayload: unknown = null
+
+		if (rawText) {
+			try {
+				errorPayload = JSON.parse(rawText)
+			} catch {
+				// Fallback to plain text payload
+			}
+		}
+
+		if (!errorPayload) {
+			errorPayload = {
+				data: null,
+				message: rawText || response.statusText,
+				status: 'Error',
+			}
+		}
+
+		if (response.status === 401 || response.status === 403) {
+			return errorPayload as Response<T>
+		}
+
+		const message =
+			typeof errorPayload === 'object' &&
+			errorPayload !== null &&
+			'message' in (errorPayload as Record<string, unknown>)
+				? String((errorPayload as Record<string, unknown>).message)
+				: `HTTP ${response.status}: ${response.statusText}`
+
+		throw new Error(message)
 	}
 
 	// Handle streaming responses (like chat completions)
 	if (onProgress && response.body) {
 		const contentLength = response.headers.get('content-length')
-		const total = contentLength ? Number.parseInt(contentLength, 10) : undefined
+		const total = contentLength
+			? Number.parseInt(contentLength, 10)
+			: undefined
 		let loaded = 0
 		let responseText = ''
 
@@ -77,7 +109,11 @@ async function fetchWithStreaming<T>(
 				return JSON.parse(responseText)
 			} catch {
 				// If not valid JSON, return as text response
-				return { data: responseText, message: null, status: 'Success' } as Response<T>
+				return {
+					data: responseText,
+					message: null,
+					status: 'Success',
+				} as Response<T>
 			}
 		} finally {
 			reader.releaseLock()
@@ -165,9 +201,15 @@ function http<T = unknown>({
 		})
 		const queryString = params.toString()
 		const separator = fullUrl.includes('?') ? '&' : '?'
-		const urlWithParams = queryString ? `${fullUrl}${separator}${queryString}` : fullUrl
+		const urlWithParams = queryString
+			? `${fullUrl}${separator}${queryString}`
+			: fullUrl
 
-		return fetchWithStreaming<T>(urlWithParams, requestOptions, onDownloadProgress)
+		return fetchWithStreaming<T>(
+			urlWithParams,
+			requestOptions,
+			onDownloadProgress,
+		)
 			.then(successHandler, failHandler)
 			.finally(() => afterRequest?.())
 	}
