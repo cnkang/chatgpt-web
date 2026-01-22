@@ -1,6 +1,6 @@
 interface StorageData<T = unknown> {
-	data: T
-	expire: number | null
+	data: T;
+	expire: number | null;
 }
 
 export function createLocalStorage(options?: { expire?: number | null }) {
