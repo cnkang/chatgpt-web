@@ -92,7 +92,10 @@ class WorkspaceWatcher {
     log('Press Ctrl+C to stop', colors.cyan)
   }
 
-  private watchPackage(packagePath: string, callback: (event: string, filename: string | null) => void): void {
+  private watchPackage(
+    packagePath: string,
+    callback: (event: string, filename: string | null) => void,
+  ): void {
     const srcPath = join(packagePath, 'src')
 
     try {
@@ -177,15 +180,15 @@ class WorkspaceWatcher {
 
   stop(): void {
     log('🛑 Stopping workspace watcher...', colors.yellow)
-    
+
     // Clear all timers
     this.debounceTimers.forEach(timer => clearTimeout(timer))
     this.debounceTimers.clear()
-    
+
     // Close all watchers
     this.watchers.forEach(watcher => watcher.close())
     this.watchers.clear()
-    
+
     log('✅ Workspace watcher stopped', colors.green)
   }
 }

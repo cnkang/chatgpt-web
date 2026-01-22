@@ -2,7 +2,7 @@
 
 /**
  * Migration Validation Script
- * 
+ *
  * This script validates the monorepo migration by checking:
  * - Package structure integrity
  * - Dependency resolution
@@ -56,14 +56,14 @@ class MigrationValidator {
     const expectedStructure = [
       'apps/web/src',
       'apps/web/package.json',
-      'apps/api/src', 
+      'apps/api/src',
       'apps/api/package.json',
       'packages/shared/src',
       'packages/shared/package.json',
       'packages/docs/package.json',
       'packages/config/package.json',
       'pnpm-workspace.yaml',
-      'turbo.json'
+      'turbo.json',
     ]
 
     const missing: string[] = []
@@ -79,10 +79,11 @@ class MigrationValidator {
 
     this.results.packageStructure = {
       passed: missing.length === 0,
-      message: missing.length === 0 
-        ? 'All expected packages and files are present'
-        : `Missing ${missing.length} expected files/directories`,
-      details: missing.length > 0 ? [`Missing: ${missing.join(', ')}`] : undefined
+      message:
+        missing.length === 0
+          ? 'All expected packages and files are present'
+          : `Missing ${missing.length} expected files/directories`,
+      details: missing.length > 0 ? [`Missing: ${missing.join(', ')}`] : undefined,
     }
   }
 
@@ -92,10 +93,10 @@ class MigrationValidator {
     const packagePaths = [
       'package.json',
       'apps/web/package.json',
-      'apps/api/package.json', 
+      'apps/api/package.json',
       'packages/shared/package.json',
       'packages/docs/package.json',
-      'packages/config/package.json'
+      'packages/config/package.json',
     ]
 
     const issues: string[] = []
@@ -109,7 +110,7 @@ class MigrationValidator {
 
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
-        
+
         // Validate package name follows convention
         if (pkgPath !== 'package.json' && !pkg.name?.startsWith('@chatgpt-web/')) {
           issues.push(`${pkgPath}: Package name should start with @chatgpt-web/`)
@@ -132,10 +133,11 @@ class MigrationValidator {
 
     this.results.packageJsonFiles = {
       passed: issues.length === 0,
-      message: issues.length === 0
-        ? `All ${validPackages.length} package.json files are valid`
-        : `Found ${issues.length} issues in package.json files`,
-      details: issues.length > 0 ? issues : undefined
+      message:
+        issues.length === 0
+          ? `All ${validPackages.length} package.json files are valid`
+          : `Found ${issues.length} issues in package.json files`,
+      details: issues.length > 0 ? issues : undefined,
     }
   }
 
@@ -171,17 +173,17 @@ class MigrationValidator {
       } catch {
         // pnpm list might fail if dependencies aren't installed yet
       }
-
     } catch (error) {
       issues.push(`Dependency validation error: ${error}`)
     }
 
     this.results.dependencyResolution = {
       passed: issues.length === 0,
-      message: issues.length === 0
-        ? 'All dependencies resolve correctly'
-        : `Found ${issues.length} dependency issues`,
-      details: issues.length > 0 ? issues : undefined
+      message:
+        issues.length === 0
+          ? 'All dependencies resolve correctly'
+          : `Found ${issues.length} dependency issues`,
+      details: issues.length > 0 ? issues : undefined,
     }
   }
 
@@ -196,15 +198,15 @@ class MigrationValidator {
 
       try {
         const files = await glob(`${pkg}/src/**/*.{ts,js,vue}`, { ignore: 'node_modules/**' })
-        
+
         for (const file of files) {
           const content = readFileSync(file, 'utf8')
-          
+
           // Check for problematic import patterns
           const problematicImports = [
-            /from\s+['"]\.\.\/\.\.\/\.\.\/packages\/shared['"]/g,  // Deep relative imports to shared
-            /from\s+['"]\.\.\/\.\.\/service['"]/g,                 // Old service imports
-            /from\s+['"]\.\.\/\.\.\/src['"]/g,                     // Old src imports
+            /from\s+['"]\.\.\/\.\.\/\.\.\/packages\/shared['"]/g, // Deep relative imports to shared
+            /from\s+['"]\.\.\/\.\.\/service['"]/g, // Old service imports
+            /from\s+['"]\.\.\/\.\.\/src['"]/g, // Old src imports
           ]
 
           for (const pattern of problematicImports) {
@@ -228,10 +230,11 @@ class MigrationValidator {
 
     this.results.importPaths = {
       passed: issues.length === 0,
-      message: issues.length === 0
-        ? 'All import paths are correct'
-        : `Found ${issues.length} import path issues`,
-      details: issues.length > 0 ? issues : undefined
+      message:
+        issues.length === 0
+          ? 'All import paths are correct'
+          : `Found ${issues.length} import path issues`,
+      details: issues.length > 0 ? issues : undefined,
     }
   }
 
@@ -244,7 +247,7 @@ class MigrationValidator {
     if (existsSync('turbo.json')) {
       try {
         const turboConfig = JSON.parse(readFileSync('turbo.json', 'utf8'))
-        
+
         if (!turboConfig.pipeline) {
           issues.push('turbo.json missing pipeline configuration')
         } else {
@@ -278,17 +281,20 @@ class MigrationValidator {
 
     // Try to run build (dry run if possible)
     try {
-      execSync('pnpm build --dry-run 2>/dev/null || echo "Build check completed"', { stdio: 'pipe' })
+      execSync('pnpm build --dry-run 2>/dev/null || echo "Build check completed"', {
+        stdio: 'pipe',
+      })
     } catch (error) {
       // Don't fail validation if build fails - might be due to missing dependencies
     }
 
     this.results.buildSystem = {
       passed: issues.length === 0,
-      message: issues.length === 0
-        ? 'Build system configuration is valid'
-        : `Found ${issues.length} build system issues`,
-      details: issues.length > 0 ? issues : undefined
+      message:
+        issues.length === 0
+          ? 'Build system configuration is valid'
+          : `Found ${issues.length} build system issues`,
+      details: issues.length > 0 ? issues : undefined,
     }
   }
 
@@ -302,7 +308,7 @@ class MigrationValidator {
       'eslint.config.js',
       'packages/config/eslint.config.js',
       'apps/web/eslint.config.js',
-      'apps/api/eslint.config.js'
+      'apps/api/eslint.config.js',
     ]
 
     let eslintConfigFound = false
@@ -318,11 +324,7 @@ class MigrationValidator {
     }
 
     // Check Prettier configuration
-    const prettierConfigs = [
-      '.prettierrc',
-      'packages/config/.prettierrc',
-      'apps/web/.prettierrc'
-    ]
+    const prettierConfigs = ['.prettierrc', 'packages/config/.prettierrc', 'apps/web/.prettierrc']
 
     let prettierConfigFound = false
     for (const config of prettierConfigs) {
@@ -347,10 +349,11 @@ class MigrationValidator {
 
     this.results.configurationConsistency = {
       passed: issues.length === 0,
-      message: issues.length === 0
-        ? 'Configuration files are consistent'
-        : `Found ${issues.length} configuration issues`,
-      details: issues.length > 0 ? issues : undefined
+      message:
+        issues.length === 0
+          ? 'Configuration files are consistent'
+          : `Found ${issues.length} configuration issues`,
+      details: issues.length > 0 ? issues : undefined,
     }
   }
 
@@ -364,7 +367,7 @@ class MigrationValidator {
       const expectedDocs = [
         'packages/docs/README.md',
         'packages/docs/CHANGELOG.md',
-        'packages/docs/CONTRIBUTING.md'
+        'packages/docs/CONTRIBUTING.md',
       ]
 
       for (const doc of expectedDocs) {
@@ -386,10 +389,11 @@ class MigrationValidator {
 
     this.results.documentationStructure = {
       passed: issues.length === 0,
-      message: issues.length === 0
-        ? 'Documentation structure is correct'
-        : `Found ${issues.length} documentation issues`,
-      details: issues.length > 0 ? issues : undefined
+      message:
+        issues.length === 0
+          ? 'Documentation structure is correct'
+          : `Found ${issues.length} documentation issues`,
+      details: issues.length > 0 ? issues : undefined,
     }
   }
 
@@ -403,10 +407,7 @@ class MigrationValidator {
       execSync('git status', { stdio: 'pipe' })
 
       // Check for moved files in git history
-      const movedFiles = [
-        'apps/web/src',
-        'apps/api/src'
-      ]
+      const movedFiles = ['apps/web/src', 'apps/api/src']
 
       for (const file of movedFiles) {
         if (existsSync(file)) {
@@ -418,17 +419,17 @@ class MigrationValidator {
           }
         }
       }
-
     } catch (error) {
       issues.push(`Git validation error: ${error}`)
     }
 
     this.results.gitHistory = {
       passed: issues.length === 0,
-      message: issues.length === 0
-        ? 'Git history validation passed'
-        : `Found ${issues.length} git history issues`,
-      details: issues.length > 0 ? issues : undefined
+      message:
+        issues.length === 0
+          ? 'Git history validation passed'
+          : `Found ${issues.length} git history issues`,
+      details: issues.length > 0 ? issues : undefined,
     }
   }
 
@@ -445,7 +446,7 @@ class MigrationValidator {
     for (const [key, result] of Object.entries(this.results)) {
       const status = result.passed ? '✅' : '❌'
       console.log(`${status} ${key}: ${result.message}`)
-      
+
       if (result.details && result.details.length > 0) {
         for (const detail of result.details) {
           console.log(`   ${detail}`)
@@ -465,8 +466,8 @@ class MigrationValidator {
       summary: {
         total: results.length,
         passed,
-        failed
-      }
+        failed,
+      },
     }
   }
 }
@@ -474,10 +475,10 @@ class MigrationValidator {
 // CLI interface
 async function main() {
   const validator = new MigrationValidator()
-  
+
   try {
     const report = await validator.validate()
-    
+
     if (!report.overall) {
       console.log('\n⚠️  Migration validation failed. Please address the issues above.')
       process.exit(1)

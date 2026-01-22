@@ -2,7 +2,7 @@
 
 /**
  * Migration Rollback Script
- * 
+ *
  * This script provides rollback capability for the monorepo migration:
  * - Restores files from backup
  * - Reverts git changes
@@ -49,14 +49,13 @@ class MigrationRollback {
       await this.validateRollbackPreconditions()
       await this.planRollbackActions()
       await this.executeRollbackActions()
-      
+
       if (this.options.validateRollback) {
         await this.validateRollbackCompletion()
       }
 
       console.log('\n✅ Migration rollback completed successfully!')
       this.printSummary()
-
     } catch (error) {
       console.error('\n❌ Rollback failed:', error)
       throw error
@@ -123,9 +122,9 @@ class MigrationRollback {
     }
 
     // Find all files in backup
-    const backupFiles = await glob('**/*', { 
+    const backupFiles = await glob('**/*', {
       cwd: this.backupDir,
-      nodir: true 
+      nodir: true,
     })
 
     for (const file of backupFiles) {
@@ -136,7 +135,7 @@ class MigrationRollback {
         type: 'restore',
         source: backupPath,
         target: targetPath,
-        description: `Restore ${file} from backup`
+        description: `Restore ${file} from backup`,
       })
     }
   }
@@ -145,22 +144,24 @@ class MigrationRollback {
     try {
       // Get list of files that were moved/added during migration
       const gitLog = execSync('git log --oneline --name-status -10', { encoding: 'utf8' })
-      
+
       // Look for migration-related commits
-      const migrationCommits = gitLog.split('\n').filter(line => 
-        line.includes('migration') || 
-        line.includes('monorepo') ||
-        line.includes('move') ||
-        line.includes('migrate')
-      )
+      const migrationCommits = gitLog
+        .split('\n')
+        .filter(
+          line =>
+            line.includes('migration') ||
+            line.includes('monorepo') ||
+            line.includes('move') ||
+            line.includes('migrate'),
+        )
 
       if (migrationCommits.length > 0) {
         this.actions.push({
           type: 'git-revert',
-          description: 'Revert migration commits using git'
+          description: 'Revert migration commits using git',
         })
       }
-
     } catch (error) {
       this.log(`Git revert planning failed: ${error}`)
     }
@@ -173,7 +174,7 @@ class MigrationRollback {
       'apps/api',
       'packages/shared',
       'packages/docs',
-      'packages/config'
+      'packages/config',
     ]
 
     for (const dir of dirsToRemove) {
@@ -181,7 +182,7 @@ class MigrationRollback {
         this.actions.push({
           type: 'remove',
           target: dir,
-          description: `Remove migrated directory: ${dir}`
+          description: `Remove migrated directory: ${dir}`,
         })
       }
     }
@@ -191,7 +192,7 @@ class MigrationRollback {
       '.migration-backup',
       'apps',
       'packages/shared/tsup.config.ts',
-      'packages/config/eslint.config.js'
+      'packages/config/eslint.config.js',
     ]
 
     for (const file of filesToRemove) {
@@ -199,7 +200,7 @@ class MigrationRollback {
         this.actions.push({
           type: 'remove',
           target: file,
-          description: `Remove migration artifact: ${file}`
+          description: `Remove migration artifact: ${file}`,
         })
       }
     }
@@ -226,22 +227,21 @@ class MigrationRollback {
         case 'restore':
           await this.restoreFile(action.source!, action.target!)
           break
-        
+
         case 'remove':
           await this.removeFileOrDir(action.target!)
           break
-        
+
         case 'git-revert':
           await this.gitRevert()
           break
-        
+
         case 'cleanup':
           await this.cleanup(action.target!)
           break
       }
 
       this.log(`✅ Completed: ${action.description}`)
-
     } catch (error) {
       this.log(`❌ Failed: ${action.description} - ${error}`)
       throw error
@@ -290,11 +290,7 @@ class MigrationRollback {
     const issues: string[] = []
 
     // Check that original structure is restored
-    const originalFiles = [
-      'src/',
-      'service/',
-      'package.json'
-    ]
+    const originalFiles = ['src/', 'service/', 'package.json']
 
     for (const file of originalFiles) {
       if (!existsSync(file)) {
@@ -308,7 +304,7 @@ class MigrationRollback {
       'apps/api',
       'packages/shared',
       'packages/docs',
-      'packages/config'
+      'packages/config',
     ]
 
     for (const artifact of migrationArtifacts) {
@@ -349,7 +345,7 @@ class MigrationRollback {
     console.log(`Backup used: ${this.options.useBackup}`)
     console.log(`Git revert used: ${this.options.useGit}`)
     console.log(`Artifacts cleaned: ${this.options.cleanupArtifacts}`)
-    
+
     console.log('\n📝 Rollback Log:')
     for (const logEntry of this.log) {
       console.log(`   ${logEntry}`)
@@ -364,13 +360,13 @@ class MigrationRollback {
 // CLI interface
 async function main() {
   const args = process.argv.slice(2)
-  
+
   const options: RollbackOptions = {
     useBackup: !args.includes('--no-backup'),
     useGit: !args.includes('--no-git'),
     cleanupArtifacts: !args.includes('--no-cleanup'),
     validateRollback: !args.includes('--no-validation'),
-    dryRun: args.includes('--dry-run')
+    dryRun: args.includes('--dry-run'),
   }
 
   console.log('Migration Rollback Script')
@@ -388,13 +384,13 @@ async function main() {
     console.log('⚠️  All migration changes will be lost!')
     console.log('⚠️  Make sure you have committed any important changes.')
     console.log('')
-    
+
     // In a real implementation, you'd want to add a confirmation prompt here
     // For now, we'll proceed with the rollback
   }
 
   const rollback = new MigrationRollback(options)
-  
+
   try {
     await rollback.rollback()
   } catch (error) {

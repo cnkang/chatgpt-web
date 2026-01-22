@@ -20,6 +20,7 @@ tsx migration-orchestrator.ts --skip-post-validation --no-backup
 ```
 
 **Options:**
+
 - `--dry-run`: Run without making actual changes
 - `--skip-validation`: Skip migration validation step
 - `--skip-config-update`: Skip configuration update step
@@ -44,6 +45,7 @@ tsx migrate-to-monorepo.ts --no-git-history
 ```
 
 **Features:**
+
 - Preserves git history during file moves
 - Creates backup before migration
 - Updates package.json files for monorepo structure
@@ -60,6 +62,7 @@ pnpm update-config
 ```
 
 **Updates:**
+
 - TypeScript configurations with project references
 - ESLint and Prettier configurations
 - Build tool configurations (Vite, tsup, Turborepo)
@@ -77,6 +80,7 @@ pnpm validate
 ```
 
 **Checks:**
+
 - Package structure integrity
 - Package.json file validity
 - Dependency resolution
@@ -96,6 +100,7 @@ pnpm validate:post
 ```
 
 **Tests:**
+
 - Package structure validation
 - Dependency installation
 - Build processes (shared, API, web packages)
@@ -118,6 +123,7 @@ tsx rollback-migration.ts --no-git --dry-run
 ```
 
 **Options:**
+
 - `--no-backup`: Don't use backup for restoration
 - `--no-git`: Don't use git for rollback
 - `--no-cleanup`: Don't clean up migration artifacts
@@ -198,11 +204,13 @@ pnpm rollback
 The migration includes comprehensive validation at multiple stages:
 
 ### Pre-Migration Validation
+
 - Git repository status
 - Required directories exist
 - No uncommitted changes (unless dry run)
 
 ### Migration Validation
+
 - Package structure integrity
 - Package.json file validity
 - Dependency resolution
@@ -210,6 +218,7 @@ The migration includes comprehensive validation at multiple stages:
 - Configuration consistency
 
 ### Post-Migration Validation
+
 - Build system functionality
 - Cross-package dependencies
 - Type checking
@@ -250,6 +259,7 @@ If migration fails:
 ### Dependencies
 
 All scripts use:
+
 - **Node.js 24+**: Required for modern features
 - **TypeScript**: Type-safe script development
 - **tsx**: TypeScript execution
@@ -266,6 +276,7 @@ All scripts use:
 ### Extensibility
 
 Scripts are designed to be:
+
 - **Modular**: Each script has a specific responsibility
 - **Configurable**: Options for different migration scenarios
 - **Testable**: Can be run in dry-run mode

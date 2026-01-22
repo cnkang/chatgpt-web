@@ -2,7 +2,7 @@
 
 /**
  * Migration Orchestrator Script
- * 
+ *
  * This script orchestrates the complete monorepo migration process:
  * - Runs pre-migration validation
  * - Executes file migration with git history preservation
@@ -60,14 +60,13 @@ class MigrationOrchestrator {
 
       console.log('\n🎉 Migration orchestration completed successfully!')
       this.printSummary()
-
     } catch (error) {
       console.error('\n💥 Migration orchestration failed:', error)
-      
+
       if (this.options.autoRollbackOnFailure) {
         await this.performRollback()
       }
-      
+
       throw error
     }
   }
@@ -79,7 +78,7 @@ class MigrationOrchestrator {
       description: 'Pre-migration validation and safety checks',
       execute: this.runPreValidation.bind(this),
       required: true,
-      rollbackOnFailure: false
+      rollbackOnFailure: false,
     })
 
     // Step 2: File migration
@@ -88,7 +87,7 @@ class MigrationOrchestrator {
       description: 'Migrate files to monorepo structure',
       execute: this.runFileMigration.bind(this),
       required: true,
-      rollbackOnFailure: true
+      rollbackOnFailure: true,
     })
 
     // Step 3: Configuration updates
@@ -97,7 +96,7 @@ class MigrationOrchestrator {
       description: 'Update configuration files for monorepo',
       execute: this.runConfigurationUpdate.bind(this),
       required: !this.options.skipConfigUpdate,
-      rollbackOnFailure: true
+      rollbackOnFailure: true,
     })
 
     // Step 4: Migration validation
@@ -106,7 +105,7 @@ class MigrationOrchestrator {
       description: 'Validate migration structure and dependencies',
       execute: this.runMigrationValidation.bind(this),
       required: !this.options.skipValidation,
-      rollbackOnFailure: false
+      rollbackOnFailure: false,
     })
 
     // Step 5: Post-migration validation
@@ -115,7 +114,7 @@ class MigrationOrchestrator {
       description: 'Comprehensive post-migration testing',
       execute: this.runPostValidation.bind(this),
       required: !this.options.skipPostValidation,
-      rollbackOnFailure: false
+      rollbackOnFailure: false,
     })
   }
 
@@ -132,31 +131,30 @@ class MigrationOrchestrator {
 
     try {
       await step.execute()
-      
+
       const duration = Date.now() - startTime
       this.completedSteps.push(step.name)
       this.log(`✅ Completed: ${step.name} (${duration}ms)`)
-      
-      console.log(`✅ Step completed successfully (${duration}ms)`)
 
+      console.log(`✅ Step completed successfully (${duration}ms)`)
     } catch (error) {
       const duration = Date.now() - startTime
       this.log(`❌ Failed: ${step.name} (${duration}ms) - ${error}`)
-      
+
       console.error(`❌ Step failed (${duration}ms):`, error)
-      
+
       if (step.rollbackOnFailure && this.options.autoRollbackOnFailure) {
         console.log('🔄 Initiating rollback due to step failure...')
         await this.performRollback()
       }
-      
+
       throw error
     }
   }
 
   private async runPreValidation(): Promise<void> {
     console.log('🔍 Running pre-migration validation...')
-    
+
     // Basic safety checks
     const { execSync } = await import('node:child_process')
     const { existsSync } = await import('node:fs')
@@ -196,7 +194,7 @@ class MigrationOrchestrator {
       dryRun: this.options.dryRun,
       preserveGitHistory: this.options.preserveGitHistory,
       createBackup: this.options.createBackup,
-      validateAfterMigration: false // We'll do this in a separate step
+      validateAfterMigration: false, // We'll do this in a separate step
     }
 
     const migrator = new MonorepoMigrator(migrationConfig)
@@ -224,7 +222,7 @@ class MigrationOrchestrator {
       const failedChecks = Object.entries(report.results)
         .filter(([_, result]) => !result.passed)
         .map(([name, _]) => name)
-      
+
       throw new Error(`Migration validation failed. Failed checks: ${failedChecks.join(', ')}`)
     }
 
@@ -238,10 +236,8 @@ class MigrationOrchestrator {
     const report = await validator.validate()
 
     if (!report.passed) {
-      const failedTests = report.results
-        .filter(r => !r.passed)
-        .map(r => r.name)
-      
+      const failedTests = report.results.filter(r => !r.passed).map(r => r.name)
+
       throw new Error(`Post-migration validation failed. Failed tests: ${failedTests.join(', ')}`)
     }
 
@@ -256,7 +252,7 @@ class MigrationOrchestrator {
       useGit: this.options.preserveGitHistory,
       cleanupArtifacts: true,
       validateRollback: true,
-      dryRun: this.options.dryRun
+      dryRun: this.options.dryRun,
     }
 
     try {
@@ -284,7 +280,7 @@ class MigrationOrchestrator {
     console.log('\n📋 Migration Summary:')
     console.log(`Steps completed: ${this.completedSteps.length}/${this.steps.length}`)
     console.log(`Completed steps: ${this.completedSteps.join(', ')}`)
-    
+
     console.log('\n📝 Execution Log:')
     for (const logEntry of this.log) {
       console.log(`   ${logEntry}`)
@@ -307,7 +303,7 @@ class MigrationOrchestrator {
 // CLI interface
 async function main() {
   const args = process.argv.slice(2)
-  
+
   const options: OrchestrationOptions = {
     dryRun: args.includes('--dry-run'),
     skipValidation: args.includes('--skip-validation'),
@@ -315,7 +311,7 @@ async function main() {
     skipPostValidation: args.includes('--skip-post-validation'),
     autoRollbackOnFailure: !args.includes('--no-auto-rollback'),
     preserveGitHistory: !args.includes('--no-git-history'),
-    createBackup: !args.includes('--no-backup')
+    createBackup: !args.includes('--no-backup'),
   }
 
   // Show help
@@ -344,7 +340,7 @@ Examples:
   }
 
   const orchestrator = new MigrationOrchestrator(options)
-  
+
   try {
     await orchestrator.orchestrate()
     console.log('\n🏁 Migration orchestration completed successfully!')
