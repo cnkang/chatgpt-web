@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface Props {
-	size?: 'small' | 'medium' | 'large'
-	text?: string
+	size?: 'small' | 'medium' | 'large';
+	text?: string;
 }
 
 // Use reactive props destructuring (Vue 3.5+ feature)

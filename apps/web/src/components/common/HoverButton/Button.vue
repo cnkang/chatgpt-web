@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Use defineEmits with modern syntax
 const emit = defineEmits<{
-	click: []
+	click: [];
 }>()
 
 function handleClick() {

@@ -3,7 +3,7 @@ import { Icon } from '@iconify/vue'
 import { computed, useAttrs } from 'vue'
 
 interface Props {
-	icon?: string
+	icon?: string;
 }
 
 // Use reactive props destructuring (Vue 3.5+ feature)
