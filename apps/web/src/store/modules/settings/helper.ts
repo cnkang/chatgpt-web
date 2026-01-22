@@ -3,9 +3,9 @@ import { ss } from '@/utils/storage'
 const LOCAL_NAME = 'settingsStorage'
 
 export interface SettingsState {
-	systemMessage: string
-	temperature: number
-	top_p: number
+	systemMessage: string;
+	temperature: number;
+	top_p: number;
 }
 
 export function defaultSetting(): SettingsState {
@@ -18,7 +18,9 @@ export function defaultSetting(): SettingsState {
 }
 
 export function getLocalState(): SettingsState {
-	const localSetting: SettingsState | undefined = ss.get(LOCAL_NAME) as SettingsState | undefined
+	const localSetting: SettingsState | undefined = ss.get(LOCAL_NAME) as
+		| SettingsState
+		| undefined
 	return { ...defaultSetting(), ...localSetting }
 }
 

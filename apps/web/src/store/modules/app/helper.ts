@@ -4,7 +4,14 @@ const LOCAL_NAME = 'appSetting'
 
 export type Theme = 'light' | 'dark' | 'auto'
 
-export type Language = 'en-US' | 'es-ES' | 'ko-KR' | 'ru-RU' | 'vi-VN' | 'zh-CN' | 'zh-TW'
+export type Language =
+	| 'en-US'
+	| 'es-ES'
+	| 'ko-KR'
+	| 'ru-RU'
+	| 'vi-VN'
+	| 'zh-CN'
+	| 'zh-TW'
 
 const languageMap: { [key: string]: Language } = {
 	'en': 'en-US',
@@ -23,9 +30,9 @@ const languageMap: { [key: string]: Language } = {
 }
 
 export interface AppState {
-	siderCollapsed: boolean
-	theme: Theme
-	language: Language
+	siderCollapsed: boolean;
+	theme: Theme;
+	language: Language;
 }
 
 export function defaultSetting(): AppState {
@@ -34,7 +41,9 @@ export function defaultSetting(): AppState {
 }
 
 export function getLocalSetting(): AppState {
-	const localSetting: AppState | undefined = ss.get(LOCAL_NAME) as AppState | undefined
+	const localSetting: AppState | undefined = ss.get(LOCAL_NAME) as
+		| AppState
+		| undefined
 	return { ...defaultSetting(), ...localSetting }
 }
 
