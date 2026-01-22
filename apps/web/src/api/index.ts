@@ -21,10 +21,10 @@ export function fetchChatConfig<T = unknown>() {
 }
 
 export function fetchChatAPIProcess<T = unknown>(params: {
-	prompt: string
-	options?: { conversationId?: string; parentMessageId?: string }
-	signal?: AbortSignal
-	onDownloadProgress?: (progressEvent: FetchProgressEvent) => void
+	prompt: string;
+	options?: { conversationId?: string; parentMessageId?: string };
+	signal?: AbortSignal;
+	onDownloadProgress?: (progressEvent: FetchProgressEvent) => void;
 }) {
 	const settingStore = useSettingStore()
 	const authStore = useAuthStore()
