@@ -45,7 +45,8 @@ export default {
 		exportFailed: '儲存失敗',
 		usingContext: '上下文模式',
 		turnOnContext: '啟用上下文模式，在此模式下，發送訊息會包含之前的聊天記錄。',
-		turnOffContext: '關閉上下文模式，在此模式下，發送訊息不會包含之前的聊天記錄。',
+		turnOffContext:
+			'關閉上下文模式，在此模式下，發送訊息不會包含之前的聊天記錄。',
 		deleteMessage: '刪除訊息',
 		deleteMessageConfirm: '是否刪除此訊息?',
 		deleteHistoryConfirm: '確定刪除此紀錄?',
@@ -78,7 +79,8 @@ export default {
 		officialAPI: '官方 OpenAI API',
 		unknownAPI: '未知 API 設定',
 		migrationNotice: '使用官方 OpenAI API',
-		migrationDescription: '此應用程式現在僅支援官方 OpenAI API，以獲得更好的安全性和可靠性。',
+		migrationDescription:
+			'此應用程式現在僅支援官方 OpenAI API，以獲得更好的安全性和可靠性。',
 		migrationSteps: '遷移指南',
 		migrationStep1: '移除任何 OPENAI_ACCESS_TOKEN 環境變數',
 		migrationStep2: '使用官方 OpenAI API 金鑰設定 OPENAI_API_KEY',
@@ -86,7 +88,8 @@ export default {
 		getAPIKey: '在此取得您的 API 金鑰',
 		openSource: '此專案在此開源：',
 		freeMIT: '免費且基於 MIT 授權，沒有任何形式的付費行為！',
-		stars: '如果你覺得此專案對你有幫助，請在 GitHub 上給我一顆星，或者贊助我，謝謝！',
+		stars:
+			'如果你覺得此專案對你有幫助，請在 GitHub 上給我一顆星，或者贊助我，謝謝！',
 	},
 	store: {
 		siderButton: '提示詞商店',

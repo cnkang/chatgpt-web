@@ -31,7 +31,8 @@ export default {
 	chat: {
 		newChatButton: '새로운 채팅',
 		newChatTitle: '새로운 채팅',
-		placeholder: '무엇이든 물어보세요...(Shift + Enter = 줄바꿈, "/"를 눌러서 힌트를 보세요)',
+		placeholder:
+			'무엇이든 물어보세요...(Shift + Enter = 줄바꿈, "/"를 눌러서 힌트를 보세요)',
 		placeholderMobile: '무엇이든 물어보세요...',
 		copy: '복사',
 		copied: '복사됨',
@@ -44,8 +45,10 @@ export default {
 		exportSuccess: '내보내기 성공',
 		exportFailed: '내보내기 실패',
 		usingContext: '컨텍스트 모드',
-		turnOnContext: '현재 모드에서는 이전 대화 기록을 포함하여 메시지를 보낼 수 있습니다.',
-		turnOffContext: '현재 모드에서는 이전 대화 기록을 포함하지 않고 메시지를 보낼 수 있습니다.',
+		turnOnContext:
+			'현재 모드에서는 이전 대화 기록을 포함하여 메시지를 보낼 수 있습니다.',
+		turnOffContext:
+			'현재 모드에서는 이전 대화 기록을 포함하지 않고 메시지를 보낼 수 있습니다.',
 		deleteMessage: '메시지 삭제',
 		deleteMessageConfirm: '이 메시지를 삭제하시겠습니까?',
 		deleteHistoryConfirm: '이 기록을 삭제하시겠습니까?',
@@ -86,7 +89,8 @@ export default {
 		migrationStep3: 'API_REVERSE_PROXY 구성 제거',
 		getAPIKey: '여기서 API 키를 받으세요',
 		openSource: '이 프로젝트는 다음에서 오픈 소스로 제공됩니다:',
-		freeMIT: '무료이며 MIT 라이선스에 기반하며, 어떠한 형태의 유료 행동도 없습니다!',
+		freeMIT:
+			'무료이며 MIT 라이선스에 기반하며, 어떠한 형태의 유료 행동도 없습니다!',
 		stars:
 			'이 프로젝트가 도움이 되었다면, GitHub에서 별을 주거나 조금의 후원을 해주시면 감사하겠습니다!',
 	},

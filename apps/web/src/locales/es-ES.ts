@@ -45,7 +45,8 @@ export default {
 		exportSuccess: 'Exportación exitosa',
 		exportFailed: 'Exportación fallida',
 		usingContext: 'Modo de contexto',
-		turnOnContext: 'En el modo actual, el envío de mensajes llevará registros de chat anteriores.',
+		turnOnContext:
+			'En el modo actual, el envío de mensajes llevará registros de chat anteriores.',
 		turnOffContext:
 			'En el modo actual, el envío de mensajes no incluirá registros de conversaciones anteriores.',
 		deleteMessage: 'Borrar mensaje',
@@ -82,12 +83,15 @@ export default {
 		migrationDescription:
 			'Esta aplicación ahora solo admite la API oficial de OpenAI para mayor seguridad y confiabilidad.',
 		migrationSteps: 'Guía de Migración',
-		migrationStep1: 'Eliminar cualquier variable de entorno OPENAI_ACCESS_TOKEN',
-		migrationStep2: 'Configurar OPENAI_API_KEY con su clave oficial de la API de OpenAI',
+		migrationStep1:
+			'Eliminar cualquier variable de entorno OPENAI_ACCESS_TOKEN',
+		migrationStep2:
+			'Configurar OPENAI_API_KEY con su clave oficial de la API de OpenAI',
 		migrationStep3: 'Eliminar cualquier configuración API_REVERSE_PROXY',
 		getAPIKey: 'Obtén tu clave API aquí',
 		openSource: 'Este proyecto es de código abierto en',
-		freeMIT: 'gratis y basado en la licencia MIT, ¡sin ningún tipo de comportamiento de pago!',
+		freeMIT:
+			'gratis y basado en la licencia MIT, ¡sin ningún tipo de comportamiento de pago!',
 		stars:
 			'Si encuentras este proyecto útil, por favor dame una Estrella en GitHub o da un pequeño patrocinio, ¡gracias!',
 	},
@@ -100,13 +104,16 @@ export default {
 		clearStoreConfirm: '¿Estás seguro de borrar los datos?',
 		importPlaceholder: 'Pegue los datos JSON aquí',
 		addRepeatTitleTips: 'Título duplicado, vuelva a ingresar',
-		addRepeatContentTips: 'Contenido duplicado: {msg}, por favor vuelva a entrar',
+		addRepeatContentTips:
+			'Contenido duplicado: {msg}, por favor vuelva a entrar',
 		editRepeatTitleTips: 'Conflicto de título, revíselo',
-		editRepeatContentTips: 'Conflicto de contenido {msg} , por favor vuelva a modificar',
+		editRepeatContentTips:
+			'Conflicto de contenido {msg} , por favor vuelva a modificar',
 		importError: 'Discrepancia de valor clave',
 		importRepeatTitle: 'Título saltado repetidamente: {msg}',
 		importRepeatContent: 'El contenido se salta repetidamente: {msg}',
 		onlineImportWarning: 'Nota: ¡Compruebe la fuente del archivo JSON!',
-		downloadError: 'Verifique el estado de la red y la validez del archivo JSON',
+		downloadError:
+			'Verifique el estado de la red y la validez del archivo JSON',
 	},
 }
