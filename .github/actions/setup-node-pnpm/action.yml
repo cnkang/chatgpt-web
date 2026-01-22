@@ -18,16 +18,16 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        
+
     - name: Setup PNPM
       uses: pnpm/action-setup@v4
       with:
         version: ${{ inputs.pnpm-version }}
-        
+
     - name: Get PNPM store directory
       shell: bash
       run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      
+
     - name: Cache PNPM store
       uses: actions/cache@v4
       with:

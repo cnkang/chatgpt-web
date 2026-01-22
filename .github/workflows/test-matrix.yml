@@ -46,7 +46,7 @@ jobs:
             # Convert comma-separated string to JSON array
             packages=$(echo '${{ github.event.inputs.packages }}' | jq -R 'split(",") | map(select(length > 0))')
           fi
-          
+
           # Determine test types to run
           case "${{ github.event.inputs.test-type }}" in
             "all")
@@ -59,10 +59,10 @@ jobs:
               test_types='["unit", "integration"]'
               ;;
           esac
-          
+
           echo "packages=$packages" >> $GITHUB_OUTPUT
           echo "test-types=$test_types" >> $GITHUB_OUTPUT
-          
+
           echo "Testing packages: $packages"
           echo "Test types: $test_types"
 
@@ -79,24 +79,24 @@ jobs:
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: ${{ matrix.node-version }}
-          
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-        
+
       - name: Build shared packages
         run: pnpm turbo run build --filter=@chatgpt-web/shared --filter=@chatgpt-web/config
-        
+
       - name: Run unit tests for ${{ matrix.package }}
         run: pnpm turbo run test --filter=@chatgpt-web/${{ matrix.package }} -- --run --reporter=verbose
-        
+
       - name: Generate coverage report
         run: pnpm turbo run test:coverage --filter=@chatgpt-web/${{ matrix.package }}
-        
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -125,22 +125,22 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
-        
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-        
+
       - name: Build all packages
         run: pnpm turbo run build
-        
+
       - name: Run integration tests for ${{ matrix.package }}
         env:
           REDIS_URL: redis://localhost:6379
           NODE_ENV: test
         run: pnpm turbo run test:integration --filter=@chatgpt-web/${{ matrix.package }} -- --run
-        
+
       - name: Upload integration test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -161,45 +161,45 @@ jobs:
         browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
-        
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-        
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
-        
+
       - name: Build all packages
         run: pnpm turbo run build
-        
+
       - name: Start services for E2E tests
         run: |
           # Start API service in background
           pnpm turbo run start --filter=@chatgpt-web/api &
           API_PID=$!
           echo "API_PID=$API_PID" >> $GITHUB_ENV
-          
+
           # Start web service in background
           pnpm turbo run preview --filter=@chatgpt-web/web &
           WEB_PID=$!
           echo "WEB_PID=$WEB_PID" >> $GITHUB_ENV
-          
+
           # Wait for services to be ready
           sleep 30
-          
+
       - name: Run E2E tests with ${{ matrix.browser }}
         env:
           PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
         run: pnpm turbo run test:e2e --filter=@chatgpt-web/web -- --project=${{ matrix.browser }}
-        
+
       - name: Stop services
         if: always()
         run: |
           kill $API_PID || true
           kill $WEB_PID || true
-          
+
       - name: Upload E2E test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -216,24 +216,24 @@ jobs:
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'performance')
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
-        
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-        
+
       - name: Build all packages
         run: pnpm turbo run build
-        
+
       - name: Run performance tests
         run: |
           # API performance tests
           pnpm turbo run test:performance --filter=@chatgpt-web/api
-          
+
           # Web performance tests (Lighthouse CI)
           pnpm turbo run test:lighthouse --filter=@chatgpt-web/web
-          
+
       - name: Upload performance results
         uses: actions/upload-artifact@v4
         with:
@@ -249,26 +249,26 @@ jobs:
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'security')
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
-        
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-        
+
       - name: Run security audit
         run: |
           # PNPM audit
           pnpm audit --audit-level moderate
-          
+
           # Snyk security scan
           npx snyk test --all-projects
-          
+
       - name: Run OWASP ZAP security scan
         uses: zaproxy/action-full-scan@v0.13.0
         with:
           target: 'http://localhost:3002'
-          
+
       - name: Upload security results
         uses: actions/upload-artifact@v4
         with:
@@ -287,7 +287,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: test-results/
-          
+
       - name: Generate test summary
         run: |
           echo "## 🧪 Test Matrix Results" >> $GITHUB_STEP_SUMMARY

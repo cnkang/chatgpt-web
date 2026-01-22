@@ -4,151 +4,151 @@
 version: 2
 updates:
   # npm dependency update configuration
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: "Asia/Shanghai"
+      interval: 'daily'
+      time: '02:00'
+      timezone: 'Asia/Shanghai'
     # Batch update configuration
     groups:
       # Vue ecosystem
       vue-ecosystem:
         patterns:
-          - "vue*"
-          - "@vue*"
-          - "@vueuse*"
-          - "vue-*"
+          - 'vue*'
+          - '@vue*'
+          - '@vueuse*'
+          - 'vue-*'
         update-types:
-          - "minor"
-          - "patch"
-      
+          - 'minor'
+          - 'patch'
+
       # Build tools
       build-tools:
         patterns:
-          - "vite*"
-          - "@vitejs*"
-          - "rollup*"
-          - "esbuild*"
+          - 'vite*'
+          - '@vitejs*'
+          - 'rollup*'
+          - 'esbuild*'
         update-types:
-          - "minor"
-          - "patch"
-      
+          - 'minor'
+          - 'patch'
+
       # ESLint ecosystem
       eslint-ecosystem:
         patterns:
-          - "eslint*"
-          - "@eslint*"
-          - "eslint-*"
-          - "@antfu/eslint-config"
+          - 'eslint*'
+          - '@eslint*'
+          - 'eslint-*'
+          - '@antfu/eslint-config'
         update-types:
-          - "minor"
-          - "patch"
-      
+          - 'minor'
+          - 'patch'
+
       # TypeScript related
       typescript-ecosystem:
         patterns:
-          - "typescript"
-          - "@types/*"
-          - "vue-tsc"
+          - 'typescript'
+          - '@types/*'
+          - 'vue-tsc'
         update-types:
-          - "minor"
-          - "patch"
-      
+          - 'minor'
+          - 'patch'
+
       # CSS tools
       css-tools:
         patterns:
-          - "tailwindcss*"
-          - "@tailwindcss*"
-          - "postcss*"
-          - "autoprefixer"
+          - 'tailwindcss*'
+          - '@tailwindcss*'
+          - 'postcss*'
+          - 'autoprefixer'
         update-types:
-          - "minor"
-          - "patch"
-      
+          - 'minor'
+          - 'patch'
+
       # Development tools
       dev-tools:
         patterns:
-          - "husky"
-          - "lint-staged"
-          - "prettier"
-          - "rimraf"
-          - "npm-run-all"
+          - 'husky'
+          - 'lint-staged'
+          - 'prettier'
+          - 'rimraf'
+          - 'npm-run-all'
         update-types:
-          - "minor"
-          - "patch"
-    
+          - 'minor'
+          - 'patch'
+
     # PR configuration
     open-pull-requests-limit: 10
-    
+
     # Commit message configuration
     commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(deps-dev)"
-      include: "scope"
-    
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
+
     # Label configuration
     labels:
-      - "dependencies"
-      - "automated"
-    
+      - 'dependencies'
+      - 'automated'
+
     # Reviewer configuration (optional, add as needed)
     # reviewers:
     #   - "your-username"
-    
+
     # Assignee configuration (optional, add as needed)
     # assignees:
     #   - "your-username"
-    
+
     # Milestone configuration (optional)
     # milestone: 1
-    
+
     # Ignore specific dependencies
     ignore:
       # Ignore major version updates for packages (requires manual review)
-      - dependency-name: "vue"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-    
+      - dependency-name: 'vue'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
+
     # Allowed update types
     allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
-    
+      - dependency-type: 'direct'
+      - dependency-type: 'indirect'
+
     # Rebase strategy configuration
-    rebase-strategy: "auto"
+    rebase-strategy: 'auto'
 
   # GitHub Actions dependency updates
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "02:00"
-      timezone: "Asia/Shanghai"
+      interval: 'weekly'
+      day: 'monday'
+      time: '02:00'
+      timezone: 'Asia/Shanghai'
     commit-message:
-      prefix: "chore(ci)"
-      include: "scope"
+      prefix: 'chore(ci)'
+      include: 'scope'
     labels:
-      - "github-actions"
-      - "automated"
+      - 'github-actions'
+      - 'automated'
     open-pull-requests-limit: 5
 
   # Docker dependency updates (if using Dockerfile)
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "sunday"
-      time: "02:00"
-      timezone: "Asia/Shanghai"
+      interval: 'weekly'
+      day: 'sunday'
+      time: '02:00'
+      timezone: 'Asia/Shanghai'
     commit-message:
-      prefix: "chore(docker)"
-      include: "scope"
+      prefix: 'chore(docker)'
+      include: 'scope'
     labels:
-      - "docker"
-      - "automated"
+      - 'docker'
+      - 'automated'
     open-pull-requests-limit: 3
