@@ -93,9 +93,9 @@ export function errorHandler(
   _next: NextFunction,
 ) {
   // Generate request ID for tracking
-  const requestId
-    = (req.headers['x-request-id'] as string)
-      || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  const requestId =
+    (req.headers['x-request-id'] as string) ||
+    `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
   const isAppError = error instanceof AppError
   const statusCode = isAppError ? error.statusCode : 500
@@ -119,8 +119,7 @@ export function errorHandler(
 
   if (statusCode >= 500) {
     console.error('Server Error:', JSON.stringify(logData, null, 2))
-  }
-  else {
+  } else {
     console.warn('Client Error:', JSON.stringify(logData))
   }
 
@@ -218,7 +217,7 @@ export function setupGracefulShutdown(server: ClosableServer) {
   process.on('SIGTERM', () => shutdown('SIGTERM'))
   process.on('SIGINT', () => shutdown('SIGINT'))
 
-  process.on('uncaughtException', (error) => {
+  process.on('uncaughtException', error => {
     console.error('Uncaught Exception:', error)
     process.exit(1)
   })
