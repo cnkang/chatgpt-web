@@ -92,8 +92,7 @@ async function exampleUsage() {
     }
 
     log('\n✅ Example completed successfully!')
-  }
-  catch (error) {
+  } catch (error) {
     console.error('\n❌ Example failed:', error)
   }
 }

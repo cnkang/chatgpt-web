@@ -35,7 +35,7 @@ describe('property-based testing setup validation', () => {
 
   it('should generate valid API keys', () => {
     fc.assert<[string]>(
-      fc.property(apiKeyGenerator(), (apiKey) => {
+      fc.property(apiKeyGenerator(), apiKey => {
         expect(apiKey).toMatch(/^sk-/)
         expect(apiKey).toHaveLength(54) // sk- + 51 characters
       }),
@@ -45,7 +45,7 @@ describe('property-based testing setup validation', () => {
 
   it('should generate valid message content', () => {
     fc.assert<[string]>(
-      fc.property(messageContentGenerator(), (content) => {
+      fc.property(messageContentGenerator(), content => {
         expect(content.trim().length).toBeGreaterThan(0)
         expect(content.length).toBeLessThanOrEqual(4000)
       }),
@@ -55,7 +55,7 @@ describe('property-based testing setup validation', () => {
 
   it('should generate valid chat messages', () => {
     fc.assert<[{ role: string; content: string; timestamp: number }]>(
-      fc.property(chatMessageGenerator(), (message) => {
+      fc.property(chatMessageGenerator(), message => {
         expect(message).toHaveProperty('role')
         expect(message).toHaveProperty('content')
         expect(message).toHaveProperty('timestamp')
@@ -63,9 +63,7 @@ describe('property-based testing setup validation', () => {
         expect(typeof message.content).toBe('string')
         expect(typeof message.timestamp).toBe('number')
       }),
-      FAST_PROPERTY_CONFIG as fc.Parameters<
-        [{ role: string; content: string; timestamp: number }]
-      >,
+      FAST_PROPERTY_CONFIG as fc.Parameters<[{ role: string; content: string; timestamp: number }]>,
     )
   })
 })

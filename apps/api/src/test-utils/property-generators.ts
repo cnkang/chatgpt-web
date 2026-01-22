@@ -150,7 +150,7 @@ export function maliciousInputGenerator() {
     fc.constant('javascript:alert("xss")'),
     fc.constant('<img src="x" onerror="alert(1)">'),
     fc.constant('"><script>alert(1)</script>'),
-    fc.constant('\'; DROP TABLE users; --'),
+    fc.constant("'; DROP TABLE users; --"),
     fc.constant('{{7*7}}'), // Template injection
     fc.constant('$' + '{7*7}'), // Template literal injection
   )
@@ -178,7 +178,7 @@ export function httpHeaderGenerator() {
   return fc.record({
     'Content-Type': fc.constantFrom('application/json', 'text/plain', 'text/html'),
     'User-Agent': fc.string({ minLength: 10, maxLength: 200 }),
-    'Authorization': fc.option(fc.string({ minLength: 20, maxLength: 100 })),
+    Authorization: fc.option(fc.string({ minLength: 20, maxLength: 100 })),
     'X-Forwarded-For': fc.option(fc.ipV4()),
   })
 }
