@@ -114,15 +114,15 @@ async function chatReplyProcess(options: RequestOptions) {
       }
 
       // Return final response
-          return sendResponse({
-            type: 'Success',
-            data: {
-              id: responseId,
-              text: fullContent,
-              content: fullContent,
-              delta: '',
-              detail: {
-                id: responseId,
+      return sendResponse({
+        type: 'Success',
+        data: {
+          id: responseId,
+          text: fullContent,
+          content: fullContent,
+          delta: '',
+          detail: {
+            id: responseId,
             object: 'chat.completion',
             created: Math.floor(Date.now() / 1000),
             model: request.model,

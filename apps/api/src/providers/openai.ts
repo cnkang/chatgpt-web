@@ -5,30 +5,30 @@
 
 import OpenAI from 'openai'
 import {
-    ErrorType,
-    createExternalApiError,
-    createNetworkError,
-    createTimeoutError,
+  ErrorType,
+  createExternalApiError,
+  createNetworkError,
+  createTimeoutError,
 } from '../utils/error-handler.js'
 import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
 import { retryWithBackoff } from '../utils/retry.js'
 import type {
-    AIProvider,
-    ChatCompletionChunk,
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatMessage,
-    ReasoningStep,
-    UsageInfo,
+  AIProvider,
+  ChatCompletionChunk,
+  ChatCompletionRequest,
+  ChatCompletionResponse,
+  ChatMessage,
+  ReasoningStep,
+  UsageInfo,
 } from './base.js'
 import { BaseAIProvider } from './base.js'
 import type { OpenAIConfig } from './config.js'
 
 const isTestEnv =
-  process.env.NODE_ENV === 'test'
-  || process.env.VITEST === 'true'
-  || Boolean(process.env.VITEST_WORKER_ID)
+  process.env.NODE_ENV === 'test' ||
+  process.env.VITEST === 'true' ||
+  Boolean(process.env.VITEST_WORKER_ID)
 
 /**
  * OpenAI Provider Implementation

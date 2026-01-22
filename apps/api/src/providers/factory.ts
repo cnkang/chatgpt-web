@@ -138,7 +138,7 @@ export class AIProviderFactory<T extends AIProvider = AIProvider> implements Pro
    */
   createWithValidation(config: AIConfig): Promise<T> {
     const provider = this.create(config)
-    return provider.validateConfiguration().then((isValid) => {
+    return provider.validateConfiguration().then(isValid => {
       if (!isValid) {
         throw new Error(`Provider ${config.provider} configuration validation failed`)
       }
@@ -158,8 +158,7 @@ export class AIProviderFactory<T extends AIProvider = AIProvider> implements Pro
     const attemptCreate = async (attempt: number): Promise<T> => {
       try {
         return await this.createWithValidation(config)
-      }
-      catch (error) {
+      } catch (error) {
         lastError = error as Error
         if (attempt >= maxRetries) {
           throw error
@@ -171,8 +170,7 @@ export class AIProviderFactory<T extends AIProvider = AIProvider> implements Pro
 
     try {
       return await attemptCreate(1)
-    }
-    catch {
+    } catch {
       throw new Error(
         `Failed to create provider after ${maxRetries} attempts. Last error: ${lastError?.message || 'Unknown error'}`,
       )

@@ -27,9 +27,9 @@ import { BaseAIProvider } from './base.js'
 import type { AzureOpenAIConfig } from './config.js'
 
 const isTestEnv =
-  process.env.NODE_ENV === 'test'
-  || process.env.VITEST === 'true'
-  || Boolean(process.env.VITEST_WORKER_ID)
+  process.env.NODE_ENV === 'test' ||
+  process.env.VITEST === 'true' ||
+  Boolean(process.env.VITEST_WORKER_ID)
 
 // Azure v1 Responses API interfaces
 interface AzureResponsesRequest {
@@ -436,32 +436,14 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
             logger.debug('Azure v1 Responses API: Stream completed', { chunkCount })
             // Process any remaining data in buffer
             if (buffer.trim()) {
-                const lines = buffer.split('\n')
-                for (const line of lines) {
-                  const trimmedLine = line.trim()
-                  if (trimmedLine.startsWith('data: ')) {
-                    const data = trimmedLine.slice(6).trim()
-                    if (data && data !== '[DONE]') {
-                      try {
-                        const payload = JSON.parse(data)
-                        const converted = this.convertAzureResponsesPayloadToChunk(
-                          payload,
-                          responseId,
-                          currentModel,
-                        )
-                        if (converted.chunk) {
-                          yield converted.chunk
-                          chunkCount++
-                        }
-                        responseId = converted.responseId
-                      } catch (error) {
-                        logger.warn('Failed to parse final chunk', { line: trimmedLine, error })
-                      }
-                    }
-                  } else if (trimmedLine && !trimmedLine.startsWith('event:')) {
-                    // Handle events without "data:" prefix (some Azure implementations)
+              const lines = buffer.split('\n')
+              for (const line of lines) {
+                const trimmedLine = line.trim()
+                if (trimmedLine.startsWith('data: ')) {
+                  const data = trimmedLine.slice(6).trim()
+                  if (data && data !== '[DONE]') {
                     try {
-                      const payload = JSON.parse(trimmedLine)
+                      const payload = JSON.parse(data)
                       const converted = this.convertAzureResponsesPayloadToChunk(
                         payload,
                         responseId,
@@ -472,11 +454,29 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
                         chunkCount++
                       }
                       responseId = converted.responseId
-                    } catch {
-                      // Not JSON, skip
+                    } catch (error) {
+                      logger.warn('Failed to parse final chunk', { line: trimmedLine, error })
                     }
                   }
+                } else if (trimmedLine && !trimmedLine.startsWith('event:')) {
+                  // Handle events without "data:" prefix (some Azure implementations)
+                  try {
+                    const payload = JSON.parse(trimmedLine)
+                    const converted = this.convertAzureResponsesPayloadToChunk(
+                      payload,
+                      responseId,
+                      currentModel,
+                    )
+                    if (converted.chunk) {
+                      yield converted.chunk
+                      chunkCount++
+                    }
+                    responseId = converted.responseId
+                  } catch {
+                    // Not JSON, skip
+                  }
                 }
+              }
             }
             break
           }
@@ -504,7 +504,10 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
                   const payload = JSON.parse(data)
                   if (!this.isResponsesStreamChunk(payload)) {
                     const event = payload as AzureResponsesStreamEvent
-                    logger.debug('Azure v1 event received', { type: event.type, delta: event.delta })
+                    logger.debug('Azure v1 event received', {
+                      type: event.type,
+                      delta: event.delta,
+                    })
                   }
 
                   const converted = this.convertAzureResponsesPayloadToChunk(
