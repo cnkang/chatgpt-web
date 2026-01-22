@@ -5,27 +5,31 @@ import type { SelectGroupOption, SelectOption } from 'naive-ui'
 import { computed } from 'vue'
 
 interface ModelOption {
-	value: string
-	label: string
-	description: string
-	supportsReasoning: boolean
-	maxTokens: number
-	costMultiplier: number
-	speed: 'fast' | 'medium' | 'slow'
+	value: string;
+	label: string;
+	description: string;
+	supportsReasoning: boolean;
+	maxTokens: number;
+	costMultiplier: number;
+	speed: 'fast' | 'medium' | 'slow';
 }
 
 interface Props {
-	modelValue: string
-	disabled?: boolean
-	showReasoningInfo?: boolean
+	modelValue: string;
+	disabled?: boolean;
+	showReasoningInfo?: boolean;
 }
 
 // Use reactive props destructuring (Vue 3.5+ feature)
-const { modelValue, disabled = false, showReasoningInfo = true } = defineProps<Props>()
+const {
+	modelValue,
+	disabled = false,
+	showReasoningInfo = true,
+} = defineProps<Props>()
 
 // Use defineEmits with modern syntax
 const emit = defineEmits<{
-	'update:modelValue': [value: string]
+	'update:modelValue': [value: string];
 }>()
 
 const modelOptions: ModelOption[] = [
@@ -67,11 +71,17 @@ const modelOptions: ModelOption[] = [
 	},
 ]
 
-const selectedModel = computed(() => modelOptions.find(model => model.value === modelValue))
+const selectedModel = computed(() =>
+	modelOptions.find((model) => model.value === modelValue),
+)
 
-const reasoningModels = computed(() => modelOptions.filter(model => model.supportsReasoning))
+const reasoningModels = computed(() =>
+	modelOptions.filter((model) => model.supportsReasoning),
+)
 
-const standardModels = computed(() => modelOptions.filter(model => !model.supportsReasoning))
+const standardModels = computed(() =>
+	modelOptions.filter((model) => !model.supportsReasoning),
+)
 
 const selectOptions = computed(() => {
 	const options: Array<SelectOption | SelectGroupOption> = []
@@ -82,7 +92,7 @@ const selectOptions = computed(() => {
 			type: 'group',
 			label: 'Standard Models',
 			key: 'standard',
-			children: standardModels.value.map(model => ({
+			children: standardModels.value.map((model) => ({
 				label: model.label,
 				value: model.value,
 				disabled,
@@ -96,7 +106,7 @@ const selectOptions = computed(() => {
 			type: 'group',
 			label: 'Reasoning Models',
 			key: 'reasoning',
-			children: reasoningModels.value.map(model => ({
+			children: reasoningModels.value.map((model) => ({
 				label: model.label,
 				value: model.value,
 				disabled,
@@ -159,14 +169,22 @@ function formatCost(multiplier: number): string {
 		</div>
 
 		<!-- Selected Model Info -->
-		<div v-if="selectedModel" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-3">
+		<div
+			v-if="selectedModel"
+			class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-3"
+		>
 			<!-- Model Header -->
 			<div class="flex items-center justify-between">
 				<div class="flex items-center space-x-2">
 					<h4 class="font-medium text-gray-900 dark:text-gray-100">
 						{{ selectedModel.label }}
 					</h4>
-					<NTag v-if="selectedModel.supportsReasoning" type="info" size="small" :bordered="false">
+					<NTag
+						v-if="selectedModel.supportsReasoning"
+						type="info"
+						size="small"
+						:bordered="false"
+					>
 						<template #icon>
 							<SvgIcon icon="ri:brain-line" />
 						</template>
@@ -181,7 +199,10 @@ function formatCost(multiplier: number): string {
 						:class="getSpeedColor(selectedModel.speed)"
 						class="text-sm"
 					/>
-					<span class="text-xs capitalize" :class="getSpeedColor(selectedModel.speed)">
+					<span
+						class="text-xs capitalize"
+						:class="getSpeedColor(selectedModel.speed)"
+					>
 						{{ selectedModel.speed }}
 					</span>
 				</div>
@@ -230,8 +251,9 @@ function formatCost(multiplier: number): string {
 							Reasoning Model Selected
 						</h5>
 						<p class="text-xs text-blue-700 dark:text-blue-300">
-							This model uses advanced reasoning and may take significantly longer to respond.
-							You'll see the reasoning process as it works through your question.
+							This model uses advanced reasoning and may take significantly
+							longer to respond. You'll see the reasoning process as it works
+							through your question.
 						</p>
 					</div>
 				</div>
@@ -240,7 +262,11 @@ function formatCost(multiplier: number): string {
 
 		<!-- Reasoning Models Info -->
 		<div
-			v-if="!selectedModel?.supportsReasoning && showReasoningInfo && reasoningModels.length > 0"
+			v-if="
+				!selectedModel?.supportsReasoning
+				&& showReasoningInfo
+				&& reasoningModels.length > 0
+			"
 			class="text-xs text-gray-500 dark:text-gray-400"
 		>
 			<NTooltip>
@@ -249,7 +275,7 @@ function formatCost(multiplier: number): string {
 						<SvgIcon icon="ri:brain-line" />
 						<span>
 							{{ reasoningModels.length }} reasoning model{{
-								reasoningModels.length > 1 ? 's' : ''
+								reasoningModels.length > 1 ? "s" : ""
 							}}
 							available
 						</span>
