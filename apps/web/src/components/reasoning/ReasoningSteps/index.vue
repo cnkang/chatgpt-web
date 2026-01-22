@@ -3,16 +3,16 @@ import { SvgIcon } from '@/components/common'
 import { computed } from 'vue'
 
 interface ReasoningStep {
-	step: number
-	thought: string
-	confidence: number
-	duration?: number
+	step: number;
+	thought: string;
+	confidence: number;
+	duration?: number;
 }
 
 interface Props {
-	steps: ReasoningStep[]
-	isVisible?: boolean
-	isLoading?: boolean
+	steps: ReasoningStep[];
+	isVisible?: boolean;
+	isLoading?: boolean;
 }
 
 // Use reactive props destructuring (Vue 3.5+ feature)
@@ -20,7 +20,7 @@ const { steps, isVisible = true, isLoading = false } = defineProps<Props>()
 
 // Use defineEmits with modern syntax
 const emit = defineEmits<{
-	toggleVisibility: []
+	toggleVisibility: [];
 }>()
 
 const sortedSteps = computed(() => [...steps].sort((a, b) => a.step - b.step))
@@ -61,10 +61,13 @@ function handleToggle() {
 			@click="handleToggle"
 		>
 			<div class="flex items-center space-x-2">
-				<SvgIcon icon="ri:brain-line" class="text-blue-500 dark:text-blue-400 text-lg" />
+				<SvgIcon
+					icon="ri:brain-line"
+					class="text-blue-500 dark:text-blue-400 text-lg"
+				/>
 				<h4 class="font-medium text-gray-900 dark:text-gray-100">
-Reasoning Process
-</h4>
+					Reasoning Process
+				</h4>
 				<span class="text-sm text-gray-500 dark:text-gray-400">({{ steps.length }} steps)</span>
 			</div>
 
@@ -103,11 +106,18 @@ Reasoning Process
 			leave-from-class="opacity-100 max-h-96"
 			leave-to-class="opacity-0 max-h-0"
 		>
-			<div v-if="isVisible" class="border-t border-gray-200 dark:border-gray-700">
+			<div
+				v-if="isVisible"
+				class="border-t border-gray-200 dark:border-gray-700"
+			>
 				<!-- Loading State -->
 				<div v-if="isLoading" class="p-4">
-					<div class="flex items-center space-x-2 text-blue-500 dark:text-blue-400">
-						<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+					<div
+						class="flex items-center space-x-2 text-blue-500 dark:text-blue-400"
+					>
+						<div
+							class="animate-spin rounded-full h-4 w-4 border-b-2 border-current"
+						/>
 						<span class="text-sm">Processing reasoning steps...</span>
 					</div>
 				</div>
@@ -129,7 +139,9 @@ Reasoning Process
 
 							<!-- Step Content -->
 							<div class="flex-1 min-w-0">
-								<p class="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
+								<p
+									class="text-sm text-gray-900 dark:text-gray-100 leading-relaxed"
+								>
 									{{ step.thought }}
 								</p>
 
@@ -138,14 +150,20 @@ Reasoning Process
 									<!-- Confidence -->
 									<div class="flex items-center space-x-1">
 										<SvgIcon icon="ri:pulse-line" class="text-xs" />
-										<span class="text-xs" :class="getConfidenceColor(step.confidence)">
+										<span
+											class="text-xs"
+											:class="getConfidenceColor(step.confidence)"
+										>
 											{{ step.confidence }}% confidence
 										</span>
 									</div>
 
 									<!-- Duration -->
 									<div v-if="step.duration" class="flex items-center space-x-1">
-										<SvgIcon icon="ri:time-line" class="text-xs text-gray-400" />
+										<SvgIcon
+											icon="ri:time-line"
+											class="text-xs text-gray-400"
+										/>
 										<span class="text-xs text-gray-500 dark:text-gray-400">
 											{{ formatDuration(step.duration) }}
 										</span>
@@ -163,8 +181,8 @@ Reasoning Process
 						class="text-gray-300 dark:text-gray-600 text-2xl mx-auto mb-2"
 					/>
 					<p class="text-sm text-gray-500 dark:text-gray-400">
-No reasoning steps available
-</p>
+						No reasoning steps available
+					</p>
 				</div>
 			</div>
 		</Transition>

@@ -1,25 +1,25 @@
 import { computed, ref } from 'vue'
 
 interface ReasoningStep {
-	step: number
-	thought: string
-	confidence: number
-	duration?: number
+	step: number;
+	thought: string;
+	confidence: number;
+	duration?: number;
 }
 
 interface ReasoningState {
-	isReasoning: boolean
-	steps: ReasoningStep[]
-	currentStep: string
-	estimatedTime: number
-	startTime: number | null
+	isReasoning: boolean;
+	steps: ReasoningStep[];
+	currentStep: string;
+	estimatedTime: number;
+	startTime: number | null;
 }
 
 interface ReasoningStepInput {
-	content?: string
-	thought?: string
-	confidence?: number
-	duration?: number
+	content?: string;
+	thought?: string;
+	confidence?: number;
+	duration?: number;
 }
 
 export function useReasoning() {
@@ -39,7 +39,10 @@ export function useReasoning() {
 
 	const averageConfidence = computed(() => {
 		if (state.value.steps.length === 0) return 0
-		const total = state.value.steps.reduce((sum, step) => sum + step.confidence, 0)
+		const total = state.value.steps.reduce(
+			(sum, step) => sum + step.confidence,
+			0,
+		)
 		return Math.round(total / state.value.steps.length)
 	})
 
@@ -81,7 +84,9 @@ export function useReasoning() {
 	function setReasoningModel(modelName: string) {
 		// Check if the model supports reasoning
 		const reasoningModels = ['o1-preview', 'o1-mini', 'o1']
-		isReasoningModel.value = reasoningModels.some(model => modelName.toLowerCase().includes(model))
+		isReasoningModel.value = reasoningModels.some((model) =>
+			modelName.toLowerCase().includes(model),
+		)
 	}
 
 	function toggleReasoningStepsVisibility() {
@@ -100,7 +105,8 @@ export function useReasoning() {
 	function parseReasoningFromResponse(response: unknown): ReasoningStep[] {
 		// This would parse the actual API response format
 		// For now, return empty array as the format depends on the API
-		const steps = (response as { reasoning_steps?: ReasoningStepInput[] })?.reasoning_steps
+		const steps = (response as { reasoning_steps?: ReasoningStepInput[] })
+			?.reasoning_steps
 		if (Array.isArray(steps)) {
 			return steps.map((step, index) => ({
 				step: index + 1,

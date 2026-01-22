@@ -3,9 +3,9 @@ import { SvgIcon } from '@/components/common'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 interface Props {
-	isVisible?: boolean
-	estimatedTime?: number // in seconds
-	currentStep?: string
+	isVisible?: boolean;
+	estimatedTime?: number; // in seconds
+	currentStep?: string;
 }
 
 // Use reactive props destructuring (Vue 3.5+ feature)
@@ -51,7 +51,9 @@ const reasoningSteps = [
 ]
 
 const currentStepIndex = computed(() => {
-	const stepIndex = Math.floor((elapsedTime.value / estimatedTime) * reasoningSteps.length)
+	const stepIndex = Math.floor(
+		(elapsedTime.value / estimatedTime) * reasoningSteps.length,
+	)
 	return Math.min(stepIndex, reasoningSteps.length - 1)
 })
 
@@ -119,12 +121,14 @@ defineExpose({
 						icon="ri:brain-line"
 						class="text-blue-500 dark:text-blue-400 text-xl animate-pulse"
 					/>
-					<div class="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping" />
+					<div
+						class="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping"
+					/>
 				</div>
 				<div>
 					<h4 class="font-medium text-blue-900 dark:text-blue-100">
-Reasoning Model Processing
-</h4>
+						Reasoning Model Processing
+					</h4>
 					<p class="text-xs text-blue-600 dark:text-blue-300">
 						This may take longer than usual responses
 					</p>
@@ -133,15 +137,21 @@ Reasoning Model Processing
 
 			<!-- Current Step -->
 			<div class="mb-3">
-				<div class="text-sm text-blue-800 dark:text-blue-200 flex items-center space-x-2">
-					<div class="animate-spin rounded-full h-3 w-3 border-b border-blue-500" />
+				<div
+					class="text-sm text-blue-800 dark:text-blue-200 flex items-center space-x-2"
+				>
+					<div
+						class="animate-spin rounded-full h-3 w-3 border-b border-blue-500"
+					/>
 					<span>{{ displayStep }}</span>
 				</div>
 			</div>
 
 			<!-- Progress Bar -->
 			<div class="mb-3">
-				<div class="flex justify-between text-xs text-blue-600 dark:text-blue-300 mb-1">
+				<div
+					class="flex justify-between text-xs text-blue-600 dark:text-blue-300 mb-1"
+				>
 					<span>Progress</span>
 					<span>{{ Math.round(progress) }}%</span>
 				</div>
@@ -154,7 +164,9 @@ Reasoning Model Processing
 			</div>
 
 			<!-- Time Information -->
-			<div class="flex justify-between items-center text-xs text-blue-600 dark:text-blue-300">
+			<div
+				class="flex justify-between items-center text-xs text-blue-600 dark:text-blue-300"
+			>
 				<div class="flex items-center space-x-1">
 					<SvgIcon icon="ri:time-line" class="text-xs" />
 					<span>Elapsed: {{ formattedElapsedTime }}</span>
