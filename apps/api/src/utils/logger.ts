@@ -90,13 +90,17 @@ function sanitizeData(data: unknown, depth: number = 0): unknown {
     for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
       const lowerKey = key.toLowerCase()
 
-      // Check if key contains sensitive information
-      const isSensitiveKey = SENSITIVE_PATTERNS.some(pattern => pattern.test(lowerKey))
+      // Check if key contains sensitive information (reset lastIndex for global regexes)
+      const isSensitiveKey = SENSITIVE_PATTERNS.some(pattern => {
+        if (pattern.global) {
+          pattern.lastIndex = 0
+        }
+        return pattern.test(lowerKey)
+      })
 
       if (isSensitiveKey && typeof value === 'string') {
         sanitized[key] = maskSensitiveString(value)
-      }
-      else {
+      } else {
         sanitized[key] = sanitizeData(value, depth + 1)
       }
     }
@@ -317,10 +321,10 @@ export function requestLogger() {
   return (req: Request, res: Response, next: NextFunction) => {
     const start = Date.now()
     const headerRequestId = req.headers['x-request-id']
-    const requestId
-      = (typeof headerRequestId === 'string' && headerRequestId)
-        || (Array.isArray(headerRequestId) && headerRequestId[0])
-        || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const requestId =
+      (typeof headerRequestId === 'string' && headerRequestId) ||
+      (Array.isArray(headerRequestId) && headerRequestId[0]) ||
+      `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
     // Add request ID to request object
     ;(req as Request & { requestId?: string }).requestId = requestId

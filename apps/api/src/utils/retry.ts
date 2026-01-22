@@ -98,8 +98,7 @@ export class CircuitBreaker {
       const result = await fn()
       this.onSuccess()
       return result
-    }
-    catch (error) {
+    } catch (error) {
       this.onFailure(error)
       throw error
     }
@@ -118,7 +117,7 @@ export class CircuitBreaker {
   }
 
   private onFailure(error: unknown): void {
-    const errorInfo = error as { type?: string, code?: string }
+    const errorInfo = error as { type?: string; code?: string }
     const isExpectedError = this.config.expectedErrors.some(
       expectedError => errorInfo.type === expectedError || errorInfo.code === expectedError,
     )
@@ -176,8 +175,7 @@ export async function retryWithBackoff<T>(
 
       // eslint-disable-next-line no-await-in-loop
       return await fn()
-    }
-    catch (error) {
+    } catch (error) {
       lastError = error
 
       // Don't retry on the last attempt
@@ -214,7 +212,7 @@ export async function retryWithBackoff<T>(
  */
 function getErrorType(error: unknown): string | undefined {
   if (error && typeof error === 'object') {
-    const typedError = error as { type?: string, code?: string, constructor?: { name?: string } }
+    const typedError = error as { type?: string; code?: string; constructor?: { name?: string } }
     return typedError.type || typedError.code || typedError.constructor?.name
   }
   return undefined
@@ -295,8 +293,7 @@ export class RateLimitedRetry {
         try {
           const result = await retryWithBackoff(fn, config)
           resolve(result)
-        }
-        catch (error) {
+        } catch (error) {
           reject(error)
         }
       })
