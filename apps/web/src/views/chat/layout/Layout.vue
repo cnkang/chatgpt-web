@@ -19,7 +19,9 @@ const { isMobile } = useBasicLayout()
 
 const collapsed = computed(() => appStore.siderCollapsed)
 
-const _needPermission = computed(() => !!authStore.session?.auth && !authStore.token)
+const _needPermission = computed(
+	() => !!authStore.session?.auth && !authStore.token,
+)
 
 const getMobileClass = computed(() => {
 	if (isMobile.value) return ['rounded-none', 'shadow-none']
@@ -32,7 +34,10 @@ const getContainerClass = computed(() => {
 </script>
 
 <template>
-	<div class="h-full dark:bg-[#24272e] transition-all" :class="[isMobile ? 'p-0' : 'p-4']">
+	<div
+		class="h-full dark:bg-[#24272e] transition-all"
+		:class="[isMobile ? 'p-0' : 'p-4']"
+	>
 		<div class="h-full overflow-hidden" :class="getMobileClass">
 			<NLayout class="z-40 transition" :class="getContainerClass" has-sider>
 				<Sider />
