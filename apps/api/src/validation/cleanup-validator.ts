@@ -41,15 +41,15 @@ export interface CleanupSummary {
 /**
  * Types of violations that can be found
  */
-export type ViolationType
-  = | 'unofficial_api_import'
-    | 'unofficial_api_usage'
-    | 'deprecated_config_var'
-    | 'access_token_reference'
-    | 'reverse_proxy_reference'
-    | 'web_scraping_code'
-    | 'browser_automation'
-    | 'unofficial_dependency'
+export type ViolationType =
+  | 'unofficial_api_import'
+  | 'unofficial_api_usage'
+  | 'deprecated_config_var'
+  | 'access_token_reference'
+  | 'reverse_proxy_reference'
+  | 'web_scraping_code'
+  | 'browser_automation'
+  | 'unofficial_dependency'
 
 /**
  * Configuration for cleanup validation
@@ -178,8 +178,7 @@ export class CleanupValidator {
         violations,
         summary,
       }
-    }
-    catch (error) {
+    } catch (error) {
       throw new Error(`Cleanup validation failed: ${(error as Error).message}`)
     }
   }
@@ -204,9 +203,9 @@ export class CleanupValidator {
     const result = await this.validateCleanup()
     const configViolations = result.violations.filter(
       v =>
-        v.type === 'deprecated_config_var'
-        || v.type === 'access_token_reference'
-        || v.type === 'reverse_proxy_reference',
+        v.type === 'deprecated_config_var' ||
+        v.type === 'access_token_reference' ||
+        v.type === 'reverse_proxy_reference',
     )
     return configViolations.length === 0
   }
@@ -249,13 +248,11 @@ export class CleanupValidator {
           if (stats.isDirectory()) {
             // eslint-disable-next-line no-await-in-loop
             await scanDirectory(fullPath)
-          }
-          else if (stats.isFile() && this.shouldInclude(fullPath)) {
+          } else if (stats.isFile() && this.shouldInclude(fullPath)) {
             files.push(fullPath)
           }
         }
-      }
-      catch (error) {
+      } catch (error) {
         // Skip directories that can't be read
         console.warn(`Warning: Could not read directory ${dirPath}: ${(error as Error).message}`)
       }
@@ -299,8 +296,7 @@ export class CleanupValidator {
           }
         }
       }
-    }
-    catch (error) {
+    } catch (error) {
       // Skip files that can't be read
       console.warn(`Warning: Could not read file ${filePath}: ${(error as Error).message}`)
     }
@@ -353,7 +349,7 @@ export class CleanupValidator {
    * @returns {boolean} True if path should be excluded
    */
   private shouldExclude(relativePath: string): boolean {
-    return this.config.excludePatterns.some((pattern) => {
+    return this.config.excludePatterns.some(pattern => {
       // Simple pattern matching - could be enhanced with glob patterns
       if (pattern.includes('*')) {
         const regex = new RegExp(pattern.replace(/\*/g, '.*'))

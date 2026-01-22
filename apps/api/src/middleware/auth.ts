@@ -10,17 +10,15 @@ async function auth(req: Request, res: Response, next: NextFunction) {
         throw new Error('Error: 无访问权限 | No access rights')
       }
       next()
-    }
-    catch (error) {
+    } catch (error) {
       const message = error instanceof Error ? error.message : 'Please authenticate.'
-      res.send({
+      return res.status(401).send({
         status: 'Unauthorized',
         message,
         data: null,
       })
     }
-  }
-  else {
+  } else {
     next()
   }
 }

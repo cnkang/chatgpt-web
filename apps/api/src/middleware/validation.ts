@@ -7,9 +7,9 @@ import type { NextFunction, Request, Response } from 'express'
 import type { ZodSchema } from 'zod'
 
 const isTestEnv =
-  process.env.NODE_ENV === 'test'
-  || process.env.VITEST === 'true'
-  || Boolean(process.env.VITEST_WORKER_ID)
+  process.env.NODE_ENV === 'test' ||
+  process.env.VITEST === 'true' ||
+  Boolean(process.env.VITEST_WORKER_ID)
 
 /**
  * Validation error response interface

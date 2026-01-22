@@ -80,18 +80,16 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
     if (cleanupResult.isClean) {
       log('✅ Codebase is clean of unofficial API references')
       codebaseClean = true
-    }
-    else {
+    } else {
       log('❌ Codebase cleanup validation failed')
       log(CleanupValidator.generateReport(cleanupResult))
 
-      cleanupResult.violations.forEach((violation) => {
+      cleanupResult.violations.forEach(violation => {
         if (violation.severity === 'error') {
           errors.push(
             `${violation.file}:${violation.line || '?'} - ${violation.type}: ${violation.content}`,
           )
-        }
-        else {
+        } else {
           warnings.push(
             `${violation.file}:${violation.line || '?'} - ${violation.type}: ${violation.content}`,
           )
@@ -108,16 +106,14 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
 
     if (noUnofficialAPI) {
       log('✅ No unofficial API references found')
-    }
-    else {
+    } else {
       log('❌ Unofficial API references still exist')
       errors.push('Unofficial API references found in codebase')
     }
 
     if (noDeprecatedConfig) {
       log('✅ No deprecated configuration variables found')
-    }
-    else {
+    } else {
       log('❌ Deprecated configuration variables still exist')
       errors.push('Deprecated configuration variables found in codebase')
     }
@@ -125,13 +121,11 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
     if (noSecurityRisks) {
       log('✅ No security risks from web scraping/browser automation found')
       securityRisksRemoved = true
-    }
-    else {
+    } else {
       log('❌ Security risks from web scraping/browser automation still exist')
       errors.push('Security risks from web scraping/browser automation found')
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('❌ Codebase validation failed:', (error as Error).message)
     errors.push(`Codebase validation error: ${(error as Error).message}`)
   }
@@ -152,12 +146,11 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
       let errorMessage = ''
       try {
         ConfigurationValidator.validateEnvironment()
-      }
-      catch (error) {
+      } catch (error) {
         errorMessage = (error as Error).message
         if (
-          errorMessage.includes('Deprecated Configuration Detected')
-          || errorMessage.includes('deprecated configuration')
+          errorMessage.includes('Deprecated Configuration Detected') ||
+          errorMessage.includes('deprecated configuration')
         ) {
           deprecatedDetected = true
         }
@@ -165,8 +158,7 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
 
       if (deprecatedDetected) {
         log('✅ Configuration validator properly detects deprecated variables')
-      }
-      else {
+      } else {
         log('❌ Configuration validator does not detect deprecated variables')
         errors.push('Configuration validator does not properly detect deprecated variables')
       }
@@ -178,8 +170,7 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
       let missingKeyDetected = false
       try {
         ConfigurationValidator.validateEnvironment()
-      }
-      catch (error) {
+      } catch (error) {
         if ((error as Error).message.includes('Missing Required Configuration')) {
           missingKeyDetected = true
         }
@@ -188,18 +179,15 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
       if (missingKeyDetected) {
         log('✅ Configuration validator properly detects missing API key')
         configurationValid = true
-      }
-      else {
+      } else {
         log('❌ Configuration validator does not detect missing API key')
         errors.push('Configuration validator does not properly detect missing API key')
       }
-    }
-    finally {
+    } finally {
       // Restore original environment
       process.env = originalEnv
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('❌ Configuration validation test failed:', (error as Error).message)
     errors.push(`Configuration validation test error: ${(error as Error).message}`)
   }
@@ -212,19 +200,17 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
 
     if (migrationInfo.migrationSteps.length > 0) {
       log('✅ Migration guidance system is functional')
-    }
-    else {
+    } else {
       log('⚠️  Migration guidance system may not be providing steps')
       warnings.push('Migration guidance system may not be providing migration steps')
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('❌ Migration guidance test failed:', (error as Error).message)
     errors.push(`Migration guidance test error: ${(error as Error).message}`)
   }
 
-  const overallSuccess
-    = codebaseClean && configurationValid && securityRisksRemoved && errors.length === 0
+  const overallSuccess =
+    codebaseClean && configurationValid && securityRisksRemoved && errors.length === 0
 
   return {
     codebaseClean,
@@ -270,8 +256,7 @@ function printSummary(summary: ValidationSummary): void {
     log('   The unofficial API has been completely removed from the codebase.')
     log('   Configuration validation is working properly.')
     log('   Security risks have been eliminated.')
-  }
-  else {
+  } else {
     log('\n🚨 Cleanup validation failed!')
     log('   Please address the errors above before considering the cleanup complete.')
   }
@@ -289,8 +274,7 @@ async function main(): Promise<void> {
 
     // Exit with appropriate code
     process.exit(summary.overallSuccess ? 0 : 1)
-  }
-  catch (error) {
+  } catch (error) {
     console.error('💥 Validation script failed:', (error as Error).message)
     console.error((error as Error).stack)
     process.exit(1)
