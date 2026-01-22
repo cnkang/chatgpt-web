@@ -3,13 +3,13 @@ import { ss } from '@/utils/storage'
 const LOCAL_NAME = 'userStorage'
 
 export interface UserInfo {
-	avatar: string
-	name: string
-	description: string
+	avatar: string;
+	name: string;
+	description: string;
 }
 
 export interface UserState {
-	userInfo: UserInfo
+	userInfo: UserInfo;
 }
 
 export function defaultSetting(): UserState {
@@ -23,7 +23,9 @@ export function defaultSetting(): UserState {
 }
 
 export function getLocalState(): UserState {
-	const localSetting: UserState | undefined = ss.get(LOCAL_NAME) as UserState | undefined
+	const localSetting: UserState | undefined = ss.get(LOCAL_NAME) as
+		| UserState
+		| undefined
 	return { ...defaultSetting(), ...localSetting }
 }
 

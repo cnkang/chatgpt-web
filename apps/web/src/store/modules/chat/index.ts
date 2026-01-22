@@ -24,7 +24,7 @@ export const useChatStore = defineStore('chat-store', {
 							(item: { uuid: number; data: Chat[] }) => item.uuid === uuid,
 						)?.data ?? []
 					)
-}
+				}
 				return (
 					state.chat.find(
 						(item: { uuid: number; data: Chat[] }) =>
