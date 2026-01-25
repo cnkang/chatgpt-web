@@ -64,7 +64,7 @@
     "openai": "^6.15.0",
     "redis": "^5.10.0",
     "socks-proxy-agent": "^8.0.5",
-    "zod": "^4.3.5"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatgpt-web/config": "workspace:*",
