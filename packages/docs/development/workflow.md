@@ -317,8 +317,8 @@ import type { ApiResponse } from '../types'
 # Backend development
 cp apps/api/.env.example apps/api/.env.development
 
-# Frontend development
-cp apps/web/.env.example apps/web/.env.development
+# Frontend development (root-level Vite env)
+cp .env.example .env.development
 ```
 
 ### Environment Switching

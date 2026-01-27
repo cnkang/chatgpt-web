@@ -184,7 +184,7 @@ import antfu from '@antfu/eslint-config'
 export default antfu({
   vue: true,
   typescript: true,
-  ignores: ['dist/**', 'node_modules/**', 'service/build/**'],
+  ignores: ['dist/**', 'node_modules/**', 'apps/api/build/**'],
 })
 ```
 
@@ -309,7 +309,7 @@ Error: listen EADDRINUSE: address already in use :::3002
 lsof -ti:3002 | xargs kill -9
 
 # Or use different port
-PORT=3003 pnpm start
+PORT=3003 pnpm dev:api
 ```
 
 #### OpenAI API Errors
@@ -385,7 +385,7 @@ WORKDIR /app
 
 # Copy package files first
 COPY package*.json pnpm-lock.yaml ./
-COPY service/package*.json ./service/
+COPY apps/api/package*.json ./apps/api/
 
 # Install dependencies
 RUN corepack enable pnpm && pnpm install --frozen-lockfile
@@ -492,7 +492,7 @@ data:
   "scripts": {
     "build": "pnpm build:frontend && pnpm build:backend",
     "build:frontend": "vite build",
-    "build:backend": "cd service && pnpm build"
+    "build:backend": "cd apps/api && pnpm build"
   }
 }
 
@@ -670,7 +670,7 @@ window.fetch = async (...args) => {
 #### Logging Configuration
 
 ```typescript
-// service/src/utils/logger.ts
+// apps/api/src/utils/logger.ts
 import winston from 'winston'
 
 const logger = winston.createLogger({

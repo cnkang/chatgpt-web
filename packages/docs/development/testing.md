@@ -21,11 +21,11 @@ This document outlines the testing strategy, tools, and best practices for the C
 ## Project Structure
 
 ```
-service/
+apps/api/
 ├── src/
-│   ├── __tests__/          # Unit tests
 │   ├── test/               # Test utilities and fixtures
-│   └── vitest.config.ts    # Vitest configuration
+│   └── __tests__/          # Unit tests
+├── vitest.config.ts        # Vitest configuration
 └── package.json            # Test scripts
 ```
 
@@ -34,7 +34,7 @@ service/
 ### Vitest Configuration
 
 ```typescript
-// service/vitest.config.ts
+// apps/api/vitest.config.ts
 import { defineConfig } from 'vitest/config'
 import path from 'path'
 
@@ -60,7 +60,7 @@ export default defineConfig({
 ### Test Setup
 
 ```typescript
-// service/test/setup.ts
+// apps/api/test/setup.ts
 import { beforeAll, afterAll, afterEach } from 'vitest'
 import { setupServer } from 'msw/node'
 import { handlers } from './mocks/handlers'
@@ -86,7 +86,7 @@ afterAll(() => {
 ### Testing Utilities
 
 ```typescript
-// service/src/utils/__tests__/validator.test.ts
+// apps/api/src/utils/__tests__/validator.test.ts
 import { describe, it, expect } from 'vitest'
 import { validateApiKey, sanitizeInput } from '../validator'
 
@@ -128,7 +128,7 @@ describe('validator', () => {
 ### Testing Express Middleware
 
 ```typescript
-// service/src/middleware/__tests__/auth.test.ts
+// apps/api/src/middleware/__tests__/auth.test.ts
 import { describe, it, expect, vi } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import { authMiddleware } from '../auth'
@@ -177,7 +177,7 @@ describe('authMiddleware', () => {
 ### Testing API Providers
 
 ```typescript
-// service/src/providers/__tests__/openai.test.ts
+// apps/api/src/providers/__tests__/openai.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { OpenAIProvider } from '../openai'
 import type { ChatMessage } from '../types'
@@ -263,7 +263,7 @@ describe('OpenAIProvider', () => {
 ### Fast-check Integration
 
 ```typescript
-// service/src/utils/__tests__/format.property.test.ts
+// apps/api/src/utils/__tests__/format.property.test.ts
 import { describe, it } from 'vitest'
 import fc from 'fast-check'
 import { formatMessage, parseMessage } from '../format'
@@ -315,7 +315,7 @@ describe('format properties', () => {
 ### Custom Arbitraries
 
 ```typescript
-// service/test/arbitraries.ts
+// apps/api/test/arbitraries.ts
 import fc from 'fast-check'
 import type { ChatMessage, ChatSession } from '../src/types'
 
@@ -345,7 +345,7 @@ export const apiKeyArbitrary = (): fc.Arbitrary<string> =>
 ### API Endpoint Testing
 
 ```typescript
-// service/src/__tests__/chat.integration.test.ts
+// apps/api/src/__tests__/chat.integration.test.ts
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
 import { app } from '../app'
@@ -416,7 +416,7 @@ describe('Chat API Integration', () => {
 ### Mock Service Workers
 
 ```typescript
-// service/test/mocks/handlers.ts
+// apps/api/test/mocks/handlers.ts
 import { http, HttpResponse } from 'msw'
 
 export const handlers = [
@@ -552,7 +552,7 @@ describe('ChatService', () => {
 ### Test Data Management
 
 ```typescript
-// service/test/fixtures/messages.ts
+// apps/api/test/fixtures/messages.ts
 export const validChatMessage = {
   id: '123e4567-e89b-12d3-a456-426614174000',
   role: 'user' as const,

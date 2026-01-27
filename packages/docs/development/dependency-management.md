@@ -245,7 +245,7 @@ pnpm deps:optimize
 
 ```bash
 # Ensure shared packages are built first
-pnpm build:shared
+pnpm --filter @chatgpt-web/shared build
 pnpm build
 ```
 

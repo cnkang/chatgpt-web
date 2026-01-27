@@ -16,22 +16,26 @@ This directory contains guides and references for developing with the ChatGPT We
 
 ```bash
 # Development
-pnpm dev                 # Start all services
+pnpm dev                # Start all packages
+pnpm dev:core           # Start frontend + backend only (recommended)
 pnpm dev:web            # Start frontend only
 pnpm dev:api            # Start backend only
 
 # Building
 pnpm build              # Build all packages
-pnpm build:shared       # Build shared packages only
-
-# Testing
-pnpm test               # Run all tests
-pnpm test:watch         # Run tests in watch mode
+pnpm build:web          # Build frontend only
+pnpm build:api          # Build backend only
 
 # Code Quality
 pnpm lint               # Lint all code
 pnpm lint:fix           # Fix linting issues
 pnpm type-check         # TypeScript type checking
+pnpm test               # Run tests
+pnpm quality            # Run the full quality pipeline
+
+# Target a single package (examples)
+pnpm --filter @chatgpt-web/shared build
+pnpm --filter @chatgpt-web/docs validate
 ```
 
 ### Project Structure

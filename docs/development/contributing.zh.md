@@ -1,51 +1,69 @@
 # 贡献指南
 
-感谢你的宝贵时间。你的贡献将使这个项目变得更好！在提交贡献之前，请务必花点时间阅读下面的入门指南。
+感谢你为 ChatGPT Web 做出贡献。以下内容基于当前 Monorepo 结构整理。
 
-## 语义化版本
+## 仓库与前置要求
 
-该项目遵循语义化版本。我们对重要的漏洞修复发布修订号，对新特性或不重要的变更发布次版本号，对重大且不兼容的变更发布主版本号。
+- 仓库地址：https://github.com/cnkang/chatgpt-web
+- Node.js：`>= 24.0.0`
+- pnpm：`>= 10.0.0`
 
-每个重大更改都将记录在 `changelog` 中。
+## 本地开发环境准备
 
-## 提交 Pull Request
-
-1. Fork [此仓库](https://github.com/Chanzhaoyu/chatgpt-web)，从 `main` 创建分支。新功能实现请发 pull request 到 `feature` 分支。其他更改发到 `main` 分支。
-2. 使用 `npm install pnpm -g` 安装 `pnpm` 工具。
-3. `vscode` 安装了 `Eslint` 插件，其它编辑器如 `webStorm` 打开了 `eslint` 功能。
-4. 根目录下执行 `pnpm bootstrap`。
-5. `/service/` 目录下执行 `pnpm install`。
-6. 对代码库进行更改。如果适用的话，请确保进行了相应的测试。
-7. 请在根目录下执行 `pnpm lint:fix` 进行代码格式检查。
-8. 请在根目录下执行 `pnpm type-check` 进行类型检查。
-9. 提交 git commit, 请同时遵守 [Commit 规范](#commit-指南)
-10. 提交 `pull request`， 如果有对应的 `issue`，请进行[关联](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword)。
-
-## Commit 指南
-
-Commit messages 请遵循[conventional-changelog 标准](https://www.conventionalcommits.org/en/v1.0.0/)：
+在仓库根目录执行：
 
 ```bash
-<类型>[可选 范围]: <描述>
+pnpm install
+pnpm bootstrap
 
-[可选 正文]
-
-[可选 脚注]
+cp .env.example .env
+cp apps/api/.env.example apps/api/.env
 ```
 
-### Commit 类型
+后端最小配置（`apps/api/.env`）：
 
-以下是 commit 类型列表:
+```bash
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-your-official-api-key
+DEFAULT_MODEL=gpt-4o
+```
 
-- feat: 新特性或功能
-- fix: 缺陷修复
-- docs: 文档更新
-- style: 代码风格或者组件样式更新
-- refactor: 代码重构，不引入新功能和缺陷修复
-- perf: 性能优化
-- test: 单元测试
-- chore: 其他不修改 src 或测试文件的提交
+## 开发与校验命令
 
-## License
+日常开发推荐：
 
-[MIT](./license)
+```bash
+pnpm dev:core
+```
+
+提交 PR 前建议执行：
+
+```bash
+pnpm quality
+pnpm test
+pnpm --filter @chatgpt-web/docs validate
+```
+
+## Pull Request 流程建议
+
+1. Fork 仓库并从 `main` 创建分支。
+2. 保持变更聚焦、提交信息清晰。
+3. 运行质量检查与测试。
+4. 提交 PR，并关联相关 Issue（如有）。
+
+## Commit 规范（Conventional Commits）
+
+请尽量遵循：
+
+```bash
+<type>[optional scope]: <description>
+```
+
+常见类型：
+
+- `feat`：新功能
+- `fix`：修复问题
+- `docs`：文档修改
+- `refactor`：重构（无行为变更）
+- `test`：测试相关
+- `chore`：维护性变更

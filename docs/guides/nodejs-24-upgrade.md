@@ -34,7 +34,7 @@
 - **@types/node**: 24.10.4 → 25.0.3
 - **husky**: 8.0.3 → 9.1.7
 
-#### 后端依赖 (service)
+#### 后端依赖 (apps/api)
 
 - **express-rate-limit**: 6.11.2 → 8.2.1
 - **https-proxy-agent**: 5.0.1 → 7.0.6
@@ -57,7 +57,7 @@
 
 #### ESLint 配置优化
 
-- 忽略构建目录 (`service/build/**`, `dist/**`)
+- 忽略构建目录 (`apps/api/build/**`, `dist/**`)
 - 优化了规则配置
 - 支持最新的代码风格
 
@@ -112,8 +112,8 @@
    pnpm run common:cleanup
    pnpm install
 
-   # Service
-   cd service
+   # 后端 API (apps/api)
+   cd apps/api
    pnpm run common:cleanup
    pnpm install
    ```
