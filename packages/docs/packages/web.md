@@ -1160,10 +1160,10 @@ pnpm preview
 ### Environment Variables
 
 ```bash
-# .env.production
-VITE_API_BASE_URL=https://api.yourdomain.com
-VITE_APP_TITLE=ChatGPT Web
-VITE_APP_VERSION=1.0.0
+# .env.production (repo root)
+VITE_GLOB_API_URL=/api
+VITE_APP_API_BASE_URL=https://api.yourdomain.com/
+VITE_GLOB_APP_PWA=true
 ```
 
 The web package provides a modern, responsive, and feature-rich frontend for ChatGPT Web with comprehensive TypeScript support, efficient state management, and optimized performance.
