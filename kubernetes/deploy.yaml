@@ -17,20 +17,28 @@ spec:
         app: chatgpt-web
     spec:
       containers:
-        - image: chenzhaoyu94/chatgpt-web
+        - image: your-registry/chatgpt-web:<git-sha>
           name: chatgpt-web
           imagePullPolicy: Always
           ports:
             - containerPort: 3002
           env:
+            - name: AI_PROVIDER
+              value: openai
             - name: OPENAI_API_KEY
               value: sk-xxx
             - name: OPENAI_API_BASE_URL
               value: 'https://api.openai.com'
+            - name: DEFAULT_MODEL
+              value: gpt-4o
             - name: OPENAI_API_MODEL
               value: gpt-4o
             - name: AUTH_SECRET_KEY
               value: '123456'
+            - name: SESSION_SECRET
+              value: 'replace-with-a-long-random-string'
+            - name: ALLOWED_ORIGINS
+              value: 'https://your-app.example.com'
             - name: TIMEOUT_MS
               value: '60000'
             - name: SOCKS_PROXY_HOST
