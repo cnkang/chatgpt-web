@@ -68,7 +68,7 @@ metadata:
 data:
   NODE_ENV: 'production'
   AI_PROVIDER: 'openai'
-  OPENAI_API_MODEL: 'gpt-4o'
+  DEFAULT_MODEL: 'gpt-4o'
   MAX_REQUEST_PER_HOUR: '1000'
   TIMEOUT_MS: '30000'
   LOG_LEVEL: 'info'
@@ -102,7 +102,7 @@ spec:
     spec:
       containers:
         - name: chatgpt-web
-          image: chenzhaoyu94/chatgpt-web:latest
+          image: your-registry/chatgpt-web:<git-sha>
           ports:
             - containerPort: 3002
               name: http
@@ -249,7 +249,7 @@ spec:
 
       containers:
         - name: chatgpt-web
-          image: chenzhaoyu94/chatgpt-web:latest
+          image: your-registry/chatgpt-web:<git-sha>
 
           # Resource limits for production
           resources:
@@ -394,7 +394,7 @@ patchesStrategicMerge:
   - configmap-dev.yaml
 
 images:
-  - name: chenzhaoyu94/chatgpt-web
+  - name: your-registry/chatgpt-web
     newTag: dev
 ```
 
@@ -448,7 +448,7 @@ patchesStrategicMerge:
   - configmap-prod.yaml
 
 images:
-  - name: chenzhaoyu94/chatgpt-web
+  - name: your-registry/chatgpt-web
     newTag: latest
 ```
 
@@ -649,7 +649,7 @@ spec:
 set -e
 
 NAMESPACE=${NAMESPACE:-chatgpt-web}
-IMAGE_TAG=${IMAGE_TAG:-latest}
+IMAGE_TAG=${IMAGE_TAG:-your-tag}
 
 echo "Deploying ChatGPT Web to namespace: $NAMESPACE"
 
