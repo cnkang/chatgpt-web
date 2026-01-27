@@ -125,9 +125,11 @@ export class ConfigurationManager {
   private loadConfiguration(): AppConfiguration {
     const provider = (process.env.AI_PROVIDER as 'openai' | 'azure') || 'openai'
     const azureDeployment = process.env.AZURE_OPENAI_DEPLOYMENT || ''
+    const corsOriginRaw = process.env.CORS_ORIGIN || process.env.ALLOWED_ORIGINS
+    const enableReasoningRaw = process.env.ENABLE_REASONING_MODELS || process.env.ENABLE_REASONING
 
-    // 如果是Azure提供商且没有设置DEFAULT_MODEL，使用部署名作为默认模型
-    let defaultModel = process.env.DEFAULT_MODEL
+    // Prefer DEFAULT_MODEL, but support OPENAI_API_MODEL for backwards compatibility.
+    let defaultModel = process.env.DEFAULT_MODEL || process.env.OPENAI_API_MODEL
     if (!defaultModel) {
       if (provider === 'azure' && azureDeployment) {
         defaultModel = azureDeployment
@@ -141,14 +143,14 @@ export class ConfigurationManager {
         port: Number.parseInt(process.env.PORT || '3002', 10),
         host: process.env.HOST || '0.0.0.0',
         cors: {
-          origin: process.env.CORS_ORIGIN?.split(',') || '*',
+          origin: corsOriginRaw?.split(',') || '*',
           credentials: process.env.CORS_CREDENTIALS === 'true',
         },
       },
       ai: {
         provider,
         defaultModel,
-        enableReasoning: process.env.ENABLE_REASONING === 'true',
+        enableReasoning: enableReasoningRaw === 'true',
         timeout: Number.parseInt(process.env.TIMEOUT_MS || '100000', 10),
         openai: {
           apiKey: process.env.OPENAI_API_KEY || '',
