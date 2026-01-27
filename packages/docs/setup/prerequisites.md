@@ -140,7 +140,7 @@ code --install-extension ms-vscode.vscode-eslint
 ```bash
 # Check Docker installation
 docker --version
-docker-compose --version
+docker compose version
 ```
 
 **Installation**:
@@ -181,8 +181,8 @@ Create a `.env` file template:
 
 ```bash
 # Copy example environment files
+cp .env.example .env
 cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
 ```
 
 ## Verification
@@ -235,10 +235,10 @@ After installing prerequisites:
 
 ```bash
 # Clone and test the project
-git clone https://github.com/your-org/chatgpt-web.git
+git clone https://github.com/cnkang/chatgpt-web.git
 cd chatgpt-web
 pnpm install
-pnpm build:shared
+pnpm --filter @chatgpt-web/shared build
 ```
 
 ## Troubleshooting
