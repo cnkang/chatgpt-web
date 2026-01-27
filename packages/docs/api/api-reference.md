@@ -186,6 +186,71 @@ Get current configuration and usage information.
 }
 ```
 
+### Migration Info
+
+Get migration guidance and current configuration validation results.
+
+**Endpoint:** `GET /migration-info`
+
+**Response (shape):**
+
+```json
+{
+  "status": "Success",
+  "message": "Migration information retrieved",
+  "data": {
+    "migration": {},
+    "validation": {}
+  }
+}
+```
+
+### Security Status
+
+Run a security validation pass and return a risk summary.
+
+**Endpoint:** `GET /security-status`
+
+**Response (shape):**
+
+```json
+{
+  "status": "Success",
+  "message": "Security validation completed",
+  "data": {
+    "isSecure": true,
+    "risks": [],
+    "summary": {
+      "totalRisks": 0,
+      "highSeverity": 0,
+      "mediumSeverity": 0,
+      "lowSeverity": 0
+    }
+  }
+}
+```
+
+### Circuit Breaker Status
+
+Inspect the current circuit breaker state used around provider calls.
+
+**Endpoint:** `GET /circuit-breaker-status`
+
+**Response (shape):**
+
+```json
+{
+  "status": "Success",
+  "message": "Circuit breaker status retrieved",
+  "data": {
+    "state": "CLOSED",
+    "failureCount": 0,
+    "lastFailureTime": null,
+    "successCount": 150
+  }
+}
+```
+
 ## Provider Configuration
 
 ### OpenAI Provider
@@ -197,7 +262,7 @@ Configure the application to use OpenAI's official API:
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_official_api_key_here
 OPENAI_API_BASE_URL=https://api.openai.com
-OPENAI_API_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-4o
 ```
 
 **Supported Models:**

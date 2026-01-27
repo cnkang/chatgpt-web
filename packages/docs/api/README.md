@@ -50,7 +50,9 @@ curl -X POST http://localhost:3002/api/chat-process \
 ### Configuration Check
 
 ```bash
-curl http://localhost:3002/api/config
+curl -X POST http://localhost:3002/api/config \
+  -H "Content-Type: application/json" \
+  -d '{}'
 ```
 
 ## Response Format

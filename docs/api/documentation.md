@@ -241,8 +241,8 @@ Get circuit breaker status for external API calls.
   "data": {
     "state": "CLOSED",
     "failureCount": 0,
-    "successCount": 150,
-    "nextAttempt": null
+    "lastFailureTime": null,
+    "successCount": 150
   }
 }
 ```
@@ -285,7 +285,7 @@ Configure the application to use OpenAI's official API:
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_official_api_key_here
 OPENAI_API_BASE_URL=https://api.openai.com
-OPENAI_API_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-4o
 ```
 
 **Supported Models:**
