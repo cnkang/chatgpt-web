@@ -78,7 +78,7 @@ jobs:
         node-version: ['24.x']
         os: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
@@ -124,7 +124,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
@@ -160,7 +160,7 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
@@ -215,7 +215,7 @@ jobs:
     needs: setup-matrix
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'performance')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
@@ -248,7 +248,7 @@ jobs:
     needs: setup-matrix
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'security')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js and PNPM
         uses: ./.github/actions/setup-node-pnpm
