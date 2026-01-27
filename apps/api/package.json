@@ -61,7 +61,7 @@
     "isomorphic-fetch": "^3.0.0",
     "jsdom": "^27.4.0",
     "node-fetch": "^3.3.2",
-    "openai": "^6.15.0",
+    "openai": "^6.16.0",
     "redis": "^5.10.0",
     "socks-proxy-agent": "^8.0.5",
     "zod": "^4.3.6"
