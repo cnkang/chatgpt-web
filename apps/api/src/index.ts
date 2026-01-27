@@ -31,7 +31,11 @@ import { logger, requestLogger } from './utils/logger'
 import { CircuitBreaker, retryWithBackoff } from './utils/retry'
 import { chatProcessRequestSchema, tokenVerificationSchema } from './validation/schemas'
 
-const PORT = 3002
+// Load environment variables early so derived configuration (like PORT) is accurate.
+dotenv.config()
+
+const parsedPort = Number.parseInt(process.env.PORT || '3002', 10)
+const PORT = Number.isNaN(parsedPort) ? 3002 : parsedPort
 
 type ChatModule = typeof import('./chatgpt/index.js')
 
@@ -44,9 +48,6 @@ const apiCircuitBreaker = new CircuitBreaker({
 })
 
 function validateConfigOrExit() {
-  // Load environment variables from .env file
-  dotenv.config()
-
   try {
     ConfigurationValidator.validateEnvironment()
     console.warn('✓ Configuration validation passed')
