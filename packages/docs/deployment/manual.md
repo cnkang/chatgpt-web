@@ -59,11 +59,11 @@ corepack enable pnpm
 
 ```bash
 # Clone the repository
-git clone https://github.com/Chanzhaoyu/chatgpt-web.git
+git clone https://github.com/cnkang/chatgpt-web.git
 cd chatgpt-web
 
 # Or download and extract release
-wget https://github.com/Chanzhaoyu/chatgpt-web/archive/refs/heads/main.zip
+wget https://github.com/cnkang/chatgpt-web/archive/refs/heads/main.zip
 unzip main.zip
 cd chatgpt-web-main
 ```
@@ -71,13 +71,9 @@ cd chatgpt-web-main
 ### 2. Install Dependencies
 
 ```bash
-# Install root dependencies
+# Install all workspace dependencies
 pnpm install
-
-# Install service dependencies
-cd service
-pnpm install
-cd ..
+pnpm bootstrap
 ```
 
 ### 3. Environment Configuration
@@ -85,25 +81,27 @@ cd ..
 ```bash
 # Copy environment templates
 cp .env.example .env
-cp service/.env.example service/.env
+cp apps/api/.env.example apps/api/.env
 
 # Edit environment files
-nano service/.env  # or vim, code, etc.
+nano apps/api/.env  # or vim, code, etc.
 ```
 
 #### Required Environment Variables
 
 ```bash
-# service/.env
+# apps/api/.env
 
 # AI Provider Configuration
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-openai-api-key-here
-OPENAI_API_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-4o
 
 # Security
 AUTH_SECRET_KEY=your-secure-secret-key-here
+SESSION_SECRET=replace-with-a-long-random-string
 MAX_REQUEST_PER_HOUR=1000
+ALLOWED_ORIGINS=https://your-app.example.com
 
 # Server Configuration
 PORT=3002
@@ -111,8 +109,6 @@ NODE_ENV=production
 
 # Performance
 TIMEOUT_MS=30000
-RETRY_MAX_ATTEMPTS=3
-RETRY_BASE_DELAY=1000
 ```
 
 #### Optional Environment Variables
@@ -126,8 +122,7 @@ AZURE_OPENAI_API_VERSION=2024-02-15-preview
 
 # Advanced Configuration
 LOG_LEVEL=info
-ENABLE_CORS=false
-ENABLE_SECURITY_HEADERS=true
+HOST=0.0.0.0
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=3600000
@@ -135,19 +130,17 @@ RATE_LIMIT_MAX_REQUESTS=1000
 
 # Proxy Configuration (if needed)
 HTTPS_PROXY=http://proxy.company.com:8080
-HTTP_PROXY=http://proxy.company.com:8080
 ```
 
 ### 4. Build Application
 
 ```bash
-# Build frontend
+# Build all packages (recommended)
 pnpm build
 
-# Build backend
-cd service
-pnpm build
-cd ..
+# Or build packages individually
+pnpm build:web
+pnpm build:api
 ```
 
 ## Deployment Methods
@@ -158,13 +151,13 @@ cd ..
 
 ```bash
 # Start backend service
-cd service
+cd apps/api
 pnpm prod &
 BACKEND_PID=$!
 
 # Serve frontend (using a simple HTTP server)
 cd ..
-npx serve dist -p 1002 &
+npx serve apps/web/dist -p 1002 &
 FRONTEND_PID=$!
 
 echo "Backend PID: $BACKEND_PID"
@@ -189,7 +182,7 @@ mkdir -p $LOG_DIR
 
 # Start backend
 echo "Starting backend service..."
-cd service
+cd apps/api
 nohup pnpm prod > $LOG_DIR/backend.log 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > $LOG_DIR/backend.pid
@@ -197,7 +190,7 @@ cd ..
 
 # Start frontend
 echo "Starting frontend service..."
-nohup npx serve dist -p $FRONTEND_PORT > $LOG_DIR/frontend.log 2>&1 &
+nohup npx serve apps/web/dist -p $FRONTEND_PORT > $LOG_DIR/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo $FRONTEND_PID > $LOG_DIR/frontend.pid
 
@@ -260,7 +253,7 @@ module.exports = {
   apps: [
     {
       name: 'chatgpt-web-backend',
-      cwd: './service',
+      cwd: './apps/api',
       script: 'pnpm',
       args: 'prod',
       env: {
@@ -279,7 +272,7 @@ module.exports = {
     {
       name: 'chatgpt-web-frontend',
       script: 'npx',
-      args: 'serve dist -p 1002',
+      args: 'serve apps/web/dist -p 1002',
       env: {
         NODE_ENV: 'production',
       },
@@ -342,7 +335,7 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/path/to/chatgpt-web/service
+WorkingDirectory=/path/to/chatgpt-web/apps/api
 Environment=NODE_ENV=production
 Environment=PORT=3002
 ExecStart=/usr/bin/pnpm prod
@@ -372,7 +365,7 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/path/to/chatgpt-web
-ExecStart=/usr/bin/npx serve dist -p 1002
+ExecStart=/usr/bin/npx serve apps/web/dist -p 1002
 Restart=always
 RestartSec=10
 StandardOutput=syslog
@@ -702,15 +695,15 @@ sudo chown -R chatgpt-web:chatgpt-web /path/to/chatgpt-web
 
 # Set permissions
 sudo chmod -R 755 /path/to/chatgpt-web
-sudo chmod 600 /path/to/chatgpt-web/service/.env
+sudo chmod 600 /path/to/chatgpt-web/apps/api/.env
 ```
 
 ### Environment Security
 
 ```bash
 # Secure environment file
-sudo chmod 600 service/.env
-sudo chown chatgpt-web:chatgpt-web service/.env
+sudo chmod 600 apps/api/.env
+sudo chown chatgpt-web:chatgpt-web apps/api/.env
 
 # Remove sensitive data from shell history
 history -c
@@ -753,7 +746,7 @@ tail -f logs/backend.log
 env | grep -E '^(NODE_|OPENAI_|AI_)'
 
 # Test manually
-cd service
+cd apps/api
 pnpm prod
 ```
 

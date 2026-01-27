@@ -6,14 +6,21 @@ This guide covers deploying the ChatGPT Web monorepo using Docker containers.
 
 ### Using Docker Compose (Recommended)
 
-1. **Create docker-compose.yml:**
+1. **Build the image from this repository:**
+
+```bash
+docker build -t chatgpt-web:local .
+```
+
+2. **Create `docker-compose.yml`:**
 
 ```yaml
 version: '3.8'
 
 services:
   chatgpt-web:
-    image: chenzhaoyu94/chatgpt-web:latest
+    build: .
+    image: chatgpt-web:local
     container_name: chatgpt-web
     restart: unless-stopped
 
@@ -24,7 +31,7 @@ services:
       # Required: OpenAI API Configuration
       OPENAI_API_KEY: sk-your_official_api_key_here
       AI_PROVIDER: openai
-      OPENAI_API_MODEL: gpt-4o
+      DEFAULT_MODEL: gpt-4o
 
       # Optional: Security
       AUTH_SECRET_KEY: your_secret_key
@@ -32,7 +39,6 @@ services:
 
       # Optional: Performance
       TIMEOUT_MS: 60000
-      RETRY_MAX_ATTEMPTS: 3
 
       # Environment
       NODE_ENV: production
@@ -46,13 +52,13 @@ services:
       start_period: 40s
 ```
 
-2. **Start the service:**
+3. **Start the service:**
 
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
 
-3. **Access the application:**
+4. **Access the application:**
 
 Open <http://localhost:3002> in your browser.
 
@@ -67,7 +73,7 @@ docker run -d \
   -e OPENAI_API_KEY=sk-your_api_key_here \
   -e AI_PROVIDER=openai \
   -e NODE_ENV=production \
-  chenzhaoyu94/chatgpt-web:latest
+  chatgpt-web:local
 
 # With additional configuration
 docker run -d \
@@ -76,13 +82,13 @@ docker run -d \
   -p 127.0.0.1:3002:3002 \
   -e OPENAI_API_KEY=sk-your_api_key_here \
   -e AI_PROVIDER=openai \
-  -e OPENAI_API_MODEL=gpt-4o \
+  -e DEFAULT_MODEL=gpt-4o \
   -e AUTH_SECRET_KEY=your_secret_key \
   -e MAX_REQUEST_PER_HOUR=100 \
   -e TIMEOUT_MS=60000 \
   -e NODE_ENV=production \
   -e LOG_LEVEL=info \
-  chenzhaoyu94/chatgpt-web:latest
+  chatgpt-web:local
 ```
 
 ## Environment Configuration
@@ -103,7 +109,7 @@ environment:
 environment:
   AI_PROVIDER: openai
   OPENAI_API_KEY: sk-your_api_key_here
-  OPENAI_API_MODEL: gpt-4o
+  DEFAULT_MODEL: gpt-4o
   OPENAI_API_BASE_URL: https://api.openai.com
 ```
 
@@ -137,11 +143,6 @@ environment:
 environment:
   # Timeouts
   TIMEOUT_MS: 60000
-  REASONING_MODEL_TIMEOUT_MS: 120000
-
-  # Retry Logic
-  RETRY_MAX_ATTEMPTS: 3
-  RETRY_BASE_DELAY: 1000
 
   # Features
   ENABLE_REASONING_MODELS: true
@@ -156,7 +157,8 @@ version: '3.8'
 
 services:
   chatgpt-web:
-    image: chenzhaoyu94/chatgpt-web:latest
+    build: .
+    image: chatgpt-web:local
     container_name: chatgpt-web-prod
     restart: unless-stopped
 
@@ -164,7 +166,7 @@ services:
       # Provider Configuration
       AI_PROVIDER: ${AI_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-4o}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
 
       # Security
       AUTH_SECRET_KEY: ${AUTH_SECRET_KEY}
@@ -172,7 +174,6 @@ services:
 
       # Performance
       TIMEOUT_MS: ${TIMEOUT_MS:-30000}
-      RETRY_MAX_ATTEMPTS: ${RETRY_MAX_ATTEMPTS:-3}
 
       # Production Settings
       NODE_ENV: production
@@ -182,8 +183,7 @@ services:
       - '127.0.0.1:3002:3002'
 
     volumes:
-      - ./logs:/app/logs
-      - ./config:/app/config
+      - ./logs:/app/apps/api/logs
 
     networks:
       - chatgpt-network
@@ -238,7 +238,7 @@ volumes:
 # Provider Configuration
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_production_api_key_here
-OPENAI_API_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-4o
 
 # Security
 AUTH_SECRET_KEY=your_very_secure_production_key
@@ -246,7 +246,6 @@ MAX_REQUEST_PER_HOUR=1000
 
 # Performance
 TIMEOUT_MS=30000
-RETRY_MAX_ATTEMPTS=3
 
 # Optional: Proxy Configuration
 # HTTPS_PROXY=http://proxy:8080
@@ -336,7 +335,7 @@ server {
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/your-org/chatgpt-web.git
+git clone https://github.com/cnkang/chatgpt-web.git
 cd chatgpt-web
 ```
 
@@ -409,7 +408,7 @@ docker logs -t chatgpt-web
 
 ### Log Rotation
 
-Configure log rotation in docker-compose.yml:
+Configure log rotation in docker compose.yml:
 
 ```yaml
 services:
@@ -430,7 +429,8 @@ version: '3.8'
 
 services:
   chatgpt-web:
-    image: chenzhaoyu94/chatgpt-web:latest
+    build: .
+    image: chatgpt-web:local
     deploy:
       replicas: 3
     environment:
@@ -518,7 +518,7 @@ docker run -it --rm \
   -e NODE_ENV=development \
   -e LOG_LEVEL=debug \
   -e OPENAI_API_KEY=sk-your_key_here \
-  chenzhaoyu94/chatgpt-web:latest
+  chatgpt-web:local
 ```
 
 ## Security Considerations
@@ -538,7 +538,7 @@ USER nextjs
 ```yaml
 services:
   chatgpt-web:
-    image: chenzhaoyu94/chatgpt-web:v2.11.1 # Specific version
+    image: chatgpt-web:2.11.1
 ```
 
 3. **Limit container resources:**
@@ -581,11 +581,12 @@ echo "sk-your_api_key" | docker secret create openai_key -
 ### Data Backup
 
 ```bash
-# Backup logs
-docker cp chatgpt-web:/app/logs ./backup/logs-$(date +%Y%m%d)
+# Backup backend logs (if you write logs to disk)
+docker cp chatgpt-web:/app/apps/api/logs ./backup/api-logs-$(date +%Y%m%d)
 
-# Backup configuration
-docker cp chatgpt-web:/app/config ./backup/config-$(date +%Y%m%d)
+# Backup built backend and static assets (optional)
+docker cp chatgpt-web:/app/apps/api/build ./backup/api-build-$(date +%Y%m%d)
+docker cp chatgpt-web:/app/apps/api/public ./backup/api-public-$(date +%Y%m%d)
 ```
 
 ### Container Recovery
@@ -596,7 +597,7 @@ docker stop chatgpt-web
 docker rm chatgpt-web
 
 # Recreate with same configuration
-docker-compose up -d
+docker compose up -d --build
 ```
 
 This guide provides comprehensive Docker deployment options for the ChatGPT Web monorepo, from simple single-container deployments to production-ready multi-container setups with load balancing and monitoring.
