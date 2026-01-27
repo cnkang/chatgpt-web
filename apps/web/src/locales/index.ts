@@ -15,29 +15,29 @@ const appStore = useAppStoreWithOut()
 const defaultLocale = appStore.language || 'zh-CN'
 
 const i18n = createI18n({
-	legacy: false,
-	locale: defaultLocale,
-	fallbackLocale: 'en-US',
-	globalInjection: true,
-	messages: {
-		'en-US': enUS,
-		'es-ES': esES,
-		'ko-KR': koKR,
-		'ru-RU': ruRU,
-		'vi-VN': viVN,
-		'zh-CN': zhCN,
-		'zh-TW': zhTW,
-	},
+  legacy: false,
+  locale: defaultLocale,
+  fallbackLocale: 'en-US',
+  globalInjection: true,
+  messages: {
+    'en-US': enUS,
+    'es-ES': esES,
+    'ko-KR': koKR,
+    'ru-RU': ruRU,
+    'vi-VN': viVN,
+    'zh-CN': zhCN,
+    'zh-TW': zhTW,
+  },
 })
 
 export const t: (key: string, ...args: unknown[]) => string = i18n.global.t
 
 export function setLocale(locale: Language) {
-	i18n.global.locale.value = locale
+  i18n.global.locale.value = locale
 }
 
 export function setupI18n(app: App) {
-	app.use(i18n)
+  app.use(i18n)
 }
 
 export default i18n
