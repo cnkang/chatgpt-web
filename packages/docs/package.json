@@ -4,7 +4,7 @@
   "description": "Documentation package for ChatGPT Web monorepo",
   "private": true,
   "scripts": {
-    "build": "echo 'Documentation build complete'",
+    "build": "mkdir -p dist && echo 'Documentation build complete' > dist/.gitkeep",
     "dev": "echo 'Documentation package - no dev server needed'",
     "serve": "python3 -m http.server 8080",
     "validate": "NODE_OPTIONS=--no-deprecation markdownlint **/*.md",

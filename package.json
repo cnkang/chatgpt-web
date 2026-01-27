@@ -67,7 +67,10 @@
   "pnpm": {
     "overrides": {
       "lodash@<4.17.23": "4.17.23",
-      "lodash-es@<4.17.23": "4.17.23"
+      "lodash-es@<4.17.23": "4.17.23",
+      "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.0",
+      "node-domexception": "npm:domexception@^4.0.0",
+      "source-map": "^0.7.4"
     }
   }
 }
