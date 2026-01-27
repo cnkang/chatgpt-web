@@ -8,67 +8,66 @@ services:
       context: ..
       dockerfile: Dockerfile
     ports:
-      - "3002:3002"  # API port
-      - "1002:1002"  # Web dev server port (if running web dev server)
+      - "3002:3002" # API port
+      - "1002:1002" # Web dev server port (if running web dev server)
     environment:
       NODE_ENV: development
-      
-      # ===========================================
-      # Provider Configuration
-      # ===========================================
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      PORT: ${PORT:-3002}
+      HOST: ${HOST:-0.0.0.0}
+
+      # Provider configuration
       AI_PROVIDER: ${AI_PROVIDER:-openai}
-      
-      # ===========================================
-      # OpenAI Configuration
-      # ===========================================
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
+      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-4o}
+
+      # OpenAI configuration
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-https://api.openai.com}
-      
-      # ===========================================
-      # Azure OpenAI Configuration
-      # ===========================================
+      OPENAI_API_DISABLE_DEBUG: ${OPENAI_API_DISABLE_DEBUG:-}
+      OPENAI_ORGANIZATION: ${OPENAI_ORGANIZATION:-}
+
+      # Azure OpenAI configuration
       AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
       AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
       AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-}
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-02-15-preview}
       AZURE_OPENAI_USE_RESPONSES_API: ${AZURE_OPENAI_USE_RESPONSES_API:-true}
-      
-      # ===========================================
-      # Model Configuration
-      # ===========================================
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
-      
-      # Security Configuration
+
+      # Security / access control
       AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-dev-secret-key}
       SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret}
-      
-      # ===========================================
-      # Rate Limiting (Disabled for Development)
-      # ===========================================
       MAX_REQUEST_PER_HOUR: ${MAX_REQUEST_PER_HOUR:-0}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      CORS_CREDENTIALS: ${CORS_CREDENTIALS:-true}
+      HTTPS: ${HTTPS:-}
+
+      # Optional Redis session store
+      REDIS_URL: ${REDIS_URL:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+
+      # Compatibility flags (provider config layer)
+      ENABLE_RATE_LIMIT: ${ENABLE_RATE_LIMIT:-true}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-3600000}
       RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-0}
-      
-      # ===========================================
-      # Performance Configuration
-      # ===========================================
-      TIMEOUT_MS: ${TIMEOUT_MS:-60000}
-      RETRY_MAX_ATTEMPTS: ${RETRY_MAX_ATTEMPTS:-3}
-      RETRY_BASE_DELAY: ${RETRY_BASE_DELAY:-1000}
-      
-      # ===========================================
-      # Reasoning Models Configuration
-      # ===========================================
+      ENABLE_CSP: ${ENABLE_CSP:-true}
+      ENABLE_HSTS: ${ENABLE_HSTS:-true}
+      API_KEY_HEADER: ${API_KEY_HEADER:-authorization}
       ENABLE_REASONING_MODELS: ${ENABLE_REASONING_MODELS:-true}
-      REASONING_MODEL_TIMEOUT_MS: ${REASONING_MODEL_TIMEOUT_MS:-120000}
-      
-      # ===========================================
-      # Development Configuration
-      # ===========================================
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      ENABLE_REQUEST_LOGGING: ${ENABLE_REQUEST_LOGGING:-true}
-      ENABLE_SECURITY_HEADERS: ${ENABLE_SECURITY_HEADERS:-false}
-      
+      ENABLE_REASONING: ${ENABLE_REASONING:-true}
+      DEBUG: ${DEBUG:-true}
+      HOT_RELOAD: ${HOT_RELOAD:-true}
+
+      # Networking
+      TIMEOUT_MS: ${TIMEOUT_MS:-60000}
+      SOCKS_PROXY_HOST: ${SOCKS_PROXY_HOST:-}
+      SOCKS_PROXY_PORT: ${SOCKS_PROXY_PORT:-}
+      SOCKS_PROXY_USERNAME: ${SOCKS_PROXY_USERNAME:-}
+      SOCKS_PROXY_PASSWORD: ${SOCKS_PROXY_PASSWORD:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      ALL_PROXY: ${ALL_PROXY:-}
+
     volumes:
       # Mount source code for hot reloading
       - ../apps:/app/apps
