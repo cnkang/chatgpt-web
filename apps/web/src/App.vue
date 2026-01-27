@@ -9,21 +9,21 @@ const { language } = useLanguage()
 </script>
 
 <template>
-	<NConfigProvider
-		class="h-full"
-		:theme="theme"
-		:theme-overrides="themeOverrides"
-		:locale="language"
-	>
-		<NaiveProvider>
-			<Suspense>
-				<template #default>
-					<RouterView />
-				</template>
-				<template #fallback>
-					<LoadingSpinner size="large" text="Loading application..." />
-				</template>
-			</Suspense>
-		</NaiveProvider>
-	</NConfigProvider>
+  <NConfigProvider
+    class="h-full"
+    :theme="theme"
+    :theme-overrides="themeOverrides"
+    :locale="language"
+  >
+    <NaiveProvider>
+      <Suspense>
+        <template #default>
+          <RouterView />
+        </template>
+        <template #fallback>
+          <LoadingSpinner size="large" text="Loading application..." />
+        </template>
+      </Suspense>
+    </NaiveProvider>
+  </NConfigProvider>
 </template>
