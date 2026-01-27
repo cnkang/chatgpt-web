@@ -5,14 +5,7 @@ import Setting from './Setting/index.vue'
 import SvgIcon from './SvgIcon/index.vue'
 import UserAvatar from './UserAvatar/index.vue'
 
-export {
-	HoverButton,
-	LoadingSpinner,
-	NaiveProvider,
-	Setting,
-	SvgIcon,
-	UserAvatar,
-}
+export { HoverButton, LoadingSpinner, NaiveProvider, Setting, SvgIcon, UserAvatar }
 
 // Re-export reasoning components
 export * from '../reasoning'
