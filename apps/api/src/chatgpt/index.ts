@@ -4,9 +4,6 @@ import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'chatgpt
 import { ChatGPTAPI } from 'chatgpt'
 import * as dotenv from 'dotenv'
 import httpsProxyAgent from 'https-proxy-agent'
-import 'isomorphic-fetch'
-import type { RequestInfo as NodeRequestInfo, RequestInit as NodeRequestInit } from 'node-fetch'
-import fetch from 'node-fetch'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import { sendResponse } from '../utils'
 import type { FetchLike, RequestOptions, SetProxyOptions, UsageResponse } from './types'
@@ -27,8 +24,7 @@ const ErrorCodeMessage: Record<string, string> = {
 const timeoutMsEnv = process.env.TIMEOUT_MS
 const timeoutMs: number = Number.isNaN(Number(timeoutMsEnv)) ? 100 * 1000 : Number(timeoutMsEnv)
 const disableDebug: boolean = process.env.OPENAI_API_DISABLE_DEBUG === 'true'
-const defaultFetch: FetchLike = (input, init) =>
-  fetch(input as NodeRequestInfo, init as NodeRequestInit)
+const defaultFetch: FetchLike = (input, init) => fetch(input as RequestInfo, init as RequestInit)
 
 let apiModel: ApiModel
 const model = isNotEmptyString(process.env.OPENAI_API_MODEL)
@@ -224,16 +220,16 @@ function setupProxy(options: SetProxyOptions) {
       `socks://${socksProxyAuth}${socksProxyHost}:${socksProxyPort}`,
     )
     options.fetch = (url, init) => {
-      const initWithAgent: NodeRequestInit = { ...(init as NodeRequestInit), agent }
-      return fetch(url as NodeRequestInfo, initWithAgent)
+      const initWithAgent = { ...(init as RequestInit), agent } as RequestInit
+      return fetch(url as RequestInfo, initWithAgent)
     }
   } else if (isNotEmptyString(process.env.HTTPS_PROXY) || isNotEmptyString(process.env.ALL_PROXY)) {
     const httpsProxy = process.env.HTTPS_PROXY || process.env.ALL_PROXY
     if (httpsProxy) {
       const agent = new HttpsProxyAgent(httpsProxy)
       options.fetch = (url, init) => {
-        const initWithAgent: NodeRequestInit = { ...(init as NodeRequestInit), agent }
-        return fetch(url as NodeRequestInfo, initWithAgent)
+        const initWithAgent = { ...(init as RequestInit), agent } as RequestInit
+        return fetch(url as RequestInfo, initWithAgent)
       }
     }
   } else {
