@@ -21,7 +21,7 @@ git commit -m "ci: update workflows for monorepo build system"
 git add docker-compose/ kubernetes/
 git commit -m "deploy: update deployment configs for monorepo"
 
-git add -A && git reset -- src/ service/ docs/
+git add -A && git reset -- apps/ packages/ docs/
 git commit -m "chore: remove legacy directories after monorepo migration"
 ```
 

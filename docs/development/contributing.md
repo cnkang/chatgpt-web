@@ -1,51 +1,69 @@
-# Contribution Guide
+# Contributing Guide
 
-Thank you for your valuable time. Your contributions will make this project better! Before submitting a contribution, please take some time to read the getting started guide below.
+Thanks for contributing to ChatGPT Web. This guide reflects the current monorepo layout.
 
-## Semantic Versioning
+## Repository and Prerequisites
 
-This project follows semantic versioning. We release patch versions for important bug fixes, minor versions for new features or non-important changes, and major versions for significant and incompatible changes.
+- Repository: https://github.com/cnkang/chatgpt-web
+- Node.js: `>= 24.0.0`
+- pnpm: `>= 10.0.0`
 
-Each major change will be recorded in the `changelog`.
+## Local Setup
 
-## Submitting Pull Request
+From the repository root:
 
-1. Fork [this repository](https://github.com/Chanzhaoyu/chatgpt-web) and create a branch from `main`. For new feature implementations, submit a pull request to the `feature` branch. For other changes, submit to the `main` branch.
-2. Install the `pnpm` tool using `npm install pnpm -g`.
-3. Install the `Eslint` plugin for `VSCode`, or enable `eslint` functionality for other editors such as `WebStorm`.
-4. Execute `pnpm bootstrap` in the root directory.
-5. Execute `pnpm install` in the `/service/` directory.
-6. Make changes to the codebase. If applicable, ensure that appropriate testing has been done.
-7. Execute `pnpm lint:fix` in the root directory to perform a code formatting check.
-8. Execute `pnpm type-check` in the root directory to perform a type check.
-9. Submit a git commit, following the [Commit Guidelines](#commit-guidelines).
-10. Submit a `pull request`. If there is a corresponding `issue`, please link it using the [linking-a-pull-request-to-an-issue keyword](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
+```bash
+pnpm install
+pnpm bootstrap
 
-## Commit Guidelines
+cp .env.example .env
+cp apps/api/.env.example apps/api/.env
+```
 
-Commit messages should follow the [conventional-changelog standard](https://www.conventionalcommits.org/en/v1.0.0/):
+Minimum backend configuration (`apps/api/.env`):
+
+```bash
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-your-official-api-key
+DEFAULT_MODEL=gpt-4o
+```
+
+## Development Commands
+
+Recommended daily workflow:
+
+```bash
+pnpm dev:core
+```
+
+Useful checks before opening a PR:
+
+```bash
+pnpm quality
+pnpm test
+pnpm --filter @chatgpt-web/docs validate
+```
+
+## Pull Requests
+
+1. Fork the repo and create a branch from `main`.
+2. Make focused changes with clear commit messages.
+3. Run quality checks and tests.
+4. Open a PR and link any related issues.
+
+## Commit Guidelines (Conventional Commits)
+
+We follow Conventional Commits:
 
 ```bash
 <type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer]
 ```
 
-### Commit Types
+Common types:
 
-The following is a list of commit types:
-
-- feat: New feature or functionality
-- fix: Bug fix
-- docs: Documentation update
-- style: Code style or component style update
-- refactor: Code refactoring, no new features or bug fixes introduced
-- perf: Performance optimization
-- test: Unit test
-- chore: Other commits that do not modify src or test files
-
-## License
-
-[MIT](./license)
+- `feat`: new feature
+- `fix`: bug fix
+- `docs`: documentation change
+- `refactor`: refactoring without behavior change
+- `test`: tests
+- `chore`: maintenance

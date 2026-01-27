@@ -10,10 +10,10 @@ The main script that orchestrates the complete migration process.
 
 ```bash
 # Full migration with all validations
-pnpm migrate:full
+pnpm --filter @chatgpt-web/scripts migrate:full
 
 # Dry run to see what would happen
-pnpm migrate:dry-run
+pnpm --filter @chatgpt-web/scripts migrate:dry-run
 
 # Custom migration with options
 tsx migration-orchestrator.ts --skip-post-validation --no-backup
@@ -35,7 +35,7 @@ Handles the core file migration with git history preservation.
 
 ```bash
 # Run file migration only
-pnpm migrate
+pnpm --filter @chatgpt-web/scripts migrate
 
 # Dry run
 tsx migrate-to-monorepo.ts --dry-run
@@ -58,7 +58,7 @@ Updates all configuration files for monorepo compatibility.
 
 ```bash
 # Update all configurations
-pnpm update-config
+pnpm --filter @chatgpt-web/scripts update-config
 ```
 
 **Updates:**
@@ -76,7 +76,7 @@ Validates the migration structure and dependencies.
 
 ```bash
 # Validate migration
-pnpm validate
+pnpm --filter @chatgpt-web/scripts validate
 ```
 
 **Checks:**
@@ -96,7 +96,7 @@ Comprehensive testing after migration completion.
 
 ```bash
 # Run post-migration validation
-pnpm validate:post
+pnpm --filter @chatgpt-web/scripts validate:post
 ```
 
 **Tests:**
@@ -116,7 +116,7 @@ Provides rollback capability for migration issues.
 
 ```bash
 # Rollback migration
-pnpm rollback
+pnpm --filter @chatgpt-web/scripts rollback
 
 # Rollback with options
 tsx rollback-migration.ts --no-git --dry-run
@@ -137,20 +137,20 @@ tsx rollback-migration.ts --no-git --dry-run
 Sets up the development environment for the monorepo.
 
 ```bash
-pnpm dev-setup
+pnpm --filter @chatgpt-web/scripts dev-setup
 ```
 
 ### 📦 Dependency Management
 
 ```bash
 # Optimize dependencies
-pnpm optimize-deps
+pnpm --filter @chatgpt-web/scripts optimize-deps
 
 # Validate dependencies
-pnpm validate-deps
+pnpm --filter @chatgpt-web/scripts validate-deps
 
 # Watch workspace changes
-pnpm watch
+pnpm --filter @chatgpt-web/scripts watch
 ```
 
 ## Migration Process
@@ -168,13 +168,13 @@ Before running the migration:
 
 ```bash
 # Recommended: Full orchestrated migration
-pnpm migrate:full
+pnpm --filter @chatgpt-web/scripts migrate:full
 
 # Alternative: Step-by-step migration
-pnpm migrate
-pnpm update-config
-pnpm validate
-pnpm validate:post
+pnpm --filter @chatgpt-web/scripts migrate
+pnpm --filter @chatgpt-web/scripts update-config
+pnpm --filter @chatgpt-web/scripts validate
+pnpm --filter @chatgpt-web/scripts validate:post
 ```
 
 ### 3. Post-Migration Steps
@@ -196,7 +196,7 @@ If migration fails or issues are discovered:
 # Rollback happens automatically on failure
 
 # Manual rollback
-pnpm rollback
+pnpm --filter @chatgpt-web/scripts rollback
 ```
 
 ## Migration Validation
@@ -250,7 +250,7 @@ The migration includes comprehensive validation at multiple stages:
 If migration fails:
 
 1. **Use automatic rollback**: The orchestrator provides automatic rollback
-2. **Manual rollback**: Use `pnpm rollback`
+2. **Manual rollback**: Use `pnpm --filter @chatgpt-web/scripts rollback`
 3. **Git reset**: `git reset --hard HEAD` (loses uncommitted changes)
 4. **Restore from backup**: Copy from `.migration-backup/`
 

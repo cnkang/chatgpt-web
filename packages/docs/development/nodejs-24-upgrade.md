@@ -34,7 +34,7 @@ This project has been upgraded to support Node.js 24 LTS and updated all major d
 - **@types/node**: 24.10.4 → 25.0.3
 - **husky**: 8.0.3 → 9.1.7
 
-#### Backend Dependencies (service)
+#### Backend Dependencies (apps/api)
 
 - **express-rate-limit**: 6.11.2 → 8.2.1
 - **https-proxy-agent**: 5.0.1 → 7.0.6
@@ -57,7 +57,7 @@ This project has been upgraded to support Node.js 24 LTS and updated all major d
 
 #### ESLint Configuration Optimization
 
-- Ignores build directories (`service/build/**`, `dist/**`)
+- Ignores build directories (`apps/api/build/**`, `dist/**`)
 - Optimized rule configuration
 - Supports latest code style
 
@@ -112,8 +112,8 @@ This project has been upgraded to support Node.js 24 LTS and updated all major d
    pnpm run common:cleanup
    pnpm install
 
-   # Service
-   cd service
+   # Backend API (apps/api)
+   cd apps/api
    pnpm run common:cleanup
    pnpm install
    ```

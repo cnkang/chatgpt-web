@@ -28,13 +28,13 @@ When adding or updating documentation:
 Run documentation validation:
 
 ```bash
-pnpm validate
+pnpm --filter @chatgpt-web/docs validate
 ```
 
 ## Serving Documentation Locally
 
 ```bash
-pnpm serve
+pnpm --filter @chatgpt-web/docs serve
 ```
 
 Then visit http://localhost:8080 to browse the documentation.
