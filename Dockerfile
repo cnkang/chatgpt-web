@@ -1,7 +1,7 @@
 # Multi-stage build for ChatGPT Web monorepo
 
 # Build frontend (apps/web)
-FROM node:24-alpine AS frontend
+FROM node:25-alpine AS frontend
 
 # Build arguments for frontend configuration
 ARG VITE_GLOB_API_URL=/api
@@ -32,7 +32,7 @@ ENV VITE_GLOB_APP_PWA=${VITE_GLOB_APP_PWA}
 RUN cd apps/web && pnpm build
 
 # Build backend (apps/api)
-FROM node:24-alpine AS backend
+FROM node:25-alpine AS backend
 
 RUN npm install pnpm -g
 
@@ -54,7 +54,7 @@ RUN pnpm install --frozen-lockfile
 RUN cd apps/api && pnpm build
 
 # Production runtime
-FROM node:24-alpine
+FROM node:25-alpine
 
 RUN npm install pnpm -g
 
