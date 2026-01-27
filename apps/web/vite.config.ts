@@ -37,7 +37,16 @@ function setupPlugins(env: ImportMetaEnv): PluginOption[] {
 }
 
 export default defineConfig(env => {
-  const viteEnv = loadEnv(env.mode, process.cwd()) as unknown as ImportMetaEnv
+  const repoRoot = path.resolve(__dirname, '../..')
+  const rootEnv = loadEnv(env.mode, repoRoot)
+
+  // Ensure root-level VITE_* variables are visible to Vite's internal env loading.
+  for (const [key, value] of Object.entries(rootEnv)) {
+    if (key.startsWith('VITE_') && !process.env[key]) process.env[key] = value
+  }
+
+  const packageEnv = loadEnv(env.mode, process.cwd())
+  const viteEnv = { ...rootEnv, ...packageEnv } as unknown as ImportMetaEnv
   const isProduction = env.mode === 'production'
 
   return {
