@@ -21,7 +21,8 @@
     "format:check": "prettier --check .",
     "quality": "run-p type-check lint format:check",
     "quality:fix": "run-p type-check lint:fix format",
-    "clean": "rimraf dist node_modules/.vite"
+    "clean": "rimraf dist node_modules/.vite",
+    "test": "echo 'No tests in web package'"
   },
   "dependencies": {
     "@chatgpt-web/shared": "workspace:*",
