@@ -26,7 +26,6 @@ on:
 
 env:
   NODE_VERSION: '24.x'
-  PNPM_VERSION: '10.28.2'
 
 jobs:
   # Determine test matrix based on inputs

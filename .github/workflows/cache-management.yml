@@ -19,7 +19,6 @@ on:
 
 env:
   NODE_VERSION: '24.x'
-  PNPM_VERSION: '10.28.2'
 
 jobs:
   # Analyze cache usage and efficiency
