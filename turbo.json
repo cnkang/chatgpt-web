@@ -36,6 +36,18 @@
         "vitest.config.ts"
       ]
     },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.vue",
+        "test/**/*.ts",
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "vitest.config.ts"
+      ]
+    },
     "test:watch": {
       "cache": false,
       "persistent": true,

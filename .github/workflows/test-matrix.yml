@@ -128,7 +128,7 @@ jobs:
         env:
           REDIS_URL: redis://localhost:6379
           NODE_ENV: test
-        run: pnpm turbo run test:integration --filter=@chatgpt-web/${{ matrix.package }} -- --run
+        run: pnpm turbo run test:integration --filter=@chatgpt-web/${{ matrix.package }}
 
       - name: Upload integration test results
         if: always()
