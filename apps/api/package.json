@@ -29,6 +29,7 @@
     "build:watch": "pnpm clean && tsup --watch",
     "clean": "rimraf build",
     "test": "vitest --run",
+    "test:integration": "vitest --run src/test/integration",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "lint": "eslint . --max-warnings 0",
