@@ -117,7 +117,7 @@ export function useReasoning() {
     const demoSteps = [
       {
         thought:
-          'Let me break down this problem into its core components to understand what\'s being asked.',
+          "Let me break down this problem into its core components to understand what's being asked.",
         confidence: 85,
         duration: 2000,
       },

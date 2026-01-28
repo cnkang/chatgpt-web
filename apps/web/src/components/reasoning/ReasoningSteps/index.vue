@@ -62,9 +62,7 @@ function handleToggle() {
     >
       <div class="flex items-center space-x-2">
         <SvgIcon icon="ri:brain-line" class="text-blue-500 dark:text-blue-400 text-lg" />
-        <h4 class="font-medium text-gray-900 dark:text-gray-100">
-Reasoning Process
-</h4>
+        <h4 class="font-medium text-gray-900 dark:text-gray-100">Reasoning Process</h4>
         <span class="text-sm text-gray-500 dark:text-gray-400">({{ steps.length }} steps)</span>
       </div>
 
@@ -162,9 +160,7 @@ Reasoning Process
             icon="ri:brain-line"
             class="text-gray-300 dark:text-gray-600 text-2xl mx-auto mb-2"
           />
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-No reasoning steps available
-</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">No reasoning steps available</p>
         </div>
       </div>
     </Transition>

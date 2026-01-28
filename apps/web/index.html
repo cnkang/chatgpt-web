@@ -15,7 +15,8 @@
           const rawSetting = localStorage.getItem('appSetting')
           const stored = rawSetting ? JSON.parse(rawSetting) : null
           const theme = stored?.data?.theme
-          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          const prefersDark =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
           const isDark = theme === 'dark' || (theme === 'auto' && prefersDark)
           const root = document.documentElement
           if (isDark) root.classList.add('dark')

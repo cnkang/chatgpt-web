@@ -161,7 +161,7 @@ function handleImportButtonClick(): void {
             {{ $t('common.export') }}
           </NButton>
 
-          <input id="fileInput" type="file" style="display: none" @change="importData">
+          <input id="fileInput" type="file" style="display: none" @change="importData" />
           <NButton size="small" @click="handleImportButtonClick">
             <template #icon>
               <SvgIcon icon="ri:upload-2-fill" />
