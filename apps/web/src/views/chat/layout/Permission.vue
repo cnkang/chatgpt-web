@@ -53,9 +53,7 @@ function handlePress(event: KeyboardEvent) {
     <div class="p-10 bg-white rounded dark:bg-slate-800">
       <div class="space-y-4">
         <header class="space-y-2">
-          <h2 class="text-2xl font-bold text-center text-slate-800 dark:text-neutral-200">
-403
-</h2>
+          <h2 class="text-2xl font-bold text-center text-slate-800 dark:text-neutral-200">403</h2>
           <p class="text-base text-center text-slate-500 dark:text-slate-500">
             {{ $t('common.unauthorizedTips') }}
           </p>

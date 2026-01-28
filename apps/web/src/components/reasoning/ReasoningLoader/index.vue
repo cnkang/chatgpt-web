@@ -122,9 +122,7 @@ defineExpose({
           <div class="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping" />
         </div>
         <div>
-          <h4 class="font-medium text-blue-900 dark:text-blue-100">
-Reasoning Model Processing
-</h4>
+          <h4 class="font-medium text-blue-900 dark:text-blue-100">Reasoning Model Processing</h4>
           <p class="text-xs text-blue-600 dark:text-blue-300">
             This may take longer than usual responses
           </p>
