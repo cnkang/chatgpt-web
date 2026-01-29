@@ -34,7 +34,10 @@ jobs:
     outputs:
       packages: ${{ steps.matrix.outputs.packages }}
       test-types: ${{ steps.matrix.outputs.test-types }}
+      has-playwright-config: ${{ steps.matrix.outputs.has-playwright-config }}
     steps:
+      - uses: actions/checkout@v6
+
       - name: Setup test matrix
         id: matrix
         run: |
@@ -59,11 +62,20 @@ jobs:
               ;;
           esac
 
+          # Check if Playwright config exists for E2E tests
+          if ls apps/web/playwright.config.* >/dev/null 2>&1; then
+            has_playwright_config=true
+          else
+            has_playwright_config=false
+          fi
+
           echo "packages=$packages" >> $GITHUB_OUTPUT
           echo "test-types=$test_types" >> $GITHUB_OUTPUT
+          echo "has-playwright-config=$has_playwright_config" >> $GITHUB_OUTPUT
 
           echo "Testing packages: $packages"
           echo "Test types: $test_types"
+          echo "Playwright config present: $has_playwright_config"
 
   # Unit tests for each package
   unit-tests:
@@ -145,7 +157,7 @@ jobs:
     needs: setup-matrix
     if: |
       contains(fromJson(needs.setup-matrix.outputs.test-types), 'e2e') &&
-      hashFiles('apps/web/playwright.config.*') != ''
+      needs.setup-matrix.outputs.has-playwright-config == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -248,17 +260,46 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run security audit
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
           # PNPM audit
           pnpm audit --audit-level moderate
 
           # Snyk security scan
-          npx snyk test --all-projects
+          if [ -n "$SNYK_TOKEN" ]; then
+            npx snyk test --all-projects
+          else
+            echo "SNYK_TOKEN not set; skipping Snyk scan."
+          fi
+
+      - name: Start API for ZAP scan
+        run: |
+          export OPENAI_API_KEY=sk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          pnpm --filter @chatgpt-web/api start &
+          echo "API_PID=$!" >> $GITHUB_ENV
+
+          for i in {1..30}; do
+            if curl -sf http://localhost:3002/health >/dev/null; then
+              echo "API is up"
+              break
+            fi
+            sleep 2
+          done
+
+          curl -sf http://localhost:3002/health >/dev/null
 
       - name: Run OWASP ZAP security scan
         uses: zaproxy/action-full-scan@v0.13.0
         with:
           target: 'http://localhost:3002'
+
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -n "$API_PID" ]; then
+            kill "$API_PID" || true
+          fi
 
       - name: Upload security results
         uses: actions/upload-artifact@v6
