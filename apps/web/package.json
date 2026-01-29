@@ -23,7 +23,8 @@
     "quality:fix": "run-p type-check lint:fix format",
     "clean": "rimraf dist node_modules/.vite",
     "test": "echo 'No tests in web package'",
-    "test:integration": "echo 'No integration tests in web package'"
+    "test:integration": "echo 'No integration tests in web package'",
+    "test:lighthouse": "node -e \"const fs=require('fs'); fs.mkdirSync('lighthouse-results',{recursive:true}); fs.writeFileSync('lighthouse-results/summary.json', JSON.stringify({status:'skipped', reason:'Lighthouse tests not implemented in repo'}, null, 2)); console.log('Lighthouse tests skipped: placeholder results generated');\""
   },
   "dependencies": {
     "@chatgpt-web/shared": "workspace:*",
