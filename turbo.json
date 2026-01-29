@@ -48,6 +48,16 @@
         "vitest.config.ts"
       ]
     },
+    "test:performance": {
+      "dependsOn": ["^build"],
+      "outputs": ["performance-results/**"],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "test/**/*.ts", "package.json"]
+    },
+    "test:lighthouse": {
+      "dependsOn": ["^build"],
+      "outputs": ["lighthouse-results/**"],
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "public/**", "package.json"]
+    },
     "test:watch": {
       "cache": false,
       "persistent": true,

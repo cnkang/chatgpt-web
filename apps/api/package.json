@@ -30,6 +30,7 @@
     "clean": "rimraf build",
     "test": "vitest --run",
     "test:integration": "vitest --run src/test/integration",
+    "test:performance": "node -e \"const fs=require('fs'); fs.mkdirSync('performance-results',{recursive:true}); fs.writeFileSync('performance-results/summary.json', JSON.stringify({status:'skipped', reason:'Performance tests not implemented in repo'}, null, 2)); console.log('Performance tests skipped: placeholder results generated');\"",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "lint": "eslint . --max-warnings 0",
