@@ -30,7 +30,7 @@
     "@chatgpt-web/shared": "workspace:*",
     "@iconify/vue": "^5.0.0",
     "@vscode/markdown-it-katex": "^1.1.2",
-    "@vueuse/core": "^14.1.0",
+    "@vueuse/core": "^14.2.0",
     "crypto-js": "^4.2.0",
     "highlight.js": "^11.11.1",
     "html-to-image": "^1.11.13",
@@ -41,7 +41,7 @@
     "pinia": "^3.0.4",
     "vue": "^3.5.27",
     "vue-i18n": "^11.2.8",
-    "vue-router": "^5.0.0"
+    "vue-router": "^5.0.1"
   },
   "devDependencies": {
     "@chatgpt-web/config": "workspace:*",
