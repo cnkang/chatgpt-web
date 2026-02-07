@@ -1,9 +1,8 @@
 <script setup lang='ts'>
-import type { Ref } from 'vue'
 import { toPng } from 'html-to-image'
 import { NAutoComplete, NButton, NInput, useDialog, useMessage } from 'naive-ui'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchChatAPIProcess } from '@/api'
 import { HoverButton, SvgIcon } from '@/components/common'
@@ -28,7 +27,7 @@ const chatStore = useChatStore()
 
 const { isMobile } = useBasicLayout()
 const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
-const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
+const { scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
 
 const { uuid } = route.params as { uuid: string }

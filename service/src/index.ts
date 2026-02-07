@@ -1,7 +1,6 @@
 import express from 'express'
-import type { ChatMessage } from './chatgpt'
 import type { RequestProps } from './types'
-import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
+import { chatConfig, chatReplyProcess, currentModel, type ChatMessage } from './chatgpt'
 import { auth } from './middleware/auth'
 import { limiter, verifyLimiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'

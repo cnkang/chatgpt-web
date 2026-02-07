@@ -1,5 +1,4 @@
-import type { Ref } from 'vue'
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, type Ref } from 'vue'
 
 type ScrollElement = HTMLDivElement | null
 

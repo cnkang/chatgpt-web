@@ -1,6 +1,5 @@
-import type { PromptStore } from './helper'
 import { defineStore } from 'pinia'
-import { getLocalPromptList, setLocalPromptList } from './helper'
+import { getLocalPromptList, setLocalPromptList, type PromptStore } from './helper'
 
 export const usePromptStore = defineStore('prompt-store', {
   state: (): PromptStore => getLocalPromptList(),

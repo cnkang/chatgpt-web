@@ -1,6 +1,5 @@
 import type { App } from 'vue'
-import type { RouteRecordRaw } from 'vue-router'
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import { ChatLayout } from '@/views/chat/layout'
 import { setupPageGuard } from './permission'
 

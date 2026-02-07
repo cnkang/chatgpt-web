@@ -1,7 +1,6 @@
 <script setup lang='ts'>
-import type { CSSProperties } from 'vue'
 import { NButton, NLayoutSider, useDialog } from 'naive-ui'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type CSSProperties } from 'vue'
 import { PromptStore, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'

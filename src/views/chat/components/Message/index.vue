@@ -32,8 +32,6 @@ const { iconRender } = useIconRender()
 
 const message = useMessage()
 
-const textRef = ref<HTMLElement>()
-
 const asRawText = ref(props.inversion)
 
 const messageRef = ref<HTMLElement>()
