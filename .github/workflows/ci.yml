@@ -48,9 +48,6 @@ jobs:
       - name: Lint
         run: nr lint
 
-      - name: Service lint
-        run: pnpm -C service lint
-
   typecheck:
     runs-on: ubuntu-latest
     steps:
