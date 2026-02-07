@@ -4,7 +4,7 @@ import { chatConfig, chatReplyProcess, currentModel, type ChatMessage } from './
 import { auth } from './middleware/auth'
 import { limiter, verifyLimiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
-import { safeEqualSecret, sanitizeErrorMessage } from './utils/security'
+import { logSanitizedError, safeEqualSecret, sanitizeErrorMessage } from './utils/security'
 
 const app = express()
 const router = express.Router()
@@ -22,6 +22,7 @@ const configuredCorsOrigins = (process.env.CORS_ALLOW_ORIGIN ?? '')
 const allowedCorsOrigins = configuredCorsOrigins.length > 0
   ? configuredCorsOrigins
   : (isProduction ? [] : ['http://localhost:1002', 'http://127.0.0.1:1002'])
+const PUBLIC_ERROR_MESSAGE = 'Request failed, please try again later.'
 
 function sendFail(res, message: string, statusCode = 200) {
   res.status(statusCode).send({ status: 'Fail', message, data: null })
@@ -77,8 +78,8 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
     })
   }
   catch (error: unknown) {
-    const message = sanitizeErrorMessage(error)
-    const payload = JSON.stringify({ status: 'Fail', message, data: null })
+    logSanitizedError('chat-process', error)
+    const payload = JSON.stringify({ status: 'Fail', message: PUBLIC_ERROR_MESSAGE, data: null })
     res.write(firstChunk ? payload : `\n${payload}`)
   }
   finally {
