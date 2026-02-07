@@ -22,6 +22,7 @@ const props = defineProps<Props>()
 const { isMobile } = useBasicLayout()
 
 const textRef = ref<HTMLElement>()
+const copyClickHandlers = new WeakMap<Element, EventListener>()
 
 const mdi = new MarkdownIt({
   html: false,
@@ -36,7 +37,24 @@ const mdi = new MarkdownIt({
   },
 })
 
-mdi.use(MdLinkAttributes, { attrs: { target: '_blank', rel: 'noopener' } }).use(MdKatex).use(MdMermaid)
+mdi.validateLink = (url: string) => {
+  const trimmed = url.trim()
+  if (!trimmed)
+    return false
+
+  if (/^(#|\/|\.\/|\.\.\/)/.test(trimmed))
+    return true
+
+  try {
+    const parsed = new URL(trimmed, 'https://localhost')
+    return ['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol)
+  }
+  catch {
+    return false
+  }
+}
+
+mdi.use(MdLinkAttributes, { attrs: { target: '_blank', rel: 'noopener noreferrer nofollow' } }).use(MdKatex).use(MdMermaid)
 
 const wrapClass = computed(() => {
   return [
@@ -69,7 +87,10 @@ function addCopyEvents() {
   if (textRef.value) {
     const copyBtn = textRef.value.querySelectorAll('.code-block-header__copy')
     copyBtn.forEach((btn) => {
-      btn.addEventListener('click', () => {
+      if (copyClickHandlers.has(btn))
+        return
+
+      const listener = () => {
         const code = btn.parentElement?.nextElementSibling?.textContent
         if (code) {
           copyToClip(code).then(() => {
@@ -79,7 +100,10 @@ function addCopyEvents() {
             }, 1000)
           })
         }
-      })
+      }
+
+      copyClickHandlers.set(btn, listener)
+      btn.addEventListener('click', listener)
     })
   }
 }
@@ -88,7 +112,11 @@ function removeCopyEvents() {
   if (textRef.value) {
     const copyBtn = textRef.value.querySelectorAll('.code-block-header__copy')
     copyBtn.forEach((btn) => {
-      btn.removeEventListener('click', () => { })
+      const listener = copyClickHandlers.get(btn)
+      if (listener) {
+        btn.removeEventListener('click', listener)
+        copyClickHandlers.delete(btn)
+      }
     })
   }
 }

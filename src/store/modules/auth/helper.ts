@@ -1,15 +1,27 @@
-import { ss } from '@/utils/storage'
-
 const LOCAL_NAME = 'SECRET_TOKEN'
+let memoryToken: string | undefined
+
+function clearLegacyTokenStorage() {
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.removeItem(LOCAL_NAME)
+    }
+    catch {
+      // Ignore storage access failures in restricted browser contexts.
+    }
+  }
+}
 
 export function getToken() {
-  return ss.get(LOCAL_NAME)
+  clearLegacyTokenStorage()
+  return memoryToken
 }
 
 export function setToken(token: string) {
-  return ss.set(LOCAL_NAME, token)
+  memoryToken = token
 }
 
 export function removeToken() {
-  return ss.remove(LOCAL_NAME)
+  memoryToken = undefined
+  clearLegacyTokenStorage()
 }

@@ -7,6 +7,7 @@ import httpsProxyAgent from 'https-proxy-agent'
 import fetch from 'node-fetch'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
+import { logSanitizedError, maskConfigured, sanitizeErrorMessage } from '../utils/security'
 import type { ApiModel, ChatContext, ChatGPTUnofficialProxyAPIOptions, ModelConfig } from '../types'
 import type { RequestOptions, SetProxyOptions, UsageResponse } from './types'
 
@@ -24,7 +25,8 @@ const ErrorCodeMessage: Record<string, string> = {
 }
 
 const timeoutMs: number = !isNaN(+process.env.TIMEOUT_MS) ? +process.env.TIMEOUT_MS : 100 * 1000
-const disableDebug: boolean = process.env.OPENAI_API_DISABLE_DEBUG === 'true'
+// Keep debug logs disabled by default to avoid leaking request metadata in logs.
+const disableDebug: boolean = process.env.OPENAI_API_DISABLE_DEBUG !== 'false'
 
 let apiModel: ApiModel
 const model = isNotEmptyString(process.env.OPENAI_API_MODEL) ? process.env.OPENAI_API_MODEL : 'gpt-3.5-turbo'
@@ -131,10 +133,10 @@ async function chatReplyProcess(options: RequestOptions) {
   }
   catch (error: any) {
     const code = error.statusCode
-    global.console.log(error)
+    logSanitizedError('chatReplyProcess', error)
     if (Reflect.has(ErrorCodeMessage, code))
       return sendResponse({ type: 'Fail', message: ErrorCodeMessage[code] })
-    return sendResponse({ type: 'Fail', message: error.message ?? 'Please check the back-end console' })
+    return sendResponse({ type: 'Fail', message: sanitizeErrorMessage(error) })
   }
 }
 
@@ -173,7 +175,7 @@ async function fetchUsage() {
     return Promise.resolve(usage ? `$${usage}` : '-')
   }
   catch (error) {
-    global.console.log(error)
+    logSanitizedError('fetchUsage', error)
     return Promise.resolve('-')
   }
 }
@@ -190,10 +192,10 @@ function formatDate(): string[] {
 
 async function chatConfig() {
   const usage = await fetchUsage()
-  const reverseProxy = process.env.API_REVERSE_PROXY ?? '-'
-  const httpsProxy = (process.env.HTTPS_PROXY || process.env.ALL_PROXY) ?? '-'
+  const reverseProxy = maskConfigured(process.env.API_REVERSE_PROXY)
+  const httpsProxy = maskConfigured(process.env.HTTPS_PROXY || process.env.ALL_PROXY)
   const socksProxy = (process.env.SOCKS_PROXY_HOST && process.env.SOCKS_PROXY_PORT)
-    ? (`${process.env.SOCKS_PROXY_HOST}:${process.env.SOCKS_PROXY_PORT}`)
+    ? maskConfigured(`${process.env.SOCKS_PROXY_HOST}:${process.env.SOCKS_PROXY_PORT}`)
     : '-'
   return sendResponse<ModelConfig>({
     type: 'Success',

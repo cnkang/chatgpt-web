@@ -8,6 +8,11 @@ import { isString } from '@/utils/is'
 const userStore = useUserStore()
 
 const userInfo = computed(() => userStore.userInfo)
+const plainDescription = computed(() => {
+  if (!isString(userInfo.value.description))
+    return ''
+  return userInfo.value.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+})
 </script>
 
 <template>
@@ -30,10 +35,7 @@ const userInfo = computed(() => userStore.userInfo)
         {{ userInfo.name ?? 'ChenZhaoYu' }}
       </h2>
       <p class="overflow-hidden text-xs text-gray-500 text-ellipsis whitespace-nowrap">
-        <span
-          v-if="isString(userInfo.description) && userInfo.description !== ''"
-          v-html="userInfo.description"
-        />
+        <span v-if="plainDescription !== ''">{{ plainDescription }}</span>
       </p>
     </div>
   </div>

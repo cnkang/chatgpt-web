@@ -19,8 +19,14 @@ services:
       API_REVERSE_PROXY:
       # Access permission key, optional
       AUTH_SECRET_KEY:
-      # The maximum number of requests per hour, optional, default unlimited
-      MAX_REQUEST_PER_HOUR: 0
+      # Require AUTH_SECRET_KEY in production (recommended)
+      AUTH_REQUIRED_IN_PRODUCTION: true
+      # CORS allowlist, comma-separated origins
+      CORS_ALLOW_ORIGIN: http://localhost:1002,http://127.0.0.1:1002
+      # The maximum number of requests per hour, optional
+      MAX_REQUEST_PER_HOUR: 60
+      # The maximum number of verification attempts per hour, optional
+      MAX_VERIFY_PER_HOUR: 20
       # timeout in milliseconds, optional
       TIMEOUT_MS: 60000
       # Socks proxy, optional, works with SOCKS_PROXY_PORT

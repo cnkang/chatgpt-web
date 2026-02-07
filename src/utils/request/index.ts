@@ -30,15 +30,24 @@ function http<T = any>(
 
     if (res.data.status === 'Unauthorized') {
       authStore.removeToken()
-      window.location.reload()
     }
 
     return Promise.reject(res.data)
   }
 
-  const failHandler = (error: Response<Error>) => {
+  const failHandler = (error: any) => {
     afterRequest?.()
-    throw new Error(error?.message || 'Error')
+
+    const authStore = useAuthStore()
+    const statusCode = error?.status
+    const status = error?.data?.status
+
+    if (statusCode === 401 || status === 'Unauthorized') {
+      authStore.removeToken()
+      throw new Error(error?.data?.message || 'Unauthorized')
+    }
+
+    throw new Error(error?.data?.message || error?.message || 'Error')
   }
 
   beforeRequest?.()

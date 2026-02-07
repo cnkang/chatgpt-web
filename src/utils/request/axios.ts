@@ -25,7 +25,7 @@ service.interceptors.response.use(
     throw new Error(response.status.toString())
   },
   (error) => {
-    return Promise.reject(error)
+    return Promise.reject(error.response ?? error)
   },
 )
 
