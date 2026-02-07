@@ -1,15 +1,12 @@
-import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'chatgpt'
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt'
+import { ChatGPTAPI, ChatGPTUnofficialProxyAPI, type ChatGPTAPIOptions, type ChatMessage, type SendMessageOptions } from 'chatgpt'
 import * as dotenv from 'dotenv'
 import httpsProxyAgent from 'https-proxy-agent'
-import fetch from 'node-fetch'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import type { ApiModel, ChatContext, ChatGPTUnofficialProxyAPIOptions, ModelConfig } from '../types'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
 import { logSanitizedError, maskConfigured, sanitizeErrorMessage } from '../utils/security'
 import type { RequestOptions, SetProxyOptions, UsageResponse } from './types'
-import 'isomorphic-fetch'
 
 const { HttpsProxyAgent } = httpsProxyAgent
 
