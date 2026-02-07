@@ -1,3 +1,33 @@
+## v3.0.1
+
+`2026-02-07`
+
+> 安全加固与工程化稳定性版本，无预期破坏性变更。详细发布说明见 `docs/releases/v3.0.1.md`。
+
+## Security
+- 修复 `service` 端 `/chat-process` 错误流可能暴露堆栈信息的问题：对外统一返回通用失败信息，详细错误仅在服务端脱敏记录。
+- 强化鉴权与敏感信息脱敏逻辑，降低日志和响应中的信息泄露风险。
+- 引入/完善 `gitleaks` 等密钥泄露防护，并忽略根目录 `.env` 跟踪。
+
+## CI & Tooling
+- 迁移到 `oxlint` 规则集并清理历史 lint 配置。
+- 修复并稳定 CI lint/build 流程，补齐 workflow 权限配置。
+- 增加 Dependabot 更新策略与自动合并流程。
+- 调整 Docker 相关工作流并移除过时步骤。
+
+## Runtime & Refactor
+- 服务端和前端 HTTP 链路迁移到原生 `fetch` / stream 方案。
+- 移除历史 HTTP 依赖与陈旧 lockfile，并做导入和无用符号清理。
+
+## Dependency Updates
+- `actions/stale`: `5 -> 10`
+- `docker/setup-qemu-action`: `2 -> 3`
+- `actions/checkout`: `3 -> 6`
+- `aws-actions/configure-aws-credentials`: `4 -> 6`
+- `docker/setup-buildx-action`: `2 -> 3`
+
+**Full Changelog**: https://github.com/cnkang/chatgpt-web/compare/v3.0.0...v3.0.1
+
 ## v2.11.1
 
 `2023-10-11`

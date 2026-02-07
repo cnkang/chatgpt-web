@@ -91,7 +91,7 @@ See all parameter variables [here](#environment-variables)
 
 ### Node
 
-`node` requires version `^16 || ^18 || ^19` (`node >= 14` needs [fetch polyfill](https://github.com/developit/unfetch#usage-as-a-polyfill) installation), use [nvm](https://github.com/nvm-sh/nvm) to manage multiple local `node` versions
+`node` requires version `^18 || ^20 || ^22 || ^24`, use [nvm](https://github.com/nvm-sh/nvm) to manage multiple local `node` versions
 
 ```shell
 node -v
@@ -156,7 +156,7 @@ pnpm dev
 - `OPENAI_API_KEY` and `OPENAI_ACCESS_TOKEN` choose one
 - `OPENAI_API_MODEL` Set model, optional, default: `gpt-3.5-turbo`
 - `OPENAI_API_BASE_URL` Set interface address, optional, default: `https://api.openai.com`
-- `OPENAI_API_DISABLE_DEBUG` Set interface to close debug logs, optional, default: empty does not close
+- `OPENAI_API_DISABLE_DEBUG` Disable API debug logs, optional, default: debug logging is disabled; set to `false` to enable
 
 `ACCESS_TOKEN` available:
 
