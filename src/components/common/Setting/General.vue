@@ -77,15 +77,21 @@ function handleReset() {
 function exportData(): void {
   const date = getCurrentDate()
   const data: string = localStorage.getItem('chatStorage') || '{}'
-  const jsonString: string = JSON.stringify(JSON.parse(data), null, 2)
-  const blob: Blob = new Blob([jsonString], { type: 'application/json' })
-  const url: string = URL.createObjectURL(blob)
-  const link: HTMLAnchorElement = document.createElement('a')
-  link.href = url
-  link.download = `chat-store_${date}.json`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+
+  try {
+    const jsonString: string = JSON.stringify(JSON.parse(data), null, 2)
+    const blob: Blob = new Blob([jsonString], { type: 'application/json' })
+    const url: string = URL.createObjectURL(blob)
+    const link: HTMLAnchorElement = document.createElement('a')
+    link.href = url
+    link.download = `chat-store_${date}.json`
+    link.rel = 'noopener noreferrer'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 0)
+  }
+  catch {
+    ms.error(t('common.invalidFileFormat'))
+  }
 }
 
 function importData(event: Event): void {
