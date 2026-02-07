@@ -11,7 +11,7 @@
     "express"
   ],
   "engines": {
-    "node": "^16 || ^18 || ^20"
+    "node": "^18 || ^20 || ^22 || ^24"
   },
   "scripts": {
     "start": "esno ./src/index.ts",
@@ -19,8 +19,8 @@
     "prod": "node ./build/index.mjs",
     "build": "pnpm clean && tsup",
     "clean": "rimraf build",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint -c .eslintrc.json .",
+    "lint:fix": "ESLINT_USE_FLAT_CONFIG=false eslint -c .eslintrc.json . --fix",
     "common:cleanup": "rimraf node_modules && rimraf pnpm-lock.yaml"
   },
   "dependencies": {
