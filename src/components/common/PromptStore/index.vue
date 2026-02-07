@@ -136,9 +136,7 @@ const modifyPromptTemplate = () => {
 }
 
 const deletePromptTemplate = (row: { key: string; value: string }) => {
-  promptList.value = [
-    ...promptList.value.filter((item: { key: string; value: string }) => item.key !== row.key),
-  ] as never
+  promptList.value = promptList.value.filter((item: { key: string; value: string }) => item.key !== row.key) as never
   message.success(t('common.deleteSuccess'))
 }
 
