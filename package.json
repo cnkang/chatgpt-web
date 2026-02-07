@@ -16,6 +16,11 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit",
+    "lint:ox": "oxlint --vue-plugin --import-plugin src service/src",
+    "lint:ox:strict": "oxlint --vue-plugin --import-plugin -D all src service/src",
+    "secrets:scan": "gitleaks dir . --no-banner --redact",
+    "secrets:scan:staged": "gitleaks git --staged --no-banner --redact",
+    "secrets:scan:history": "gitleaks git --no-banner --redact --log-opts='--all'",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "bootstrap": "pnpm install && pnpm run common:prepare",
@@ -57,6 +62,7 @@
     "lint-staged": "^16.2.7",
     "markdown-it-link-attributes": "^4.0.1",
     "npm-run-all": "^4.1.5",
+    "oxlint": "^1.43.0",
     "postcss": "^8.5.6",
     "rimraf": "^4.4.1",
     "tailwindcss": "^3.4.18",
@@ -68,8 +74,8 @@
     "workbox-window": "^7.4.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,vue}": [
-      "pnpm lint:fix"
+    "*.{js,cjs,mjs,ts,tsx,vue}": [
+      "oxlint --vue-plugin --import-plugin"
     ]
   },
   "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a"

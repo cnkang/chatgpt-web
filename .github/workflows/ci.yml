@@ -10,14 +10,34 @@ on:
       - main
 
 jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks (incremental commits)
+        run: |
+          ZERO_HASH="0000000000000000000000000000000000000000"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            LOG_OPTS="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.event.before }}" != "$ZERO_HASH" ]; then
+            LOG_OPTS="${{ github.event.before }}..${{ github.sha }}"
+          else
+            LOG_OPTS="-n 1 ${{ github.sha }}"
+          fi
+
+          echo "Scanning commit range: $LOG_OPTS"
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.30.0 git --no-banner --redact --log-opts="$LOG_OPTS"
+
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version-file: .nvmrc
 
       - name: Setup
         run: npm i -g @antfu/ni
@@ -25,17 +45,20 @@ jobs:
       - name: Install
         run: nci
 
+      - name: Oxlint
+        run: nr lint:ox
+
       - name: Lint
         run: nr lint:fix
 
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version-file: .nvmrc
 
       - name: Setup
         run: npm i -g @antfu/ni

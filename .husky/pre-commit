@@ -1,4 +1,15 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npx lint-staged
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "gitleaks is required for pre-commit checks. Install with: brew install gitleaks"
+  exit 1
+fi
+
+if ! pnpm exec oxlint --version >/dev/null 2>&1; then
+  echo "oxlint is required for pre-commit checks. Run: pnpm install"
+  exit 1
+fi
+
+pnpm run -s secrets:scan:staged
+pnpm exec lint-staged

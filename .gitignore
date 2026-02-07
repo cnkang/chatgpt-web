@@ -32,3 +32,6 @@ coverage
 /.env
 /.env.*
 /service/.env
+
+# Security scan reports
+gitleaks-report*.json

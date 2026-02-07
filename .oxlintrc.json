@@ -1,0 +1,19 @@
+{
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "import",
+    "vue"
+  ],
+  "categories": {},
+  "rules": {},
+  "env": {
+    "builtin": true
+  },
+  "globals": {},
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "dist/**",
+    "service/build/**"
+  ]
+}
