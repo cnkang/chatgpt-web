@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
 import { NAvatar } from 'naive-ui'
+import { computed } from 'vue'
+import defaultAvatar from '@/assets/avatar.jpg'
 import { useUserStore } from '@/store'
 import { isString } from '@/utils/is'
-import defaultAvatar from '@/assets/avatar.jpg'
 
 interface Props {
   image?: boolean

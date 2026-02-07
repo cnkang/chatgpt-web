@@ -1,20 +1,20 @@
 <script setup lang='ts'>
 import type { Ref } from 'vue'
+import { toPng } from 'html-to-image'
+import { NAutoComplete, NButton, NInput, useDialog, useMessage } from 'naive-ui'
+import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { NAutoComplete, NButton, NInput, useDialog, useMessage } from 'naive-ui'
-import { toPng } from 'html-to-image'
-import { Message } from './components'
-import { useScroll } from './hooks/useScroll'
-import { useChat } from './hooks/useChat'
-import { useUsingContext } from './hooks/useUsingContext'
-import HeaderComponent from './components/Header/index.vue'
+import { fetchChatAPIProcess } from '@/api'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
-import { useChatStore, usePromptStore } from '@/store'
-import { fetchChatAPIProcess } from '@/api'
 import { t } from '@/locales'
+import { useChatStore, usePromptStore } from '@/store'
+import { Message } from './components'
+import HeaderComponent from './components/Header/index.vue'
+import { useChat } from './hooks/useChat'
+import { useScroll } from './hooks/useScroll'
+import { useUsingContext } from './hooks/useUsingContext'
 
 let controller = new AbortController()
 
@@ -143,7 +143,7 @@ async function onConversation() {
 
             scrollToBottomIfAtBottom()
           }
-          catch (error) {
+          catch {
             //
           }
         },
@@ -272,7 +272,7 @@ async function onRegenerate(index: number) {
               return fetchChatAPIOnce()
             }
           }
-          catch (error) {
+          catch {
             //
           }
         },
@@ -342,7 +342,7 @@ function handleExport() {
         ms.success(t('chat.exportSuccess'))
         Promise.resolve()
       }
-      catch (error: any) {
+      catch {
         ms.error(t('chat.exportFailed'))
       }
       finally {
@@ -422,7 +422,7 @@ const searchOptions = computed(() => {
 })
 
 // value反渲染key
-const renderOption = (option: { label: string }) => {
+function renderOption(option: { label: string }) {
   for (const i of promptTemplate.value) {
     if (i.value === option.label)
       return [i.key]

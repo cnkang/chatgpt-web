@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, onUpdated, ref } from 'vue'
-import MarkdownIt from 'markdown-it'
 import MdKatex from '@vscode/markdown-it-katex'
+import hljs from 'highlight.js'
+import MarkdownIt from 'markdown-it'
 import MdLinkAttributes from 'markdown-it-link-attributes'
 import MdMermaid from 'mermaid-it-markdown'
-import hljs from 'highlight.js'
+import { computed, onMounted, onUnmounted, onUpdated, ref } from 'vue'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 import { copyToClip } from '@/utils/copy'
@@ -42,7 +42,7 @@ mdi.validateLink = (url: string) => {
   if (!trimmed)
     return false
 
-  if (/^(#|\/|\.\/|\.\.\/)/.test(trimmed))
+  if (/^(?:#|\/|\.\/|\.\.\/)/.test(trimmed))
     return true
 
   try {

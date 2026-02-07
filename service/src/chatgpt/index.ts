@@ -1,15 +1,15 @@
-import * as dotenv from 'dotenv'
-import 'isomorphic-fetch'
 import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'chatgpt'
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt'
-import { SocksProxyAgent } from 'socks-proxy-agent'
+import * as dotenv from 'dotenv'
 import httpsProxyAgent from 'https-proxy-agent'
 import fetch from 'node-fetch'
+import { SocksProxyAgent } from 'socks-proxy-agent'
+import type { ApiModel, ChatContext, ChatGPTUnofficialProxyAPIOptions, ModelConfig } from '../types'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
 import { logSanitizedError, maskConfigured, sanitizeErrorMessage } from '../utils/security'
-import type { ApiModel, ChatContext, ChatGPTUnofficialProxyAPIOptions, ModelConfig } from '../types'
 import type { RequestOptions, SetProxyOptions, UsageResponse } from './types'
+import 'isomorphic-fetch'
 
 const { HttpsProxyAgent } = httpsProxyAgent
 
@@ -237,4 +237,4 @@ function currentModel(): ApiModel {
 
 export type { ChatContext, ChatMessage }
 
-export { chatReplyProcess, chatConfig, currentModel }
+export { chatConfig, chatReplyProcess, currentModel }

@@ -1,7 +1,7 @@
 import { isNotEmptyString } from '../utils/is'
 import { safeEqualSecret } from '../utils/security'
 
-const auth = async (req, res, next) => {
+async function auth(req, res, next) {
   const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
   if (isNotEmptyString(AUTH_SECRET_KEY)) {
     const authorization = req.header('Authorization')
