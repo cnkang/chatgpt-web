@@ -19,6 +19,8 @@
     "type-check": "vue-tsc --noEmit",
     "lint": "oxlint --vue-plugin --import-plugin src service/src",
     "lint:strict": "oxlint --vue-plugin --import-plugin -D all src service/src",
+    "lint:ox": "pnpm run lint",
+    "lint:ox:strict": "pnpm run lint:strict",
     "secrets:scan": "gitleaks dir . --no-banner --redact",
     "secrets:scan:staged": "gitleaks git --staged --no-banner --redact",
     "secrets:scan:history": "gitleaks git --no-banner --redact --log-opts='--all'",

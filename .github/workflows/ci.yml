@@ -45,9 +45,6 @@ jobs:
       - name: Install
         run: nci
 
-      - name: Oxlint
-        run: nr lint:ox
-
       - name: Lint
         run: nr lint
 
