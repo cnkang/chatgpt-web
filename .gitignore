@@ -29,4 +29,6 @@ coverage
 *.sw?
 
 # Environment variables files
+/.env
+/.env.*
 /service/.env
