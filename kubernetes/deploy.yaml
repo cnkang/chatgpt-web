@@ -17,9 +17,9 @@ spec:
         app: chatgpt-web
     spec:
       containers:
-        - image: chenzhaoyu94/chatgpt-web
+        - image: ghcr.io/your-org/chatgpt-web:latest
           name: chatgpt-web
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3002
           env:
@@ -28,17 +28,25 @@ spec:
                 secretKeyRef:
                   name: chatgpt-web-secrets
                   key: OPENAI_API_KEY
+                  optional: true
+            - name: OPENAI_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: chatgpt-web-secrets
+                  key: OPENAI_ACCESS_TOKEN
+                  optional: true
             - name: OPENAI_API_BASE_URL
               value: 'https://api.openai.com'
             - name: OPENAI_API_MODEL
-              value: gpt-3.5-turbo
+              value: gpt-4o-mini
             - name: API_REVERSE_PROXY
-              value: https://ai.fakeopen.com/api/conversation
+              value: ''
             - name: AUTH_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: chatgpt-web-secrets
                   key: AUTH_SECRET_KEY
+                  optional: true
             - name: AUTH_REQUIRED_IN_PRODUCTION
               value: 'true'
             - name: CORS_ALLOW_ORIGIN
@@ -53,7 +61,13 @@ spec:
               value: ''
             - name: SOCKS_PROXY_PORT
               value: ''
+            - name: SOCKS_PROXY_USERNAME
+              value: ''
+            - name: SOCKS_PROXY_PASSWORD
+              value: ''
             - name: HTTPS_PROXY
+              value: ''
+            - name: ALL_PROXY
               value: ''
           resources:
             limits:
