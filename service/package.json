@@ -1,9 +1,21 @@
 {
   "name": "chatgpt-web-service",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "private": false,
   "description": "ChatGPT Web Service",
-  "author": "ChenZhaoYu <chenzhaoyu1994@gmail.com>",
+  "author": "Kang",
+  "contributors": [
+    "ChenZhaoYu"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cnkang/chatgpt-web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cnkang/chatgpt-web/issues"
+  },
+  "homepage": "https://github.com/cnkang/chatgpt-web#readme",
   "keywords": [
     "chatgpt-web",
     "chatgpt",
@@ -11,7 +23,7 @@
     "express"
   ],
   "engines": {
-    "node": "^18 || ^20 || ^22 || ^24"
+    "node": "24.x"
   },
   "scripts": {
     "start": "esno ./src/index.ts",
