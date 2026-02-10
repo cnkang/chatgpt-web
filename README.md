@@ -1,364 +1,191 @@
 # ChatGPT Web
 
-> Disclaimer: This project is only published on GitHub, based on the MIT license, free and for open source learning usage. And there will be no any form of account selling, paid service, discussion group, discussion group and other behaviors. Beware of being deceived.
+> Disclaimer: This project is open-source, published on GitHub, and released under the MIT License. Please avoid paid reselling or unofficial paid support groups.
 
-[中文](README.zh.md)
+[中文文档](./README.zh.md)
 
 ![cover](./docs/c1.png)
 ![cover2](./docs/c2.png)
 
-- [ChatGPT Web](#chatgpt-web)
-	- [Introduction](#introduction)
-	- [Roadmap](#roadmap)
-	- [Prerequisites](#prerequisites)
-		- [Node](#node)
-		- [PNPM](#pnpm)
-		- [Filling in the Key](#filling-in-the-key)
-	- [Install Dependencies](#install-dependencies)
-		- [Backend](#backend)
-		- [Frontend](#frontend)
-	- [Run in Test Environment](#run-in-test-environment)
-		- [Backend Service](#backend-service)
-		- [Frontend Webpage](#frontend-webpage)
-	- [Environment Variables](#environment-variables)
-	- [Packaging](#packaging)
-		- [Use Docker](#use-docker)
-			- [Docker Parameter Examples](#docker-parameter-examples)
-			- [Docker build \& Run](#docker-build--run)
-			- [Docker compose](#docker-compose)
-			- [Prevent Crawlers](#prevent-crawlers)
-		- [Deploy with Railway](#deploy-with-railway)
-			- [Railway Environment Variables](#railway-environment-variables)
-		- [Deploy with Sealos](#deploy-with-sealos)
-		- [Package Manually](#package-manually)
-			- [Backend Service](#backend-service-1)
-			- [Frontend Webpage](#frontend-webpage-1)
-	- [FAQ](#faq)
-	- [Contributing](#contributing)
-	- [Acknowledgements](#acknowledgements)
-	- [Sponsors](#sponsors)
-	- [License](#license)
-## Introduction
+## Overview
 
-Supports dual models and provides two unofficial `ChatGPT API` methods
+A full-stack ChatGPT web client built with `Vue 3 + Vite` (frontend) and `Express + TypeScript` (service).
 
-| Method                             | Free? | Reliability | Quality |
-| ---------------------------------- | ----- | ----------- | ------- |
-| `ChatGPTAPI(gpt-3.5-turbo-0301)`   | No    | Reliable    | Relatively stupid |
-| `ChatGPTUnofficialProxyAPI(web accessToken)` | Yes   | Relatively unreliable | Smart |
+The project supports two runtime modes through the `chatgpt` package:
 
-Comparison:
-1. `ChatGPTAPI` uses `gpt-3.5-turbo` through `OpenAI` official `API` to call `ChatGPT`
-2. `ChatGPTUnofficialProxyAPI` uses unofficial proxy server to access `ChatGPT`'s backend `API`, bypass `Cloudflare` (dependent on third-party servers, and has rate limits)
+- `OPENAI_API_KEY` mode (`ChatGPTAPI`)
+- `OPENAI_ACCESS_TOKEN` mode (`ChatGPTUnofficialProxyAPI`)
 
-Warnings:
-1. You should first use the `API` method
-2. When using the `API`, if the network is not working, it is blocked in China, you need to build your own proxy, never use someone else's public proxy, which is dangerous.
-3. When using the `accessToken` method, the reverse proxy will expose your access token to third parties. This should not have any adverse effects, but please consider the risks before using this method.
-4. When using `accessToken`, whether you are a domestic or foreign machine, proxies will be used. The default proxy is [pengzhile](https://github.com/pengzhile)'s `https://ai.fakeopen.com/api/conversation`. This is not a backdoor or monitoring unless you have the ability to flip over `CF` verification yourself. Use beforehand acknowledge. [Community Proxy](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy) (Note: Only these two are recommended, other third-party sources, please identify for yourself)
-5. When publishing the project to public network, you should set the `AUTH_SECRET_KEY` variable to add your password access, you should also modify the `title` in `index. html` to prevent it from being searched by keywords.
+## Current Features
 
-Switching methods:
-1. Enter the `service/.env.example` file, copy the contents to the `service/.env` file
-2. To use `OpenAI API Key`, fill in the `OPENAI_API_KEY` field [(get apiKey)](https://platform.openai.com/overview)
-3. To use `Web API`, fill in the `OPENAI_ACCESS_TOKEN` field [(get accessToken)](https://chat.openai.com/api/auth/session)
-4. `OpenAI API Key` takes precedence when both exist
+- Multi-session chat history and context continuation
+- Markdown / code rendering, KaTeX formula rendering, Mermaid support
+- Import/export conversations and export messages as image
+- Multi-language UI and theme switching
+- Auth key protection (`AUTH_SECRET_KEY`) and request rate limiting
+- Security defaults for production (`AUTH_REQUIRED_IN_PRODUCTION`, CORS allowlist)
 
-Environment variables:
+## Repository Layout
 
-See all parameter variables [here](#environment-variables)
+- `src/`: frontend app (Vue 3 + Vite)
+- `service/`: backend service (Express + TypeScript)
+- `docker-compose/`: compose deployment example
+- `kubernetes/`: Kubernetes deployment manifests
+- `docs/releases/`: release notes
 
-## Roadmap
-[✓] Dual models
+## Maintainer
 
-[✓] Multi-session storage and context logic
+- Current maintainer: `Kang` (no direct contact information is published in this repository)
+- Original project author: [ChenZhaoYu](https://github.com/Chanzhaoyu)
 
-[✓] Formatting and beautification of code and other message types
+## Requirements
 
-[✓] Access control
+- Node.js: `24 (LTS)` via `nvm` (`.nvmrc`)
+- PNPM: `10.x` (matches `packageManager`)
 
-[✓] Data import/export
+## Quick Start
 
-[✓] Save messages as local images
+### 1) Use required runtime
 
-[✓] Multilingual interface
-
-[✓] Interface themes
-
-[✗] More...
-
-## Prerequisites
-
-### Node
-
-`node` requires version `^18 || ^20 || ^22 || ^24`, use [nvm](https://github.com/nvm-sh/nvm) to manage multiple local `node` versions
-
-```shell
-node -v
+```bash
+nvm install
+nvm use
+corepack enable
+corepack prepare pnpm@10.29.2 --activate
 ```
 
-### PNPM
-If you haven't installed `pnpm`
-```shell
-npm install pnpm -g
-```
+### 2) Install dependencies
 
-### Filling in the Key
-Get `Openai Api Key` or `accessToken` and fill in the local environment variables [Go to Introduction](#introduction)
-
-```
-# service/.env file
-
-# OpenAI API Key - https://platform.openai.com/overview
-OPENAI_API_KEY=
-
-# change this to an `accessToken` extracted from the ChatGPT site's `https://chat.openai.com/api/auth/session` response
-OPENAI_ACCESS_TOKEN=
-```
-
-## Install Dependencies
-
-> For the convenience of "backend developers" to understand the burden, the front-end "workspace" mode is not adopted, but separate folders are used to store them. If you only need to do secondary development of the front-end page, delete the `service` folder.
-
-### Backend
-
-Enter the folder `/service` and run the following commands
-
-```shell
-pnpm install
-```
-
-### Frontend
-Run the following commands at the root directory
-```shell
+```bash
 pnpm bootstrap
+pnpm --dir service install
 ```
 
-## Run in Test Environment
-### Backend Service
+### 3) Configure backend env
 
-Enter the folder `/service` and run the following commands
-
-```shell
-pnpm start
+```bash
+cp service/.env.example service/.env
 ```
 
-### Frontend Webpage
-Run the following commands at the root directory
-```shell
+At least one of the following must be configured in `service/.env`:
+
+- `OPENAI_API_KEY`
+- `OPENAI_ACCESS_TOKEN`
+
+### 4) Configure frontend env (recommended)
+
+Create `.env.local` in repository root:
+
+```bash
+VITE_GLOB_API_URL=/api
+VITE_APP_API_BASE_URL=http://127.0.0.1:3002
+VITE_GLOB_OPEN_LONG_REPLY=false
+VITE_GLOB_APP_PWA=false
+```
+
+### 5) Start services
+
+Terminal A (backend):
+
+```bash
+pnpm --dir service dev
+```
+
+Terminal B (frontend):
+
+```bash
 pnpm dev
 ```
 
-## Environment Variables
+Default local access:
 
-`API` available:
+- Frontend: `http://127.0.0.1:1002`
+- Backend health: `http://127.0.0.1:3002/health`
 
-- `OPENAI_API_KEY` and `OPENAI_ACCESS_TOKEN` choose one
-- `OPENAI_API_MODEL` Set model, optional, default: `gpt-3.5-turbo`
-- `OPENAI_API_BASE_URL` Set interface address, optional, default: `https://api.openai.com`
-- `OPENAI_API_DISABLE_DEBUG` Disable API debug logs, optional, default: debug logging is disabled; set to `false` to enable
+## Backend Environment Variables
 
-`ACCESS_TOKEN` available:
+| Variable | Required | Description |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | One of two | OpenAI API key |
+| `OPENAI_ACCESS_TOKEN` | One of two | Access token mode |
+| `OPENAI_API_BASE_URL` | Optional | Custom OpenAI-compatible base URL |
+| `OPENAI_API_MODEL` | Optional | Model name |
+| `OPENAI_API_DISABLE_DEBUG` | Optional | Set `false` to enable API debug logs |
+| `API_REVERSE_PROXY` | Optional | Reverse proxy URL for access-token mode |
+| `TIMEOUT_MS` | Optional | Request timeout in milliseconds |
+| `MAX_REQUEST_PER_HOUR` | Optional | Per-IP request rate limit (`0` disables limit) |
+| `MAX_VERIFY_PER_HOUR` | Optional | Per-IP verify endpoint rate limit (`0` disables limit) |
+| `AUTH_SECRET_KEY` | Optional | Bearer token required by protected endpoints |
+| `AUTH_REQUIRED_IN_PRODUCTION` | Optional | Defaults to `true`; requires `AUTH_SECRET_KEY` in production |
+| `CORS_ALLOW_ORIGIN` | Optional | Comma-separated CORS allowlist |
+| `SOCKS_PROXY_HOST` / `SOCKS_PROXY_PORT` | Optional | SOCKS proxy host and port (must be used together) |
+| `SOCKS_PROXY_USERNAME` / `SOCKS_PROXY_PASSWORD` | Optional | SOCKS proxy credentials |
+| `HTTPS_PROXY` | Optional | HTTPS proxy URL |
+| `ALL_PROXY` | Optional | Fallback proxy URL |
 
-- `OPENAI_ACCESS_TOKEN` and `OPENAI_API_KEY` choose one, `OPENAI_API_KEY` takes precedence when both exist
-- `API_REVERSE_PROXY` Set reverse proxy, optional, default: `https://ai.fakeopen.com/api/conversation`, [Community](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy) (Note: Only these two are recommended, other third party sources, please identify for yourself)
+## Frontend Environment Variables
 
-Common:
+| Variable | Required | Description |
+| --- | --- | --- |
+| `VITE_GLOB_API_URL` | Recommended | API prefix used by browser requests (typically `/api`) |
+| `VITE_APP_API_BASE_URL` | Recommended for dev | Vite dev server proxy target |
+| `VITE_GLOB_OPEN_LONG_REPLY` | Optional | Auto-continue long replies when model returns `length` |
+| `VITE_GLOB_APP_PWA` | Optional | Enable/disable PWA build |
 
-- `AUTH_SECRET_KEY` Access permission key, optional
-- `MAX_REQUEST_PER_HOUR` Maximum number of requests per hour, optional, unlimited by default
-- `TIMEOUT_MS` Timeout, unit milliseconds, optional
-- `SOCKS_PROXY_HOST` and `SOCKS_PROXY_PORT` take effect together, optional
-- `SOCKS_PROXY_PORT` and `SOCKS_PROXY_HOST` take effect together, optional
-- `HTTPS_PROXY` Support `http`, `https`, `socks5`, optional
-- `ALL_PROXY` Support `http`, `https`, `socks5`, optional
+## Build
 
-## Packaging
+```bash
+pnpm build
+pnpm --dir service build
+```
 
-### Use Docker
+Run production backend:
 
-#### Docker Parameter Examples
+```bash
+pnpm --dir service prod
+```
 
-![docker](./docs/docker.png)
+## Deployment
 
-#### Docker build & Run
+### Docker
 
 ```bash
 docker build -t chatgpt-web .
-
-# Foreground running
-docker run --name chatgpt-web --rm -it -p 127.0.0.1:3002:3002 --env OPENAI_API_KEY=your_api_key chatgpt-web
-
-# Background running
-docker run --name chatgpt-web -d -p 127.0.0.1:3002:3002 --env OPENAI_API_KEY=your_api_key chatgpt-web
-
-# Run address
-http://localhost:3002/
+docker run --name chatgpt-web --rm -it -p 3002:3002 --env-file service/.env chatgpt-web
 ```
 
-#### Docker compose
+### Docker Compose
 
-[Hub address](https://hub.docker.com/repository/docker/chenzhaoyu94/chatgpt-web/general)
+See: [docker-compose/README.md](./docker-compose/README.md)
 
-```yml
-version: '3'
+### Kubernetes
 
-services:
-  app:
-    image: chenzhaoyu94/chatgpt-web # always use latest, pull the tag image again to update
-    ports:
-      - 127.0.0.1:3002:3002
-    environment:
-      # choose one
-      OPENAI_API_KEY: sk-xxx
-      # choose one
-      OPENAI_ACCESS_TOKEN: xxx
-      # API interface address, optional, available when OPENAI_API_KEY is set
-      OPENAI_API_BASE_URL: xxx
-      # API model, optional, available when OPENAI_API_KEY is set, https://platform.openai.com/docs/models
-      # gpt-4, gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4-turbo-preview, gpt-4-0125-preview, gpt-4-1106-preview, gpt-4-0314, gpt-4-0613, gpt-4-32k, gpt-4-32k-0314, gpt-4-32k-0613, gpt-3.5-turbo-16k, gpt-3.5-turbo-16k-0613, gpt-3.5-turbo, gpt-3.5-turbo-0301, gpt-3.5-turbo-0613, text-davinci-003, text-davinci-002, code-davinci-002
-      OPENAI_API_MODEL: xxx
-      # reverse proxy, optional
-      API_REVERSE_PROXY: xxx
-      # access permission key, optional
-      AUTH_SECRET_KEY: xxx
-      # maximum number of requests per hour, optional, unlimited by default
-      MAX_REQUEST_PER_HOUR: 0
-      # timeout, unit milliseconds, optional
-      TIMEOUT_MS: 60000
-      # Socks proxy, optional, take effect with SOCKS_PROXY_PORT
-      SOCKS_PROXY_HOST: xxx
-      # Socks proxy port, optional, take effect with SOCKS_PROXY_HOST
-      SOCKS_PROXY_PORT: xxx
-      # HTTPS proxy, optional, support http,https,socks5
-      HTTPS_PROXY: http://xxx:7890
+See: [kubernetes/README.md](./kubernetes/README.md)
+
+## Quality Checks
+
+```bash
+pnpm lint
+pnpm type-check
+pnpm secrets:scan
 ```
-
-- `OPENAI_API_BASE_URL` Optional, available when `OPENAI_API_KEY` is set
-- `OPENAI_API_MODEL` Optional, available when `OPENAI_API_KEY` is set
-
-#### Prevent Crawlers
-
-**nginx**
-
-Fill in the following configuration in the nginx configuration file to prevent crawlers. You can refer to the `docker-compose/nginx/nginx.conf` file to add anti-crawler methods
-
-```
-    # Prevent crawlers
-    if ($http_user_agent ~* "360Spider|JikeSpider|Spider|spider|bot|Bot|2345Explorer|curl|wget|webZIP|qihoobot|Baiduspider|Googlebot|Googlebot-Mobile|Googlebot-Image|Mediapartners-Google|Adsbot-Google|Feedfetcher-Google|Yahoo! Slurp|Yahoo! Slurp China|YoudaoBot|Sosospider|Sogou spider|Sogou web spider|MSNBot|ia_archiver|Tomato Bot|NSPlayer|bingbot")
-    {
-      return 403;
-    }
-```
-
-### Deploy with Railway
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/yytmgc)
-
-#### Railway Environment Variables
-
-| Environment variable name | Required | Remarks |
-| --------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
-| `PORT`                | Required | Default `3002` |
-| `AUTH_SECRET_KEY`          | Optional | Access permission key                             |
-| `MAX_REQUEST_PER_HOUR`          | Optional | Maximum number of requests per hour, optional, unlimited by default                             |
-| `TIMEOUT_MS`          | Optional | Timeout, unit milliseconds                                                                    |
-| `OPENAI_API_KEY`      | `OpenAI API` choose one | `apiKey` required for `OpenAI API` [(get apiKey)](https://platform.openai.com/overview)           |
-| `OPENAI_ACCESS_TOKEN` | `Web API` choose one | `accessToken` required for `Web API` [(get accessToken)](https://chat.openai.com/api/auth/session) |
-| `OPENAI_API_BASE_URL`   | Optional, available when `OpenAI API` | `API` interface address |
-| `OPENAI_API_MODEL`   | Optional, available when `OpenAI API` | `API` model |
-| `API_REVERSE_PROXY`   | Optional, available when `Web API` | `Web API` reverse proxy address [Details](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy) |
-| `SOCKS_PROXY_HOST`   | Optional, take effect with `SOCKS_PROXY_PORT` | Socks proxy |
-| `SOCKS_PROXY_PORT`   | Optional, take effect with `SOCKS_PROXY_HOST` | Socks proxy port |
-| `SOCKS_PROXY_USERNAME`   | Optional, take effect with `SOCKS_PROXY_HOST` | Socks proxy username |
-| `SOCKS_PROXY_PASSWORD`   | Optional, take effect with `SOCKS_PROXY_HOST` | Socks proxy password |
-| `HTTPS_PROXY`   | Optional | HTTPS proxy, support http,https, socks5 |
-| `ALL_PROXY`   | Optional | All proxies, support http,https, socks5 |
-
-> Note: Modifying environment variables on `Railway` will re-`Deploy`
-
-### Deploy with Sealos
-
-[![](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://cloud.sealos.io/?openapp=system-fastdeploy%3FtemplateName%3Dchatgpt-web)
-
-> Environment variables are consistent with Docker environment variables
-
-### Package Manually
-#### Backend Service
-> If you don't need the `node` interface of this project, you can omit the following operations
-
-Copy the `service` folder to the server where you have the `node` service environment.
-
-```shell
-# Install
-pnpm install
-
-# Pack
-pnpm build
-
-# Run
-pnpm prod
-```
-
-PS: It is also okay to run `pnpm start` directly on the server without packing
-
-#### Frontend Webpage
-
-1. Modify the `VITE_GLOB_API_URL` field in the `.env` file at the root directory to your actual backend interface address
-
-2. Run the following commands at the root directory, then copy the files in the `dist` folder to the root directory of your website service
-
-[Reference](https://cn.vitejs.dev/guide/static -deploy.html#building-the-app)
-
-```shell
-pnpm build
-```
-
-## FAQ
-Q: Why does `Git` commit always report errors?
-
-A: Because there is a commit message verification, please follow the [Commit Guide](./CONTRIBUTING.md)
-
-Q: Where to change the request interface if only the front-end page is used?
-
-A: The `VITE_GLOB_API_URL` field in the `.env` file at the root directory.
-
-Q: All files explode red when saving?
-
-A: `vscode` please install the recommended plug-ins for the project, or manually install the `Eslint` plug-in.
-
-Q: No typewriter effect on the front end?
-
-A: One possible reason is that after Nginx reverse proxy, buffer is turned on, then Nginx will try to buffer some data from the backend before sending it to the browser. Please try adding `proxy_buffering off; ` after the reverse proxy parameter, then reload Nginx. Other web server configurations are similar.
 
 ## Contributing
 
-Please read the [Contributing Guide](./CONTRIBUTING.md) before contributing
-
-Thanks to everyone who has contributed!
-
-<a href="https://github.com/Chanzhaoyu/chatgpt-web/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Chanzhaoyu/chatgpt-web" />
-</a>
+Please read [CONTRIBUTING.en.md](./CONTRIBUTING.en.md) before submitting PRs.
 
 ## Acknowledgements
 
-Thanks to [JetBrains](https://www.jetbrains.com/) SoftWare for providing free Open Source license for this project.
+Special tribute to [ChenZhaoYu](https://github.com/Chanzhaoyu), the original author of this project and its open-source foundation.
 
-## Sponsors
+Thanks to [JetBrains](https://www.jetbrains.com/) for supporting open-source development.
 
-If you find this project helpful and can afford it, you can give me a little support. Anyway, thanks for your support~
+Thanks to all contributors:
 
-<div style="display: flex; gap: 20px;">
-	<div style="text-align: center">
-		<img style="max-width: 100%" src="./docs/wechat.png" alt="WeChat" />
-		<p>WeChat Pay</p>
-	</div>
-	<div style="text-align: center">
-		<img style="max-width: 100%" src="./docs/alipay.png" alt="Alipay" />
-		<p>Alipay</p>
-	</div>
-</div>
+<a href="https://github.com/cnkang/chatgpt-web/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=cnkang/chatgpt-web" alt="Contributors" />
+</a>
 
 ## License
-MIT © [ChenZhaoYu]
+
+MIT License. See [LICENSE](./LICENSE).

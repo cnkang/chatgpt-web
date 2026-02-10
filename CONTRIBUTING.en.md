@@ -1,48 +1,68 @@
 # Contribution Guide
-Thank you for your valuable time. Your contributions will make this project better! Before submitting a contribution, please take some time to read the getting started guide below.
 
-## Semantic Versioning
-This project follows semantic versioning. We release patch versions for important bug fixes, minor versions for new features or non-important changes, and major versions for significant and incompatible changes.
+Thank you for contributing to this project.
 
-Each major change will be recorded in the `changelog`.
+## Branch and Pull Request
 
-## Submitting Pull Request
-1. Fork [this repository](https://github.com/Chanzhaoyu/chatgpt-web) and create a branch from `main`. For new feature implementations, submit a pull request to the `feature` branch. For other changes, submit to the `main` branch.
-2. Install the `pnpm` tool using `npm install pnpm -g`.
-3. Install the `Eslint` plugin for `VSCode`, or enable `eslint` functionality for other editors such as `WebStorm`.
-4. Execute `pnpm bootstrap` in the root directory.
-5. Execute `pnpm install` in the `/service/` directory.
-6. Make changes to the codebase. If applicable, ensure that appropriate testing has been done.
-7. Execute `pnpm lint:fix` in the root directory to perform a code formatting check.
-8. Execute `pnpm type-check` in the root directory to perform a type check.
-9. Submit a git commit, following the [Commit Guidelines](#commit-guidelines).
-10. Submit a `pull request`. If there is a corresponding `issue`, please link it using the [linking-a-pull-request-to-an-issue keyword](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
+1. Fork [cnkang/chatgpt-web](https://github.com/cnkang/chatgpt-web) and create your branch from `main`.
+2. Keep your changes focused and submit a pull request to `main`.
+3. Link related issues in your PR description when applicable.
 
-## Commit Guidelines
-
-Commit messages should follow the [conventional-changelog standard](https://www.conventionalcommits.org/en/v1.0.0/):
+## Local Setup
 
 ```bash
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer]
+nvm install
+nvm use
+corepack enable
+corepack prepare pnpm@10.29.2 --activate
+pnpm bootstrap
+pnpm --dir service install
 ```
 
-### Commit Types
+## Development Commands
 
-The following is a list of commit types:
+```bash
+# Frontend
+pnpm dev
 
-- feat: New feature or functionality
-- fix: Bug fix
-- docs: Documentation update
-- style: Code style or component style update
-- refactor: Code refactoring, no new features or bug fixes introduced
-- perf: Performance optimization
-- test: Unit test
-- chore: Other commits that do not modify src or test files
+# Backend (watch mode)
+pnpm --dir service dev
+```
+
+## Quality Gates
+
+Run these checks before opening a PR:
+
+```bash
+pnpm lint
+pnpm type-check
+pnpm secrets:scan
+```
+
+If backend changes are included, also verify production build:
+
+```bash
+pnpm --dir service build
+```
+
+## Commit Convention
+
+Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+
+```text
+<type>[optional scope]: <description>
+```
+
+Common types:
+
+- `feat`: new feature
+- `fix`: bug fix
+- `docs`: documentation changes
+- `refactor`: code refactor
+- `perf`: performance improvement
+- `test`: tests
+- `chore`: tooling/maintenance
 
 ## License
 
-[MIT](./license)
+By contributing, you agree that your contributions are licensed under the [MIT License](./LICENSE).
