@@ -3,9 +3,10 @@
 
 ## v3.0.1
 
-`2026-02-07`
+`2026-02-10`
 
 > 安全加固与工程化稳定性版本，无预期破坏性变更。详细发布说明见 `docs/releases/v3.0.1.md`。
+> 本次为重发版本，`v3.0.1` tag 已更新到最新提交，包含 2026-02-07 之后的运行时、部署与文档维护更新。
 
 ## Security
 - 修复 `service` 端 `/chat-process` 错误流可能暴露堆栈信息的问题：对外统一返回通用失败信息，详细错误仅在服务端脱敏记录。
@@ -23,6 +24,12 @@
 ## Runtime & Refactor
 - 服务端和前端 HTTP 链路迁移到原生 `fetch` / stream 方案。
 - 移除历史 HTTP 依赖与陈旧 lockfile，并做导入和无用符号清理。
+
+## Re-release Follow-ups (2026-02-10)
+- 统一 Node/PNPM 运行时基线到 `Node 24` 与 `pnpm 10.29.2`，降低本地与 CI 环境漂移风险。
+- 更新依赖与 CI action（含 `actions/setup-node@v6`），增强构建链路稳定性。
+- 刷新项目文档与贡献指南，修订部署模板（Docker Compose / Kubernetes）。
+- 规范化 `LICENSE` 并移除过时文档资产，减少法律与维护噪音。
 
 ## Dependency Updates
 - `actions/stale`: `5 -> 10`

@@ -10,6 +10,7 @@
 ## Overview
 
 A full-stack ChatGPT web client built with `Vue 3 + Vite` (frontend) and `Express + TypeScript` (service).
+Latest release: `v3.0.1` (`2026-02-10`, republished to latest commit).
 
 The project supports two runtime modes through the `chatgpt` package:
 
