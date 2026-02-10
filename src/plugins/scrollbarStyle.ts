@@ -21,7 +21,7 @@ function setupScrollbarStyle() {
     }
   `
 
-  style.innerHTML = styleContent
+  style.textContent = styleContent
   document.head.appendChild(style)
 }
 

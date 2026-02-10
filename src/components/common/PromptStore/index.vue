@@ -48,6 +48,8 @@ const promptStore = usePromptStore()
 // Prompt在线导入推荐List,根据部署者喜好进行修改(assets/recommend.json)
 const promptRecommendList = PromptRecommend
 const promptList = ref<any>(promptStore.promptList)
+const PROMPT_REMOTE_TIMEOUT_MS = 10000
+const PROMPT_REMOTE_MAX_BYTES = 512 * 1024
 
 // 用于添加修改的临时prompt参数
 const tempPromptKey = ref('')
@@ -83,6 +85,18 @@ const downloadURL = ref('')
 const downloadDisabled = computed(() => downloadURL.value.trim().length < 1)
 function setDownloadURL(url: string) {
   downloadURL.value = url
+}
+
+function parseHttpUrl(rawUrl: string): URL | undefined {
+  try {
+    const parsed = new URL(rawUrl.trim())
+    if (!['http:', 'https:'].includes(parsed.protocol))
+      return undefined
+    return parsed
+  }
+  catch {
+    return undefined
+  }
 }
 
 // 控制 input 按钮
@@ -208,13 +222,46 @@ function exportPromptTemplate() {
 
 // 模板在线导入
 async function downloadPromptTemplate() {
+  let timeout: ReturnType<typeof setTimeout> | undefined
   try {
     importLoading.value = true
-    const response = await fetch(downloadURL.value)
-    const jsonData = await response.json()
+    const parsedUrl = parseHttpUrl(downloadURL.value)
+    if (!parsedUrl)
+      throw new Error('Unsupported URL protocol')
+
+    const controller = new AbortController()
+    timeout = setTimeout(() => controller.abort(), PROMPT_REMOTE_TIMEOUT_MS)
+
+    const response = await fetch(parsedUrl.toString(), {
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+    clearTimeout(timeout)
+    timeout = undefined
+
+    if (!response.ok)
+      throw new Error(`Request failed with status ${response.status}`)
+
+    const contentLengthHeader = response.headers.get('content-length')
+    if (contentLengthHeader) {
+      const contentLength = Number.parseInt(contentLengthHeader, 10)
+      if (Number.isFinite(contentLength) && contentLength > PROMPT_REMOTE_MAX_BYTES)
+        throw new Error('Prompt template payload too large')
+    }
+
+    const responseText = await response.text()
+    if (responseText.length > PROMPT_REMOTE_MAX_BYTES)
+      throw new Error('Prompt template payload too large')
+
+    const jsonData = JSON.parse(responseText)
+    if (!Array.isArray(jsonData) || jsonData.length === 0)
+      throw new Error('Invalid prompt template payload')
+
     if ('key' in jsonData[0] && 'value' in jsonData[0])
       tempPromptValue.value = JSON.stringify(jsonData)
-    if ('act' in jsonData[0] && 'prompt' in jsonData[0]) {
+    else if ('act' in jsonData[0] && 'prompt' in jsonData[0]) {
       const newJsonData = jsonData.map((item: { act: string, prompt: string }) => {
         return {
           key: item.act,
@@ -223,6 +270,10 @@ async function downloadPromptTemplate() {
       })
       tempPromptValue.value = JSON.stringify(newJsonData)
     }
+    else {
+      throw new Error('Unsupported prompt template format')
+    }
+
     importPromptTemplate()
     downloadURL.value = ''
   }
@@ -231,6 +282,8 @@ async function downloadPromptTemplate() {
     downloadURL.value = ''
   }
   finally {
+    if (timeout)
+      clearTimeout(timeout)
     importLoading.value = false
   }
 }

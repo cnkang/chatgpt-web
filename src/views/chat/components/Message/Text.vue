@@ -4,7 +4,7 @@ import hljs from 'highlight.js'
 import MarkdownIt from 'markdown-it'
 import MdLinkAttributes from 'markdown-it-link-attributes'
 import MdMermaid from 'mermaid-it-markdown'
-import { computed, onMounted, onUnmounted, onUpdated, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 import { copyToClip } from '@/utils/copy'
@@ -22,15 +22,31 @@ const props = defineProps<Props>()
 const { isMobile } = useBasicLayout()
 
 const textRef = ref<HTMLElement>()
-const copyClickHandlers = new WeakMap<Element, EventListener>()
+
+function normalizeLanguage(language?: string): string {
+  if (!language)
+    return ''
+  const normalized = language.trim().toLowerCase()
+  return /^[a-z0-9+._-]{1,40}$/i.test(normalized) ? normalized : ''
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('\'', '&#39;')
+}
 
 const mdi = new MarkdownIt({
   html: false,
   linkify: true,
   highlight(code, language) {
-    const validLang = !!(language && hljs.getLanguage(language))
+    const normalizedLanguage = normalizeLanguage(language)
+    const validLang = !!(normalizedLanguage && hljs.getLanguage(normalizedLanguage))
     if (validLang) {
-      const lang = language ?? ''
+      const lang = normalizedLanguage
       return highlightBlock(hljs.highlight(code, { language: lang }).value, lang)
     }
     return highlightBlock(hljs.highlightAuto(code).value, '')
@@ -80,45 +96,33 @@ const text = computed(() => {
 })
 
 function highlightBlock(str: string, lang?: string) {
-  return `<pre class="code-block-wrapper"><div class="code-block-header"><span class="code-block-header__lang">${lang}</span><span class="code-block-header__copy">${t('chat.copyCode')}</span></div><code class="hljs code-block-body ${lang}">${str}</code></pre>`
+  const safeLang = normalizeLanguage(lang)
+  const safeLabel = escapeHtml(t('chat.copyCode'))
+  const langClass = safeLang ? ` ${safeLang}` : ''
+  const langText = safeLang ? escapeHtml(safeLang) : ''
+
+  return `<pre class="code-block-wrapper"><div class="code-block-header"><span class="code-block-header__lang">${langText}</span><span class="code-block-header__copy">${safeLabel}</span></div><code class="hljs code-block-body${langClass}">${str}</code></pre>`
 }
 
-function addCopyEvents() {
-  if (textRef.value) {
-    const copyBtn = textRef.value.querySelectorAll('.code-block-header__copy')
-    copyBtn.forEach((btn) => {
-      if (copyClickHandlers.has(btn))
-        return
+function handleTextClick(event: MouseEvent) {
+  const target = event.target
+  if (!(target instanceof Element))
+    return
 
-      const listener = () => {
-        const code = btn.parentElement?.nextElementSibling?.textContent
-        if (code) {
-          copyToClip(code).then(() => {
-            btn.textContent = t('chat.copied')
-            setTimeout(() => {
-              btn.textContent = t('chat.copyCode')
-            }, 1000)
-          })
-        }
-      }
+  const copyBtn = target.closest('.code-block-header__copy')
+  if (!copyBtn || !textRef.value?.contains(copyBtn))
+    return
 
-      copyClickHandlers.set(btn, listener)
-      btn.addEventListener('click', listener)
-    })
-  }
-}
+  const code = copyBtn.parentElement?.nextElementSibling?.textContent
+  if (!code)
+    return
 
-function removeCopyEvents() {
-  if (textRef.value) {
-    const copyBtn = textRef.value.querySelectorAll('.code-block-header__copy')
-    copyBtn.forEach((btn) => {
-      const listener = copyClickHandlers.get(btn)
-      if (listener) {
-        btn.removeEventListener('click', listener)
-        copyClickHandlers.delete(btn)
-      }
-    })
-  }
+  copyToClip(code).then(() => {
+    copyBtn.textContent = t('chat.copied')
+    setTimeout(() => {
+      copyBtn.textContent = t('chat.copyCode')
+    }, 1000)
+  })
 }
 
 function escapeDollarNumber(text: string) {
@@ -151,15 +155,11 @@ function escapeBrackets(text: string) {
 }
 
 onMounted(() => {
-  addCopyEvents()
-})
-
-onUpdated(() => {
-  addCopyEvents()
+  textRef.value?.addEventListener('click', handleTextClick)
 })
 
 onUnmounted(() => {
-  removeCopyEvents()
+  textRef.value?.removeEventListener('click', handleTextClick)
 })
 </script>
 
