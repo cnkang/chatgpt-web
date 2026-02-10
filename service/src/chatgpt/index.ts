@@ -22,6 +22,7 @@ const ErrorCodeMessage: Record<string, string> = {
 }
 
 const timeoutMs: number = !isNaN(+process.env.TIMEOUT_MS) ? +process.env.TIMEOUT_MS : 100 * 1000
+const usageRequestTimeoutMs: number = !isNaN(+process.env.USAGE_REQUEST_TIMEOUT_MS) ? +process.env.USAGE_REQUEST_TIMEOUT_MS : 10 * 1000
 // Keep debug logs disabled by default to avoid leaking request metadata in logs.
 const disableDebug: boolean = process.env.OPENAI_API_DISABLE_DEBUG !== 'false'
 
@@ -162,9 +163,12 @@ async function fetchUsage() {
 
   setupProxy(options)
 
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), usageRequestTimeoutMs)
+
   try {
     // 获取已使用量
-    const useResponse = await options.fetch(urlUsage, { headers })
+    const useResponse = await options.fetch(urlUsage, { headers, signal: controller.signal })
     if (!useResponse.ok)
       throw new Error('获取使用量失败')
     const usageData = await useResponse.json() as UsageResponse
@@ -174,6 +178,9 @@ async function fetchUsage() {
   catch (error) {
     logSanitizedError('fetchUsage', error)
     return Promise.resolve('-')
+  }
+  finally {
+    clearTimeout(timeout)
   }
 }
 
