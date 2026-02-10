@@ -17,3 +17,5 @@ services:
       AUTH_REQUIRED_IN_PRODUCTION: 'true'
       # CORS allowlist, comma-separated origins
       CORS_ALLOW_ORIGIN: http://localhost:1002,http://127.0.0.1:1002
+      # Direct container exposure by default (set 1 if placed behind one trusted reverse proxy)
+      TRUST_PROXY: 'false'

@@ -25,6 +25,7 @@ The project supports two runtime modes through the `chatgpt` package:
 - Multi-language UI and theme switching
 - Auth key protection (`AUTH_SECRET_KEY`) and request rate limiting
 - Security defaults for production (`AUTH_REQUIRED_IN_PRODUCTION`, CORS allowlist)
+- Input-boundary validation and configurable runtime hardening (`TRUST_PROXY`, payload/timeout limits)
 
 ## Repository Layout
 
@@ -114,8 +115,14 @@ Default local access:
 | `OPENAI_API_DISABLE_DEBUG` | Optional | Set `false` to enable API debug logs |
 | `API_REVERSE_PROXY` | Optional | Reverse proxy URL for access-token mode |
 | `TIMEOUT_MS` | Optional | Request timeout in milliseconds |
+| `USAGE_REQUEST_TIMEOUT_MS` | Optional | Timeout for usage billing query in milliseconds |
 | `MAX_REQUEST_PER_HOUR` | Optional | Per-IP request rate limit (`0` disables limit) |
 | `MAX_VERIFY_PER_HOUR` | Optional | Per-IP verify endpoint rate limit (`0` disables limit) |
+| `MAX_PROMPT_CHARS` | Optional | Max prompt length accepted by `/chat-process` |
+| `MAX_SYSTEM_MESSAGE_CHARS` | Optional | Max system message length accepted by `/chat-process` |
+| `MAX_VERIFY_TOKEN_CHARS` | Optional | Max `/verify` token length |
+| `JSON_BODY_LIMIT` | Optional | Express JSON body size limit (for example `1mb`) |
+| `TRUST_PROXY` | Optional | Express `trust proxy` setting (`false` by default, set `1` behind one trusted reverse proxy) |
 | `AUTH_SECRET_KEY` | Optional | Bearer token required by protected endpoints |
 | `AUTH_REQUIRED_IN_PRODUCTION` | Optional | Defaults to `true`; requires `AUTH_SECRET_KEY` in production |
 | `CORS_ALLOW_ORIGIN` | Optional | Comma-separated CORS allowlist |
@@ -123,6 +130,11 @@ Default local access:
 | `SOCKS_PROXY_USERNAME` / `SOCKS_PROXY_PASSWORD` | Optional | SOCKS proxy credentials |
 | `HTTPS_PROXY` | Optional | HTTPS proxy URL |
 | `ALL_PROXY` | Optional | Fallback proxy URL |
+
+Deployment note:
+
+- Keep `TRUST_PROXY=false` when exposing the service directly.
+- Set `TRUST_PROXY=1` when running behind one trusted reverse proxy (for correct client IP and rate limiting).
 
 ## Frontend Environment Variables
 

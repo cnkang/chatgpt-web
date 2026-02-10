@@ -57,6 +57,18 @@ spec:
               value: '20'
             - name: TIMEOUT_MS
               value: '60000'
+            - name: USAGE_REQUEST_TIMEOUT_MS
+              value: '10000'
+            - name: MAX_PROMPT_CHARS
+              value: '32000'
+            - name: MAX_SYSTEM_MESSAGE_CHARS
+              value: '8000'
+            - name: MAX_VERIFY_TOKEN_CHARS
+              value: '1024'
+            - name: JSON_BODY_LIMIT
+              value: '1mb'
+            - name: TRUST_PROXY
+              value: '1'
             - name: SOCKS_PROXY_HOST
               value: ''
             - name: SOCKS_PROXY_PORT

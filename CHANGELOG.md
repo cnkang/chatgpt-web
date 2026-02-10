@@ -11,6 +11,9 @@
 ## Security
 - 修复 `service` 端 `/chat-process` 错误流可能暴露堆栈信息的问题：对外统一返回通用失败信息，详细错误仅在服务端脱敏记录。
 - 关闭 `Express` 默认 `X-Powered-By` 响应头，降低框架指纹暴露风险。
+- 为 `/chat-process` 与 `/verify` 增加请求边界校验（类型、长度、数值范围），降低异常输入与资源滥用风险。
+- 新增并文档化运行时安全参数（`TRUST_PROXY`、`JSON_BODY_LIMIT`、请求长度上限、用量查询超时）。
+- 加固 Markdown 代码块语言渲染与远程 Prompt 导入链路（协议白名单、超时、响应体大小限制）。
 - 调整前端导出逻辑，移除动态 `appendChild` sink，降低 DOM XSS 告警风险并补充异常处理。
 - 强化鉴权与敏感信息脱敏逻辑，降低日志和响应中的信息泄露风险。
 - 引入/完善 `gitleaks` 等密钥泄露防护，并忽略根目录 `.env` 跟踪。
@@ -26,7 +29,7 @@
 - 移除历史 HTTP 依赖与陈旧 lockfile，并做导入和无用符号清理。
 
 ## Re-release Follow-ups (2026-02-10)
-- 统一 Node/PNPM 运行时基线到 `Node 24` 与 `pnpm 10.29.2`，降低本地与 CI 环境漂移风险。
+- 统一本地开发与 CI 的 Node/PNPM 运行时基线到 `Node 24` 与 `pnpm 10.29.2`，降低环境漂移风险。
 - 更新依赖与 CI action（含 `actions/setup-node@v6`），增强构建链路稳定性。
 - 刷新项目文档与贡献指南，修订部署模板（Docker Compose / Kubernetes）。
 - 规范化 `LICENSE` 并移除过时文档资产，减少法律与维护噪音。

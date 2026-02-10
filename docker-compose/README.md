@@ -42,3 +42,13 @@ docker compose -f docker-compose/docker-compose.yml down
 
 - App: `http://127.0.0.1:3002`
 - Health check: `http://127.0.0.1:3002/health`
+
+## Security/Runtime Notes
+
+- The default compose setup is direct access to the app container, so keep `TRUST_PROXY=false` in `service/.env`.
+- If you place this stack behind another reverse proxy, set `TRUST_PROXY=1` (or your actual proxy-hop count).
+- Optional request-boundary hardening knobs in `service/.env`:
+  - `JSON_BODY_LIMIT` (default example: `1mb`)
+  - `MAX_PROMPT_CHARS` (default example: `32000`)
+  - `MAX_SYSTEM_MESSAGE_CHARS` (default example: `8000`)
+  - `MAX_VERIFY_TOKEN_CHARS` (default example: `1024`)

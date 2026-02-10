@@ -25,6 +25,7 @@
 - 多语言界面与主题切换
 - `AUTH_SECRET_KEY` 鉴权与请求限流
 - 面向生产的安全默认值（`AUTH_REQUIRED_IN_PRODUCTION`、CORS 白名单）
+- 输入边界校验与运行时安全参数（`TRUST_PROXY`、请求体/长度/超时限制）
 
 ## 目录结构
 
@@ -114,8 +115,14 @@ pnpm dev
 | `OPENAI_API_DISABLE_DEBUG` | 可选 | 设为 `false` 可开启 API 调试日志 |
 | `API_REVERSE_PROXY` | 可选 | Access Token 模式下的反向代理地址 |
 | `TIMEOUT_MS` | 可选 | 请求超时时间（毫秒） |
+| `USAGE_REQUEST_TIMEOUT_MS` | 可选 | 用量查询接口超时时间（毫秒） |
 | `MAX_REQUEST_PER_HOUR` | 可选 | 每 IP 每小时请求上限（`0` 为不限） |
 | `MAX_VERIFY_PER_HOUR` | 可选 | 每 IP 每小时验证接口上限（`0` 为不限） |
+| `MAX_PROMPT_CHARS` | 可选 | `/chat-process` 接口允许的最大 prompt 长度 |
+| `MAX_SYSTEM_MESSAGE_CHARS` | 可选 | `/chat-process` 接口允许的最大 system message 长度 |
+| `MAX_VERIFY_TOKEN_CHARS` | 可选 | `/verify` 接口 token 最大长度 |
+| `JSON_BODY_LIMIT` | 可选 | Express JSON 请求体大小限制（例如 `1mb`） |
+| `TRUST_PROXY` | 可选 | Express `trust proxy` 配置（默认 `false`，单层可信反向代理场景建议设为 `1`） |
 | `AUTH_SECRET_KEY` | 可选 | 受保护接口的 Bearer 鉴权密钥 |
 | `AUTH_REQUIRED_IN_PRODUCTION` | 可选 | 默认 `true`，生产环境强制要求 `AUTH_SECRET_KEY` |
 | `CORS_ALLOW_ORIGIN` | 可选 | 逗号分隔的 CORS 白名单 |
@@ -123,6 +130,11 @@ pnpm dev
 | `SOCKS_PROXY_USERNAME` / `SOCKS_PROXY_PASSWORD` | 可选 | SOCKS 代理认证信息 |
 | `HTTPS_PROXY` | 可选 | HTTPS 代理 |
 | `ALL_PROXY` | 可选 | 兜底代理地址 |
+
+部署提示：
+
+- 服务直接对公网暴露时，保持 `TRUST_PROXY=false`。
+- 服务位于单层可信反向代理后（如 ingress / nginx）时，建议设为 `TRUST_PROXY=1`，以便限流按真实客户端 IP 生效。
 
 ## 前端环境变量
 

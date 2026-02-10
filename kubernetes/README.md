@@ -44,3 +44,15 @@ kubectl apply -f kubernetes/ingress.yaml
 kubectl get pods -l app=chatgpt-web
 kubectl get svc chatgpt-web
 ```
+
+## Runtime Hardening Notes
+
+- The deployment template enables `TRUST_PROXY=1`, which matches a common "single ingress hop" topology.
+- If your cluster has multiple trusted proxy hops, set `TRUST_PROXY` to the correct hop count.
+- If the service is directly exposed without ingress/proxy, set `TRUST_PROXY=false`.
+- Optional boundary controls you can tune in `kubernetes/deploy.yaml`:
+  - `JSON_BODY_LIMIT`
+  - `MAX_PROMPT_CHARS`
+  - `MAX_SYSTEM_MESSAGE_CHARS`
+  - `MAX_VERIFY_TOKEN_CHARS`
+  - `USAGE_REQUEST_TIMEOUT_MS`
