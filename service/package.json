@@ -1,6 +1,7 @@
 {
   "name": "chatgpt-web-service",
   "version": "3.0.1",
+  "packageManager": "pnpm@10.29.2+sha512.bef43fa759d91fd2da4b319a5a0d13ef7a45bb985a3d7342058470f9d2051a3ba8674e629672654686ef9443ad13a82da2beb9eeb3e0221c87b8154fff9d74b8",
   "private": false,
   "description": "ChatGPT Web Service",
   "author": "Kang",
@@ -26,17 +27,16 @@
     "node": "24.x"
   },
   "scripts": {
-    "start": "esno ./src/index.ts",
-    "dev": "esno watch ./src/index.ts",
-    "prod": "node ./build/index.mjs",
+    "start": "node --env-file-if-exists=.env --experimental-strip-types ./src/index.ts",
+    "dev": "node --env-file-if-exists=.env --watch --experimental-strip-types ./src/index.ts",
+    "prod": "node --env-file-if-exists=.env ./build/index.mjs",
+    "type-check": "tsc --noEmit",
     "build": "pnpm clean && tsup",
-    "clean": "rimraf build",
-    "common:cleanup": "rimraf node_modules && rimraf pnpm-lock.yaml"
+    "clean": "node -e \"import('node:fs').then(({ rmSync }) => rmSync('build', { recursive: true, force: true }))\"",
+    "common:cleanup": "node -e \"import('node:fs').then(({ rmSync }) => { rmSync('node_modules', { recursive: true, force: true }); rmSync('pnpm-lock.yaml', { force: true }); })\""
   },
   "dependencies": {
     "chatgpt": "^5.2.5",
-    "dotenv": "^17.2.4",
-    "esno": "^4.8.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "https-proxy-agent": "^7.0.6",
@@ -44,8 +44,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^25.2.2",
-    "rimraf": "^6.1.2",
+    "@types/node": "^24.10.13",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   }

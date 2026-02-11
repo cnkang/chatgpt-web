@@ -1,15 +1,19 @@
 {
   "compilerOptions": {
-    "target": "es2020",
+    "target": "ES2024",
     "lib": [
-      "esnext"
+      "ES2024"
     ],
     "baseUrl": ".",
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
-    "allowJs": true,
-    "strict": false,
+    "allowJs": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "useUnknownInCatchVariables": true,
     "noEmit": true,
     "outDir": "build",
     "esModuleInterop": true,

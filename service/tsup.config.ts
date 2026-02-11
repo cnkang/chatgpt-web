@@ -3,11 +3,11 @@ import { defineConfig } from 'tsup'
 export default defineConfig({
   entry: ['src/index.ts'],
   outDir: 'build',
-  target: 'es2020',
+  target: 'node24',
   format: ['esm'],
   splitting: false,
   sourcemap: true,
   minify: false,
-  shims: true,
+  shims: false,
   dts: false,
 })
