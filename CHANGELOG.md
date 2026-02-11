@@ -9,7 +9,7 @@
 - 前端升级到 Tailwind CSS v4 CSS-first 配置（`@import "tailwindcss"` + `@source` + `@theme` + `@custom-variant`），移除 `tailwind.config.js`。
 - 后端开发运行改为 Node.js 原生参数（`--env-file-if-exists`、`--watch`、`--experimental-strip-types`），移除 `dotenv` / `esno`。
 - `service` TypeScript 配置升级为严格模式并对核心中间件/路由做类型收敛，提升稳定性与可维护性。
-- 升级核心依赖（`vue`、`markdown-it`、`mermaid`、`oxlint` 等）并移除可被原生能力替代的工具依赖（如 `npm-run-all`、`rimraf`、`@vueuse/core`、`autoprefixer`）。
+- 升级核心依赖（`vue`、`markdown-it`、`oxlint` 等）并移除可被原生能力替代的工具依赖（如 `npm-run-all`、`rimraf`、`@vueuse/core`、`autoprefixer`）。
 - CI 增加 `test` job，并统一 root + service 的 pnpm 安装与缓存策略。
 - 详细改动说明见 `docs/releases/modernization-2026-02-11.md`。
 

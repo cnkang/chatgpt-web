@@ -15,7 +15,7 @@ This maintenance update modernizes runtime/tooling baselines and removes legacy 
 
 ## Dependency Modernization
 
-- Upgraded key frontend dependencies to latest stable compatible versions (`vue`, `markdown-it`, `mermaid`, `oxlint`).
+- Upgraded key frontend dependencies to latest stable compatible versions (`vue`, `markdown-it`, `oxlint`).
 - Removed redundant dependencies replaced by native/platform features:
   - root: `@vueuse/core`, `npm-run-all`, `autoprefixer`, `rimraf`
   - service: `dotenv`, `esno`, `rimraf`
