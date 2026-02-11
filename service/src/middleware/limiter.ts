@@ -1,19 +1,22 @@
+import type { RequestHandler } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import { isNotEmptyString } from '../utils/is'
 
 const MAX_REQUEST_PER_HOUR = process.env.MAX_REQUEST_PER_HOUR
 const MAX_VERIFY_PER_HOUR = process.env.MAX_VERIFY_PER_HOUR
 
-function parseMaxCount(value: string | undefined, defaultValue: number) {
+function parseMaxCount(value: string | undefined, defaultValue: number): number {
   if (!isNotEmptyString(value))
     return defaultValue
+
   const parsed = Number.parseInt(value, 10)
-  if (Number.isNaN(parsed) || parsed < 0)
+  if (!Number.isInteger(parsed) || parsed < 0)
     return defaultValue
+
   return parsed
 }
 
-function createLimiter(max: number, message: string) {
+function createLimiter(max: number, message: string): RequestHandler {
   if (max === 0) {
     return (_req, _res, next) => {
       next()

@@ -9,10 +9,6 @@ export interface RequestOptions {
   top_p?: number
 }
 
-export interface SetProxyOptions {
-  fetch?: typeof globalThis.fetch
-}
-
 export interface UsageResponse {
   total_usage: number
 }
