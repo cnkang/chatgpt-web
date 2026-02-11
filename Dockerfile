@@ -10,7 +10,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY . /app
 
-RUN pnpm run build
+RUN pnpm run build-only
 
 # build backend
 FROM node:24-alpine AS backend
