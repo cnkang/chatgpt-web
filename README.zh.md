@@ -9,7 +9,7 @@
 
 ## 项目简介
 
-这是一个基于 `Vue 3 + Vite`（前端）与 `Express + TypeScript`（后端）的 ChatGPT Web 客户端。
+这是一个基于 `Vue 3.5 + Vite 7 + Tailwind CSS 4`（前端）与 `Express + TypeScript`（后端）的 ChatGPT Web 客户端。
 最新发布版本：`v3.0.1`（`2026-02-10` 重发并指向最新提交）。
 
 通过 `chatgpt` 包支持两种运行模式：
@@ -44,6 +44,15 @@
 
 - Node.js：`24 (LTS)`（通过 `nvm` 和 `.nvmrc`）
 - PNPM：`10.x`（与 `packageManager` 一致）
+
+## 现代化基线
+
+- 前端采用 Tailwind CSS v4 的 CSS-first 配置，位于 `src/styles/lib/tailwind.css`（`@import "tailwindcss"`、`@source`、`@theme`、`@custom-variant`）。
+- 后端开发运行时使用 Node.js 原生参数：
+  - `--env-file-if-exists=.env`
+  - `--watch`
+  - `--experimental-strip-types`
+- 后端已移除 `dotenv` / `esno` 依赖，环境加载与 TypeScript 运行由 Node.js 原生能力接管。
 
 ## 快速开始
 
@@ -180,6 +189,7 @@ docker run --name chatgpt-web --rm -it -p 3002:3002 --env-file service/.env chat
 ```bash
 pnpm lint
 pnpm type-check
+pnpm -r --if-present test
 pnpm secrets:scan
 ```
 

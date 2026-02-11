@@ -25,7 +25,7 @@ pnpm --dir service install
 # 前端
 pnpm dev
 
-# 后端（监听模式）
+# 后端（Node.js 原生 watch + env-file + strip-types）
 pnpm --dir service dev
 ```
 
@@ -36,6 +36,7 @@ pnpm --dir service dev
 ```bash
 pnpm lint
 pnpm type-check
+pnpm -r --if-present test
 pnpm secrets:scan
 ```
 

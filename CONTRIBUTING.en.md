@@ -25,7 +25,7 @@ pnpm --dir service install
 # Frontend
 pnpm dev
 
-# Backend (watch mode)
+# Backend (Node.js native watch + env-file + strip-types)
 pnpm --dir service dev
 ```
 
@@ -36,6 +36,7 @@ Run these checks before opening a PR:
 ```bash
 pnpm lint
 pnpm type-check
+pnpm -r --if-present test
 pnpm secrets:scan
 ```
 
