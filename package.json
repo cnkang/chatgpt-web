@@ -51,7 +51,7 @@
     "html-to-image": "^1.11.13",
     "katex": "^0.16.28",
     "markdown-it": "^14.1.1",
-    "mermaid": "^10.9.5",
+    "mermaid": "^11.10.0",
     "mermaid-it-markdown": "^1.0.13",
     "naive-ui": "^2.43.2",
     "pinia": "^3.0.4",
