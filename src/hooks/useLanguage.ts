@@ -1,32 +1,26 @@
 import { enUS, esAR, koKR, ruRU, viVN, zhCN, zhTW } from 'naive-ui'
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { setLocale } from '@/locales'
 import { useAppStore } from '@/store'
+
+const localeMap = {
+  'en-US': enUS,
+  'es-ES': esAR,
+  'ko-KR': koKR,
+  'vi-VN': viVN,
+  'ru-RU': ruRU,
+  'zh-CN': zhCN,
+  'zh-TW': zhTW,
+} as const
 
 export function useLanguage() {
   const appStore = useAppStore()
 
-  const language = computed(() => {
+  watchEffect(() => {
     setLocale(appStore.language)
-    switch (appStore.language) {
-      case 'en-US':
-        return enUS
-      case 'es-ES':
-        return esAR
-      case 'ko-KR':
-        return koKR
-      case 'vi-VN':
-        return viVN
-      case 'ru-RU':
-        return ruRU
-      case 'zh-CN':
-        return zhCN
-      case 'zh-TW':
-        return zhTW
-      default:
-        return enUS
-    }
   })
+
+  const language = computed(() => localeMap[appStore.language] ?? enUS)
 
   return { language }
 }

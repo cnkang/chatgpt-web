@@ -1,16 +1,17 @@
-import { nextTick, ref, type Ref } from 'vue'
+import { nextTick, useTemplateRef, type ShallowRef } from 'vue'
 
-type ScrollElement = HTMLDivElement | null
+type ScrollElement = HTMLDivElement
+type TemplateElementRef<T> = Readonly<ShallowRef<T | null>>
 
 interface ScrollReturn {
-  scrollRef: Ref<ScrollElement>
+  scrollRef: TemplateElementRef<ScrollElement>
   scrollToBottom: () => Promise<void>
   scrollToTop: () => Promise<void>
   scrollToBottomIfAtBottom: () => Promise<void>
 }
 
-export function useScroll(): ScrollReturn {
-  const scrollRef = ref<ScrollElement>(null)
+export function useScroll(refKey = 'scrollRef'): ScrollReturn {
+  const scrollRef = useTemplateRef<ScrollElement>(refKey)
 
   const scrollToBottom = async () => {
     await nextTick()

@@ -1,13 +1,14 @@
 <script setup lang='ts'>
 import { toPng } from 'html-to-image'
-import { NAutoComplete, NButton, NInput, useDialog, useMessage } from 'naive-ui'
+import { NAutoComplete, NButton, NInput, useDialog, useMessage, type InputInst } from 'naive-ui'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchChatAPIProcess } from '@/api'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
+import type { PromptItem } from '@/store/modules/prompt/helper'
 import { useChatStore, usePromptStore } from '@/store'
 import { Message } from './components'
 import HeaderComponent from './components/Header/index.vue'
@@ -27,7 +28,7 @@ const chatStore = useChatStore()
 
 const { isMobile } = useBasicLayout()
 const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
-const { scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
+const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
 
 const { uuid } = route.params as { uuid: string }
@@ -37,7 +38,107 @@ const conversationList = computed(() => dataSources.value.filter(item => (!item.
 
 const prompt = ref<string>('')
 const loading = ref<boolean>(false)
-const inputRef = ref<Ref | null>(null)
+const inputRef = useTemplateRef<InputInst>('inputRef')
+
+interface StreamConversationPayload {
+  id?: string
+  text?: string
+  conversationId?: string
+  detail?: {
+    choices?: Array<{
+      finish_reason?: string
+    }>
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function parseLatestStreamPayload(responseText: string): StreamConversationPayload | null {
+  const lines = responseText
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    try {
+      const parsed = JSON.parse(lines[index]) as unknown
+      if (isRecord(parsed))
+        return parsed as StreamConversationPayload
+    }
+    catch {
+      // ignore invalid partial chunks and keep scanning backwards
+    }
+  }
+
+  return null
+}
+
+function now() {
+  return new Date().toLocaleString()
+}
+
+function isCanceledError(error: unknown): boolean {
+  return error instanceof Error && error.message === 'canceled'
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error && error.message ? error.message : t('common.wrong')
+}
+
+async function streamReply(index: number, initialMessage: string, options: Chat.ConversationRequest, autoScroll: boolean) {
+  let message = initialMessage
+  let lastText = ''
+
+  while (true) {
+    let continuationParentMessageId: string | undefined
+    let continuationText: string | undefined
+
+    await fetchChatAPIProcess<Chat.ConversationResponse>({
+      prompt: message,
+      options,
+      signal: controller.signal,
+      onDownloadProgress: ({ event }) => {
+        const data = parseLatestStreamPayload(event.target.responseText)
+        if (!data)
+          return
+
+        updateChat(
+          +uuid,
+          index,
+          {
+            dateTime: now(),
+            text: lastText + (data.text ?? ''),
+            inversion: false,
+            error: false,
+            loading: true,
+            conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
+            requestOptions: { prompt: message, options: { ...options } },
+          },
+        )
+
+        const finishReason = data.detail?.choices?.[0]?.finish_reason
+        if (openLongReply && finishReason === 'length' && data.id) {
+          continuationParentMessageId = data.id
+          continuationText = data.text
+        }
+
+        if (autoScroll)
+          scrollToBottomIfAtBottom()
+      },
+    })
+
+    if (!openLongReply || !continuationParentMessageId)
+      break
+
+    options.parentMessageId = continuationParentMessageId
+    lastText = continuationText ?? lastText
+    message = ''
+  }
+
+  updateChatSome(+uuid, index, { loading: false })
+}
 
 // 添加PromptStore
 const promptStore = usePromptStore()
@@ -69,7 +170,7 @@ async function onConversation() {
   addChat(
     +uuid,
     {
-      dateTime: new Date().toLocaleString(),
+      dateTime: now(),
       text: message,
       inversion: true,
       error: false,
@@ -91,7 +192,7 @@ async function onConversation() {
   addChat(
     +uuid,
     {
-      dateTime: new Date().toLocaleString(),
+      dateTime: now(),
       text: t('chat.thinking'),
       loading: true,
       inversion: false,
@@ -103,59 +204,12 @@ async function onConversation() {
   scrollToBottom()
 
   try {
-    let lastText = ''
-    const fetchChatAPIOnce = async () => {
-      await fetchChatAPIProcess<Chat.ConversationResponse>({
-        prompt: message,
-        options,
-        signal: controller.signal,
-        onDownloadProgress: ({ event }) => {
-          const xhr = event.target
-          const { responseText } = xhr
-          // Always process the final line
-          const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-          let chunk = responseText
-          if (lastIndex !== -1)
-            chunk = responseText.substring(lastIndex)
-          try {
-            const data = JSON.parse(chunk)
-            updateChat(
-              +uuid,
-              dataSources.value.length - 1,
-              {
-                dateTime: new Date().toLocaleString(),
-                text: lastText + (data.text ?? ''),
-                inversion: false,
-                error: false,
-                loading: true,
-                conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
-                requestOptions: { prompt: message, options: { ...options } },
-              },
-            )
-
-            if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
-              options.parentMessageId = data.id
-              lastText = data.text
-              message = ''
-              return fetchChatAPIOnce()
-            }
-
-            scrollToBottomIfAtBottom()
-          }
-          catch {
-            //
-          }
-        },
-      })
-      updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
-    }
-
-    await fetchChatAPIOnce()
+    await streamReply(dataSources.value.length - 1, message, options, true)
   }
-  catch (error: any) {
-    const errorMessage = error?.message ?? t('common.wrong')
+  catch (error: unknown) {
+    const errorMessage = getErrorMessage(error)
 
-    if (error.message === 'canceled') {
+    if (isCanceledError(error)) {
       updateChatSome(
         +uuid,
         dataSources.value.length - 1,
@@ -186,7 +240,7 @@ async function onConversation() {
       +uuid,
       dataSources.value.length - 1,
       {
-        dateTime: new Date().toLocaleString(),
+        dateTime: now(),
         text: errorMessage,
         inversion: false,
         error: true,
@@ -223,7 +277,7 @@ async function onRegenerate(index: number) {
     +uuid,
     index,
     {
-      dateTime: new Date().toLocaleString(),
+      dateTime: now(),
       text: '',
       inversion: false,
       error: false,
@@ -234,54 +288,10 @@ async function onRegenerate(index: number) {
   )
 
   try {
-    let lastText = ''
-    const fetchChatAPIOnce = async () => {
-      await fetchChatAPIProcess<Chat.ConversationResponse>({
-        prompt: message,
-        options,
-        signal: controller.signal,
-        onDownloadProgress: ({ event }) => {
-          const xhr = event.target
-          const { responseText } = xhr
-          // Always process the final line
-          const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-          let chunk = responseText
-          if (lastIndex !== -1)
-            chunk = responseText.substring(lastIndex)
-          try {
-            const data = JSON.parse(chunk)
-            updateChat(
-              +uuid,
-              index,
-              {
-                dateTime: new Date().toLocaleString(),
-                text: lastText + (data.text ?? ''),
-                inversion: false,
-                error: false,
-                loading: true,
-                conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
-                requestOptions: { prompt: message, options: { ...options } },
-              },
-            )
-
-            if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
-              options.parentMessageId = data.id
-              lastText = data.text
-              message = ''
-              return fetchChatAPIOnce()
-            }
-          }
-          catch {
-            //
-          }
-        },
-      })
-      updateChatSome(+uuid, index, { loading: false })
-    }
-    await fetchChatAPIOnce()
+    await streamReply(index, message, options, false)
   }
-  catch (error: any) {
-    if (error.message === 'canceled') {
+  catch (error: unknown) {
+    if (isCanceledError(error)) {
       updateChatSome(
         +uuid,
         index,
@@ -292,13 +302,13 @@ async function onRegenerate(index: number) {
       return
     }
 
-    const errorMessage = error?.message ?? t('common.wrong')
+    const errorMessage = getErrorMessage(error)
 
     updateChat(
       +uuid,
       index,
       {
-        dateTime: new Date().toLocaleString(),
+        dateTime: now(),
         text: errorMessage,
         inversion: false,
         error: true,
@@ -326,7 +336,11 @@ function handleExport() {
       try {
         d.loading = true
         const ele = document.getElementById('image-wrapper')
-        const imgUrl = await toPng(ele as HTMLDivElement)
+        if (!(ele instanceof HTMLDivElement)) {
+          ms.error(t('chat.exportFailed'))
+          return
+        }
+        const imgUrl = await toPng(ele)
         const tempLink = document.createElement('a')
         tempLink.style.display = 'none'
         tempLink.href = imgUrl
@@ -339,7 +353,6 @@ function handleExport() {
         window.URL.revokeObjectURL(imgUrl)
         d.loading = false
         ms.success(t('chat.exportSuccess'))
-        Promise.resolve()
       }
       catch {
         ms.error(t('chat.exportFailed'))
@@ -407,26 +420,23 @@ function handleStop() {
 // 搜索选项计算，这里使用value作为索引项，所以当出现重复value时渲染异常(多项同时出现选中效果)
 // 理想状态下其实应该是key作为索引项,但官方的renderOption会出现问题，所以就需要value反renderLabel实现
 const searchOptions = computed(() => {
-  if (prompt.value.startsWith('/')) {
-    return promptTemplate.value.filter((item: { key: string }) => item.key.toLowerCase().includes(prompt.value.substring(1).toLowerCase())).map((obj: { value: any }) => {
-      return {
-        label: obj.value,
-        value: obj.value,
-      }
-    })
-  }
-  else {
+  if (!prompt.value.startsWith('/'))
     return []
-  }
+
+  const keyword = prompt.value.slice(1).toLowerCase()
+
+  return promptTemplate.value
+    .filter(item => item.key.toLowerCase().includes(keyword))
+    .map(item => ({
+      label: item.value,
+      value: item.value,
+    }))
 })
 
 // value反渲染key
 function renderOption(option: { label: string }) {
-  for (const i of promptTemplate.value) {
-    if (i.value === option.label)
-      return [i.key]
-  }
-  return []
+  const item = promptTemplate.value.find((promptItem: PromptItem) => promptItem.value === option.label)
+  return item ? [item.key] : []
 }
 
 const placeholder = computed(() => {
@@ -447,8 +457,11 @@ const footerClass = computed(() => {
 })
 
 onMounted(() => {
+  if (!scrollRef.value)
+    return
+
   scrollToBottom()
-  if (inputRef.value && !isMobile.value)
+  if (!isMobile.value)
     inputRef.value?.focus()
 })
 
@@ -535,7 +548,7 @@ onUnmounted(() => {
                 @input="handleInput"
                 @focus="handleFocus"
                 @blur="handleBlur"
-                @keypress="handleEnter"
+                @keydown="handleEnter"
               />
             </template>
           </NAutoComplete>
