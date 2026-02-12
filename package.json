@@ -85,5 +85,10 @@
     "*.{js,cjs,mjs,ts,tsx,vue}": [
       "oxlint --vue-plugin --import-plugin"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "lodash-es": "4.17.23"
+    }
   }
 }
