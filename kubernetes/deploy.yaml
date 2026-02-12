@@ -16,12 +16,36 @@ spec:
       labels:
         app: chatgpt-web
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
       containers:
         - image: ghcr.io/your-org/chatgpt-web:latest
           name: chatgpt-web
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10000
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 3002
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           env:
             - name: OPENAI_API_KEY
               valueFrom:
@@ -88,6 +112,9 @@ spec:
             requests:
               cpu: 300m
               memory: 300Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

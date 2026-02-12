@@ -3,8 +3,8 @@ import MdKatex from '@vscode/markdown-it-katex'
 import hljs from 'highlight.js'
 import MarkdownIt from 'markdown-it'
 import MdLinkAttributes from 'markdown-it-link-attributes'
-import MdMermaid from 'mermaid-it-markdown'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import mermaid from 'mermaid'
+import { computed, nextTick, onMounted, onUnmounted, onUpdated, ref } from 'vue'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 import { copyToClip } from '@/utils/copy'
@@ -22,6 +22,8 @@ const props = defineProps<Props>()
 const { isMobile } = useBasicLayout()
 
 const textRef = ref<HTMLElement>()
+let mermaidInitialized = false
+let mermaidId = 0
 
 function normalizeLanguage(language?: string): string {
   if (!language)
@@ -44,6 +46,9 @@ const mdi = new MarkdownIt({
   linkify: true,
   highlight(code, language) {
     const normalizedLanguage = normalizeLanguage(language)
+    if (normalizedLanguage === 'mermaid')
+      return `<pre><code class="language-mermaid">${escapeHtml(code)}</code></pre>`
+
     const validLang = !!(normalizedLanguage && hljs.getLanguage(normalizedLanguage))
     if (validLang) {
       const lang = normalizedLanguage
@@ -70,7 +75,7 @@ mdi.validateLink = (url: string) => {
   }
 }
 
-mdi.use(MdLinkAttributes, { attrs: { target: '_blank', rel: 'noopener noreferrer nofollow' } }).use(MdKatex).use(MdMermaid)
+mdi.use(MdLinkAttributes, { attrs: { target: '_blank', rel: 'noopener noreferrer nofollow' } }).use(MdKatex)
 
 const wrapClass = computed(() => {
   return [
@@ -154,8 +159,58 @@ function escapeBrackets(text: string) {
   })
 }
 
+function ensureMermaidInitialized() {
+  if (mermaidInitialized)
+    return
+
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'strict',
+    suppressErrorRendering: true,
+  })
+  mermaidInitialized = true
+}
+
+async function renderMermaidDiagrams() {
+  if (props.asRawText || props.inversion)
+    return
+
+  const root = textRef.value
+  if (!root)
+    return
+
+  const mermaidBlocks = Array.from(root.querySelectorAll<HTMLElement>('pre > code.language-mermaid'))
+  if (mermaidBlocks.length === 0)
+    return
+
+  ensureMermaidInitialized()
+
+  for (const block of mermaidBlocks) {
+    const pre = block.parentElement
+    const source = block.textContent?.trim()
+    if (!(pre instanceof HTMLElement) || !source)
+      continue
+
+    try {
+      const { svg } = await mermaid.render(`mermaid-${++mermaidId}`, source)
+      const container = document.createElement('div')
+      container.className = 'mermaid-container'
+      container.innerHTML = svg
+      pre.replaceWith(container)
+    }
+    catch {
+      // Keep the source block when mermaid parsing fails.
+    }
+  }
+}
+
 onMounted(() => {
   textRef.value?.addEventListener('click', handleTextClick)
+  void nextTick(() => renderMermaidDiagrams())
+})
+
+onUpdated(() => {
+  void renderMermaidDiagrams()
 })
 
 onUnmounted(() => {
