@@ -2,7 +2,6 @@
 import MdKatex from '@vscode/markdown-it-katex'
 import hljs from 'highlight.js'
 import MarkdownIt from 'markdown-it'
-import MdLinkAttributes from 'markdown-it-link-attributes'
 import mermaid from 'mermaid'
 import { computed, nextTick, onMounted, onUnmounted, onUpdated, ref } from 'vue'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
@@ -58,6 +57,20 @@ const mdi = new MarkdownIt({
   },
 })
 
+function applySafeLinkAttributes(md: MarkdownIt) {
+  const defaultRender = md.renderer.rules.link_open
+
+  md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+    tokens[idx].attrSet('target', '_blank')
+    tokens[idx].attrSet('rel', 'noopener noreferrer nofollow')
+
+    if (defaultRender)
+      return defaultRender(tokens, idx, options, env, self)
+
+    return self.renderToken(tokens, idx, options)
+  }
+}
+
 mdi.validateLink = (url: string) => {
   const trimmed = url.trim()
   if (!trimmed)
@@ -75,18 +88,15 @@ mdi.validateLink = (url: string) => {
   }
 }
 
-mdi.use(MdLinkAttributes, { attrs: { target: '_blank', rel: 'noopener noreferrer nofollow' } }).use(MdKatex)
+applySafeLinkAttributes(mdi)
+mdi.use(MdKatex)
 
 const wrapClass = computed(() => {
   return [
-    'text-wrap',
-    'min-w-[20px]',
-    'rounded-md',
-    isMobile.value ? 'p-2' : 'px-3 py-2',
-    props.inversion ? 'bg-[#d2f9d1]' : 'bg-[#f4f6f8]',
-    props.inversion ? 'dark:bg-[#a1dc95]' : 'dark:bg-[#1e1e20]',
-    props.inversion ? 'message-request' : 'message-reply',
-    { 'text-red-500': props.error },
+    'message-bubble',
+    props.inversion ? 'message-bubble--user' : 'message-bubble--assistant',
+    isMobile.value ? 'message-bubble--mobile' : 'message-bubble--desktop',
+    { 'message-bubble--error': props.error },
   ]
 })
 
@@ -219,7 +229,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="text-black" :class="wrapClass">
+  <div :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
       <div v-if="!inversion">
         <div v-if="!asRawText" class="markdown-body" :class="{ 'markdown-body-generate': loading }" v-html="text" />
