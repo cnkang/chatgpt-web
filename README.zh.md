@@ -91,7 +91,6 @@ cp service/.env.example service/.env
 VITE_GLOB_API_URL=/api
 VITE_APP_API_BASE_URL=http://127.0.0.1:3002
 VITE_GLOB_OPEN_LONG_REPLY=false
-VITE_GLOB_APP_PWA=false
 ```
 
 ### 5）启动服务
@@ -152,7 +151,6 @@ pnpm dev
 | `VITE_GLOB_API_URL` | 推荐 | 浏览器请求的 API 前缀（通常为 `/api`） |
 | `VITE_APP_API_BASE_URL` | 开发环境推荐 | Vite 本地代理转发目标 |
 | `VITE_GLOB_OPEN_LONG_REPLY` | 可选 | 当返回 `length` 时自动续写长回复 |
-| `VITE_GLOB_APP_PWA` | 可选 | 启用/禁用 PWA 构建 |
 
 ## 构建
 

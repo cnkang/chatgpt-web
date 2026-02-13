@@ -91,7 +91,6 @@ Create `.env.local` in repository root:
 VITE_GLOB_API_URL=/api
 VITE_APP_API_BASE_URL=http://127.0.0.1:3002
 VITE_GLOB_OPEN_LONG_REPLY=false
-VITE_GLOB_APP_PWA=false
 ```
 
 ### 5) Start services
@@ -152,7 +151,6 @@ Deployment note:
 | `VITE_GLOB_API_URL` | Recommended | API prefix used by browser requests (typically `/api`) |
 | `VITE_APP_API_BASE_URL` | Recommended for dev | Vite dev server proxy target |
 | `VITE_GLOB_OPEN_LONG_REPLY` | Optional | Auto-continue long replies when model returns `length` |
-| `VITE_GLOB_APP_PWA` | Optional | Enable/disable PWA build |
 
 ## Build
 
