@@ -1,7 +1,9 @@
-import { readonly, ref } from 'vue'
+import { computed, readonly, ref } from 'vue'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 639.98px)'
+const TABLET_MEDIA_QUERY = '(min-width: 640px) and (max-width: 1023.98px)'
 const isMobileState = ref(false)
+const isTabletState = ref(false)
 let hasSetup = false
 
 function setupMediaQuery() {
@@ -9,17 +11,28 @@ function setupMediaQuery() {
     return
 
   hasSetup = true
-  const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY)
+  const mobileMediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY)
+  const tabletMediaQuery = window.matchMedia(TABLET_MEDIA_QUERY)
 
-  const syncFromMediaQuery = (event?: MediaQueryListEvent) => {
-    isMobileState.value = event?.matches ?? mediaQuery.matches
+  const syncFromMediaQuery = () => {
+    isMobileState.value = mobileMediaQuery.matches
+    isTabletState.value = tabletMediaQuery.matches
   }
 
   syncFromMediaQuery()
-  mediaQuery.addEventListener('change', syncFromMediaQuery)
+  mobileMediaQuery.addEventListener('change', syncFromMediaQuery)
+  tabletMediaQuery.addEventListener('change', syncFromMediaQuery)
 }
 
 export function useBasicLayout() {
   setupMediaQuery()
-  return { isMobile: readonly(isMobileState) }
+  const isMobile = readonly(isMobileState)
+  const isTablet = readonly(isTabletState)
+  const isDesktop = computed(() => !isMobile.value && !isTablet.value)
+
+  return {
+    isMobile,
+    isTablet,
+    isDesktop,
+  }
 }

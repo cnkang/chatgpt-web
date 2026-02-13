@@ -51,45 +51,46 @@ function isActive(uuid: number) {
 </script>
 
 <template>
-  <NScrollbar class="px-4">
-    <div class="flex flex-col gap-2 text-sm">
+  <NScrollbar class="chat-history-scroll">
+    <div class="chat-history-list">
       <template v-if="!dataSources.length">
-        <div class="flex flex-col items-center mt-4 text-center text-neutral-300">
-          <SvgIcon icon="ri:inbox-line" class="mb-2 text-3xl" />
+        <div class="chat-history-empty">
+          <SvgIcon icon="ri:inbox-line" class="chat-history-empty__icon" />
           <span>{{ $t('common.noData') }}</span>
         </div>
       </template>
       <template v-else>
         <div v-for="(item, index) of dataSources" :key="index">
           <a
-            class="relative flex items-center gap-3 px-3 py-3 break-all border rounded-md cursor-pointer hover:bg-neutral-100 group dark:border-neutral-800 dark:hover:bg-[#24272e]"
-            :class="isActive(item.uuid) && ['border-[#4b9e5f]', 'bg-neutral-100', 'text-[#4b9e5f]', 'dark:bg-[#24272e]', 'dark:border-[#4b9e5f]', 'pr-14']"
+            class="chat-history-item group"
+            :class="{ 'chat-history-item--active': isActive(item.uuid) }"
             @click="handleSelect(item)"
           >
-            <span>
+            <span class="chat-history-item__icon">
               <SvgIcon icon="ri:message-3-line" />
             </span>
-            <div class="relative flex-1 overflow-hidden break-all text-ellipsis whitespace-nowrap">
+            <div class="chat-history-item__title">
               <NInput
                 v-if="item.isEdit"
-                v-model:value="item.title" size="tiny"
+                v-model:value="item.title"
+                size="tiny"
                 @keypress="handleEnter(item, false, $event)"
               />
-              <span v-else>{{ item.title }}</span>
+              <span v-else class="chat-history-item__title-text">{{ item.title }}</span>
             </div>
-            <div v-if="isActive(item.uuid)" class="absolute z-10 flex visible right-1">
+            <div v-if="isActive(item.uuid)" class="chat-history-item__actions">
               <template v-if="item.isEdit">
-                <button class="p-1" @click="handleEdit(item, false, $event)">
+                <button class="chat-history-item__action" @click="handleEdit(item, false, $event)">
                   <SvgIcon icon="ri:save-line" />
                 </button>
               </template>
               <template v-else>
-                <button class="p-1">
-                  <SvgIcon icon="ri:edit-line" @click="handleEdit(item, true, $event)" />
+                <button class="chat-history-item__action" @click="handleEdit(item, true, $event)">
+                  <SvgIcon icon="ri:edit-line" />
                 </button>
                 <NPopconfirm placement="bottom" @positive-click="handleDeleteDebounce(index, $event)">
                   <template #trigger>
-                    <button class="p-1">
+                    <button class="chat-history-item__action">
                       <SvgIcon icon="ri:delete-bin-line" />
                     </button>
                   </template>
@@ -103,3 +104,112 @@ function isActive(uuid: number) {
     </div>
   </NScrollbar>
 </template>
+
+<style scoped lang="less">
+.chat-history-scroll {
+  height: 100%;
+  padding: 0 1rem;
+}
+
+.chat-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chat-history-empty {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--chat-text-muted);
+}
+
+.chat-history-empty__icon {
+  margin-bottom: 0.375rem;
+  font-size: 1.55rem;
+}
+
+.chat-history-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border: 1px solid transparent;
+  border-radius: 0.875rem;
+  padding: 0.7rem 0.75rem;
+  color: var(--chat-text-primary);
+  background: color-mix(in oklab, var(--chat-panel-bg-soft) 86%, transparent);
+  transition: all 0.2s ease;
+}
+
+.chat-history-item:hover {
+  border-color: var(--chat-border-color);
+  background: color-mix(in oklab, var(--chat-panel-bg) 90%, transparent);
+}
+
+.chat-history-item--active {
+  border-color: color-mix(in oklab, var(--chat-accent) 55%, var(--chat-border-color));
+  background: color-mix(in oklab, var(--chat-accent-soft) 38%, var(--chat-panel-bg-soft));
+  padding-right: 5rem;
+}
+
+.chat-history-item__icon {
+  color: var(--chat-text-muted);
+}
+
+.chat-history-item__title {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chat-history-item__title-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-history-item__actions {
+  position: absolute;
+  right: 0.35rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.chat-history-item__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.5rem;
+  color: var(--chat-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.chat-history-item__action:hover {
+  color: var(--chat-text-primary);
+  background: color-mix(in oklab, var(--chat-panel-bg-strong) 88%, transparent);
+}
+
+@supports not (color: color-mix(in oklab, white 50%, black)) {
+  .chat-history-item {
+    background: var(--chat-panel-bg-soft);
+  }
+
+  .chat-history-item:hover {
+    background: var(--chat-panel-bg);
+  }
+
+  .chat-history-item--active {
+    background: var(--chat-accent-soft);
+  }
+}
+</style>

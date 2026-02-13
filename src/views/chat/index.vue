@@ -32,8 +32,9 @@ const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
 
 const { uuid } = route.params as { uuid: string }
+const currentUuid = Number(uuid)
 
-const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
+const dataSources = computed(() => chatStore.getChatByUuid(currentUuid))
 const conversationList = computed(() => dataSources.value.filter(item => (!item.inversion && !!item.conversationOptions)))
 
 const prompt = ref<string>('')
@@ -105,7 +106,7 @@ async function streamReply(index: number, initialMessage: string, options: Chat.
           return
 
         updateChat(
-          +uuid,
+          currentUuid,
           index,
           {
             dateTime: now(),
@@ -137,7 +138,7 @@ async function streamReply(index: number, initialMessage: string, options: Chat.
     message = ''
   }
 
-  updateChatSome(+uuid, index, { loading: false })
+  updateChatSome(currentUuid, index, { loading: false })
 }
 
 // 添加PromptStore
@@ -149,7 +150,7 @@ const { promptList: promptTemplate } = storeToRefs(promptStore)
 // 未知原因刷新页面，loading 状态不会重置，手动重置
 dataSources.value.forEach((item, index) => {
   if (item.loading)
-    updateChatSome(+uuid, index, { loading: false })
+    updateChatSome(currentUuid, index, { loading: false })
 })
 
 function handleSubmit() {
@@ -168,7 +169,7 @@ async function onConversation() {
   controller = new AbortController()
 
   addChat(
-    +uuid,
+    currentUuid,
     {
       dateTime: now(),
       text: message,
@@ -184,13 +185,13 @@ async function onConversation() {
   prompt.value = ''
 
   let options: Chat.ConversationRequest = {}
-  const lastContext = conversationList.value[conversationList.value.length - 1]?.conversationOptions
+  const lastContext = conversationList.value.at(-1)?.conversationOptions
 
   if (lastContext && usingContext.value)
     options = { ...lastContext }
 
   addChat(
-    +uuid,
+    currentUuid,
     {
       dateTime: now(),
       text: t('chat.thinking'),
@@ -211,7 +212,7 @@ async function onConversation() {
 
     if (isCanceledError(error)) {
       updateChatSome(
-        +uuid,
+        currentUuid,
         dataSources.value.length - 1,
         {
           loading: false,
@@ -221,11 +222,11 @@ async function onConversation() {
       return
     }
 
-    const currentChat = getChatByUuidAndIndex(+uuid, dataSources.value.length - 1)
+    const currentChat = getChatByUuidAndIndex(currentUuid, dataSources.value.length - 1)
 
     if (currentChat?.text && currentChat.text !== '') {
       updateChatSome(
-        +uuid,
+        currentUuid,
         dataSources.value.length - 1,
         {
           text: `${currentChat.text}\n[${errorMessage}]`,
@@ -237,7 +238,7 @@ async function onConversation() {
     }
 
     updateChat(
-      +uuid,
+      currentUuid,
       dataSources.value.length - 1,
       {
         dateTime: now(),
@@ -274,7 +275,7 @@ async function onRegenerate(index: number) {
   loading.value = true
 
   updateChat(
-    +uuid,
+    currentUuid,
     index,
     {
       dateTime: now(),
@@ -293,7 +294,7 @@ async function onRegenerate(index: number) {
   catch (error: unknown) {
     if (isCanceledError(error)) {
       updateChatSome(
-        +uuid,
+        currentUuid,
         index,
         {
           loading: false,
@@ -305,7 +306,7 @@ async function onRegenerate(index: number) {
     const errorMessage = getErrorMessage(error)
 
     updateChat(
-      +uuid,
+      currentUuid,
       index,
       {
         dateTime: now(),
@@ -374,7 +375,7 @@ function handleDelete(index: number) {
     positiveText: t('common.yes'),
     negativeText: t('common.no'),
     onPositiveClick: () => {
-      chatStore.deleteChatByUuid(+uuid, index)
+      chatStore.deleteChatByUuid(currentUuid, index)
     },
   })
 }
@@ -389,7 +390,7 @@ function handleClear() {
     positiveText: t('common.yes'),
     negativeText: t('common.no'),
     onPositiveClick: () => {
-      chatStore.clearChatByUuid(+uuid)
+      chatStore.clearChatByUuid(currentUuid)
     },
   })
 }
@@ -449,13 +450,6 @@ const buttonDisabled = computed(() => {
   return loading.value || !prompt.value || prompt.value.trim() === ''
 })
 
-const footerClass = computed(() => {
-  let classes = ['p-4']
-  if (isMobile.value)
-    classes = ['sticky', 'left-0', 'bottom-0', 'right-0', 'p-2', 'pr-3', 'overflow-hidden']
-  return classes
-})
-
 onMounted(() => {
   if (!scrollRef.value)
     return
@@ -472,28 +466,25 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full">
+  <div class="chat-page">
     <HeaderComponent
       v-if="isMobile"
       :using-context="usingContext"
       @export="handleExport"
       @handle-clear="handleClear"
     />
-    <main class="flex-1 overflow-hidden">
-      <div id="scrollRef" ref="scrollRef" class="h-full overflow-hidden overflow-y-auto">
-        <div
-          class="w-full max-w-screen-xl m-auto dark:bg-[#101014]"
-          :class="[isMobile ? 'p-2' : 'p-4']"
-        >
-          <div id="image-wrapper" class="relative">
+    <main class="chat-page__main">
+      <div id="scrollRef" ref="scrollRef" class="chat-page__scroll">
+        <div class="chat-page__scroll-inner">
+          <div id="image-wrapper" class="chat-stream">
             <template v-if="!dataSources.length">
-              <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
-                <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
+              <div class="chat-empty">
+                <SvgIcon icon="ri:bubble-chart-fill" class="chat-empty__icon" />
                 <span>{{ t('chat.newChatTitle') }}</span>
               </div>
             </template>
             <template v-else>
-              <div>
+              <div class="chat-stream__content">
                 <Message
                   v-for="(item, index) of dataSources"
                   :key="index"
@@ -505,8 +496,8 @@ onUnmounted(() => {
                   @regenerate="onRegenerate(index)"
                   @delete="handleDelete(index)"
                 />
-                <div class="sticky bottom-0 left-0 flex justify-center">
-                  <NButton v-if="loading" type="warning" @click="handleStop">
+                <div class="chat-stream__stop-row">
+                  <NButton v-if="loading" type="warning" class="chat-stream__stop-btn" @click="handleStop">
                     <template #icon>
                       <SvgIcon icon="ri:stop-circle-line" />
                     </template>
@@ -519,42 +510,49 @@ onUnmounted(() => {
         </div>
       </div>
     </main>
-    <footer :class="footerClass">
-      <div class="w-full max-w-screen-xl m-auto">
-        <div class="flex items-center justify-between space-x-2">
-          <HoverButton v-if="!isMobile" @click="handleClear">
-            <span class="text-xl text-[#4f555e] dark:text-white">
-              <SvgIcon icon="ri:delete-bin-line" />
-            </span>
-          </HoverButton>
-          <HoverButton v-if="!isMobile" @click="handleExport">
-            <span class="text-xl text-[#4f555e] dark:text-white">
-              <SvgIcon icon="ri:download-2-line" />
-            </span>
-          </HoverButton>
-          <HoverButton @click="toggleUsingContext">
-            <span class="text-xl" :class="{ 'text-[#4b9e5f]': usingContext, 'text-[#a8071a]': !usingContext }">
-              <SvgIcon icon="ri:chat-history-line" />
-            </span>
-          </HoverButton>
-          <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
-            <template #default="{ handleInput, handleBlur, handleFocus }">
-              <NInput
-                ref="inputRef"
-                v-model:value="prompt"
-                type="textarea"
-                :placeholder="placeholder"
-                :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }"
-                @input="handleInput"
-                @focus="handleFocus"
-                @blur="handleBlur"
-                @keydown="handleEnter"
-              />
-            </template>
-          </NAutoComplete>
-          <NButton type="primary" :disabled="buttonDisabled" @click="handleSubmit">
+    <footer class="chat-composer-wrap" :class="{ 'chat-composer-wrap--mobile': isMobile }">
+      <div class="chat-composer-shell">
+        <div class="chat-composer">
+          <div class="chat-composer__tools">
+            <HoverButton v-if="!isMobile" @click="handleClear">
+              <span class="chat-tool-icon">
+                <SvgIcon icon="ri:delete-bin-line" />
+              </span>
+            </HoverButton>
+            <HoverButton v-if="!isMobile" @click="handleExport">
+              <span class="chat-tool-icon">
+                <SvgIcon icon="ri:download-2-line" />
+              </span>
+            </HoverButton>
+            <HoverButton @click="toggleUsingContext">
+              <span
+                class="chat-tool-icon"
+                :class="{ 'chat-tool-icon--active': usingContext, 'chat-tool-icon--inactive': !usingContext }"
+              >
+                <SvgIcon icon="ri:chat-history-line" />
+              </span>
+            </HoverButton>
+          </div>
+          <div class="chat-composer__input">
+            <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
+              <template #default="{ handleInput, handleBlur, handleFocus }">
+                <NInput
+                  ref="inputRef"
+                  v-model:value="prompt"
+                  type="textarea"
+                  :placeholder="placeholder"
+                  :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }"
+                  @input="handleInput"
+                  @focus="handleFocus"
+                  @blur="handleBlur"
+                  @keydown="handleEnter"
+                />
+              </template>
+            </NAutoComplete>
+          </div>
+          <NButton type="primary" class="chat-composer__send" :disabled="buttonDisabled" @click="handleSubmit">
             <template #icon>
-              <span class="dark:text-black">
+              <span class="chat-composer__send-icon">
                 <SvgIcon icon="ri:send-plane-fill" />
               </span>
             </template>
@@ -564,3 +562,208 @@ onUnmounted(() => {
     </footer>
   </div>
 </template>
+
+<style scoped lang="less">
+.chat-page {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+}
+
+.chat-page__main {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-page__scroll {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: clamp(0.75rem, 1.5vw, 1.25rem);
+}
+
+.chat-page__scroll-inner {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.chat-stream {
+  position: relative;
+  border: 1px solid var(--chat-border-color);
+  border-radius: 1.1rem;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--chat-panel-bg-strong) 76%, transparent) 0%, var(--chat-panel-bg) 100%);
+  box-shadow: var(--chat-shadow-soft);
+  padding: clamp(0.9rem, 1.5vw, 1.35rem);
+}
+
+.chat-stream__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-empty {
+  min-height: 11rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  text-align: center;
+  color: var(--chat-text-muted);
+}
+
+.chat-empty__icon {
+  font-size: 1.6rem;
+}
+
+.chat-stream__stop-row {
+  position: sticky;
+  left: 0;
+  bottom: 0.45rem;
+  display: flex;
+  justify-content: center;
+  padding-top: 0.4rem;
+}
+
+.chat-stream__stop-btn {
+  border-radius: 999px;
+  box-shadow: var(--chat-shadow-soft);
+}
+
+.chat-composer-wrap {
+  position: sticky;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  padding: 0 1rem calc(0.8rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, color-mix(in oklab, var(--chat-app-bg) 80%, transparent), transparent);
+}
+
+.chat-composer-wrap--mobile {
+  padding: 0 0.65rem calc(0.55rem + env(safe-area-inset-bottom));
+}
+
+.chat-composer-shell {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.chat-composer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: flex-end;
+  gap: 0.6rem;
+  border: 1px solid var(--chat-border-color);
+  border-radius: 1rem;
+  background: color-mix(in oklab, var(--chat-panel-bg-strong) 82%, transparent);
+  box-shadow: var(--chat-shadow-soft);
+  padding: 0.55rem;
+  backdrop-filter: blur(10px);
+}
+
+.chat-composer__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.chat-tool-icon {
+  font-size: 1.05rem;
+  color: var(--chat-text-secondary);
+}
+
+.chat-tool-icon--active {
+  color: var(--chat-accent);
+}
+
+.chat-tool-icon--inactive {
+  color: #cb5f6f;
+}
+
+.chat-composer__input {
+  min-width: 0;
+}
+
+.chat-composer__input :deep(.n-auto-complete) {
+  width: 100%;
+}
+
+.chat-composer__input :deep(.n-input) {
+  border-radius: 0.8rem;
+}
+
+.chat-composer__input :deep(.n-input__textarea-el) {
+  max-height: 40vh;
+}
+
+.chat-composer__send {
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 0.8rem;
+}
+
+.chat-composer__send-icon {
+  font-size: 1rem;
+}
+
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .chat-page__scroll {
+    padding: 0.8rem;
+  }
+
+  .chat-stream {
+    border-radius: 1rem;
+  }
+}
+
+@media (max-width: 639.98px) {
+  .chat-page__scroll {
+    padding: 0.55rem;
+  }
+
+  .chat-stream {
+    padding: 0.75rem;
+    border-radius: 0.95rem;
+  }
+
+  .chat-empty {
+    min-height: 8rem;
+  }
+
+  .chat-composer {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'tools tools'
+      'input send';
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .chat-composer__tools {
+    grid-area: tools;
+  }
+
+  .chat-composer__input {
+    grid-area: input;
+  }
+
+  .chat-composer__send {
+    grid-area: send;
+    width: 2.65rem;
+    height: 2.65rem;
+  }
+}
+
+@supports not (color: color-mix(in oklab, white 50%, black)) {
+  .chat-stream {
+    background: var(--chat-panel-bg);
+  }
+
+  .chat-composer {
+    background: var(--chat-panel-bg-strong);
+  }
+}
+</style>

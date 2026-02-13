@@ -93,24 +93,25 @@ async function handleCopy() {
 <template>
   <div
     ref="messageRef"
-    class="flex w-full mb-6 overflow-hidden"
-    :class="[{ 'flex-row-reverse': inversion }]"
+    class="chat-message"
+    :class="{ 'chat-message--user': inversion }"
   >
     <div
-      class="flex items-center justify-center flex-shrink-0 h-8 overflow-hidden rounded-full basis-8"
-      :class="[inversion ? 'ml-2' : 'mr-2']"
+      class="chat-message__avatar"
+      :class="{ 'chat-message__avatar--user': inversion }"
     >
       <AvatarComponent :image="inversion" />
     </div>
-    <div class="overflow-hidden text-sm " :class="[inversion ? 'items-end' : 'items-start']">
-      <p class="text-xs text-[#b4bbc4]" :class="[inversion ? 'text-right' : 'text-left']">
+    <div class="chat-message__body">
+      <p class="chat-message__time" :class="{ 'chat-message__time--user': inversion }">
         {{ dateTime }}
       </p>
       <div
-        class="flex items-end gap-1 mt-2"
-        :class="[inversion ? 'flex-row-reverse' : 'flex-row']"
+        class="chat-message__content-row"
+        :class="{ 'chat-message__content-row--user': inversion }"
       >
         <TextComponent
+          class="chat-message__bubble"
           ref="textRef"
           :inversion="inversion"
           :error="error"
@@ -118,10 +119,10 @@ async function handleCopy() {
           :loading="loading"
           :as-raw-text="asRawText"
         />
-        <div class="flex flex-col">
+        <div class="chat-message__actions">
           <button
             v-if="!inversion"
-            class="mb-2 transition text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-300"
+            class="chat-message__action-btn chat-message__action-btn--refresh"
             @click="handleRegenerate"
           >
             <SvgIcon icon="ri:restart-line" />
@@ -132,7 +133,7 @@ async function handleCopy() {
             :options="options"
             @select="handleSelect"
           >
-            <button class="transition text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-200">
+            <button class="chat-message__action-btn">
               <SvgIcon icon="ri:more-2-fill" />
             </button>
           </NDropdown>
@@ -141,3 +142,135 @@ async function handleCopy() {
     </div>
   </div>
 </template>
+
+<style scoped lang="less">
+.chat-message {
+  display: flex;
+  width: 100%;
+  margin-bottom: 1.35rem;
+  overflow: hidden;
+  animation: message-slide-in 0.24s ease;
+}
+
+.chat-message--user {
+  flex-direction: row-reverse;
+}
+
+.chat-message__avatar {
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 999px;
+  margin-right: 0.55rem;
+  border: 1px solid var(--chat-border-color);
+}
+
+.chat-message__avatar--user {
+  margin-right: 0;
+  margin-left: 0.55rem;
+}
+
+.chat-message__body {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.875rem;
+}
+
+.chat-message__time {
+  text-align: left;
+  font-size: 0.72rem;
+  color: var(--chat-text-muted);
+  letter-spacing: 0.015em;
+}
+
+.chat-message__time--user {
+  text-align: right;
+}
+
+.chat-message__content-row {
+  display: flex;
+  margin-top: 0.45rem;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.chat-message__content-row--user {
+  flex-direction: row-reverse;
+}
+
+.chat-message__bubble {
+  max-width: min(100%, 78ch);
+}
+
+.chat-message__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  opacity: 0.66;
+  transition: opacity 0.2s ease;
+}
+
+.chat-message__action-btn {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: var(--chat-text-muted);
+  transition: all 0.2s ease;
+}
+
+.chat-message__action-btn:hover {
+  color: var(--chat-text-primary);
+  background: color-mix(in oklab, var(--chat-panel-bg-strong) 86%, transparent);
+}
+
+.chat-message__action-btn--refresh {
+  margin-bottom: 0.1rem;
+}
+
+.chat-message:hover .chat-message__actions {
+  opacity: 1;
+}
+
+@media (max-width: 639.98px) {
+  .chat-message {
+    margin-bottom: 1rem;
+  }
+
+  .chat-message__avatar {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .chat-message__bubble {
+    max-width: 100%;
+  }
+
+  .chat-message__actions {
+    opacity: 1;
+  }
+}
+
+@supports not (color: color-mix(in oklab, white 50%, black)) {
+  .chat-message__action-btn:hover {
+    background: var(--chat-panel-bg-strong);
+  }
+}
+
+@keyframes message-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
