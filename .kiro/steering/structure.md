@@ -4,25 +4,29 @@
 
 ```
 chatgpt-web/
-├── src/                    # Frontend Vue.js application
-├── service/                # Backend Node.js service
-├── public/                 # Static assets (favicon, PWA icons)
-├── docs/                   # Documentation and images
-├── docker-compose/         # Docker deployment configuration
-├── kubernetes/             # Kubernetes deployment manifests
-├── dist/                   # Frontend build output (generated)
-├── .kiro/                  # Kiro IDE configuration and steering
-├── .serena/                # Serena agent memories and cache
-├── .husky/                 # Git hooks configuration
-└── [config files]          # Root-level configuration files
+├── apps/                   # Monorepo applications
+│   ├── web/               # Frontend Vue.js application
+│   └── api/               # Backend Node.js service
+├── packages/              # Shared packages (if any)
+├── tools/                 # Build tools and utilities
+├── docs/                  # Documentation and images
+├── docker-compose/        # Docker deployment configuration
+├── kubernetes/            # Kubernetes deployment manifests
+├── .kiro/                 # Kiro IDE configuration and steering
+├── .serena/               # Serena agent memories and cache
+├── .husky/                # Git hooks configuration
+├── .turbo/                # Turborepo cache
+├── turbo.json             # Turborepo configuration
+├── pnpm-workspace.yaml    # PNPM workspace configuration
+└── [config files]         # Root-level configuration files
 ```
 
-## Frontend Structure (`src/`)
+## Frontend Structure (`apps/web/src/`)
 
 ### Component Organization
 
 ```
-src/components/
+apps/web/src/components/
 ├── common/                 # Reusable UI components
 │   ├── HoverButton/       # Button with hover effects
 │   ├── LoadingSpinner/    # Loading indicators
@@ -42,7 +46,7 @@ src/components/
 ### Application Architecture
 
 ```
-src/
+apps/web/src/
 ├── views/                 # Page-level components
 │   ├── chat/             # Main chat interface
 │   │   ├── components/   # Chat-specific components (Header, Message)
@@ -67,12 +71,12 @@ src/
 └── plugins/              # Vue plugins and setup
 ```
 
-## Backend Structure (`service/src/`)
+## Backend Structure (`apps/api/src/`)
 
 ### Service Architecture
 
 ```
-service/src/
+apps/api/src/
 ├── chatgpt/              # AI provider implementations
 │   ├── index.ts          # Legacy OpenAI implementation
 │   ├── provider-adapter.ts # Modern provider abstraction
@@ -108,21 +112,30 @@ service/src/
 
 ### Root Level Configuration
 
-- `package.json` - Frontend dependencies and scripts
-- `vite.config.ts` - Vite build configuration with Node.js 24 optimizations
-- `tsconfig.json` - TypeScript configuration for frontend
-- `tailwind.config.js` - Tailwind CSS configuration
+- `package.json` - Monorepo root dependencies and scripts
+- `turbo.json` - Turborepo build pipeline configuration
+- `pnpm-workspace.yaml` - PNPM workspace configuration
 - `eslint.config.js` - ESLint configuration with @antfu/eslint-config
 - `.prettierrc` - Prettier formatting rules
 - `.env` - Environment variables (create from .env.example)
 
-### Service Configuration
+### Frontend Configuration (`apps/web/`)
 
-- `service/package.json` - Backend dependencies and scripts
-- `service/tsconfig.json` - TypeScript configuration for backend
-- `service/tsup.config.ts` - Build configuration for backend
-- `service/vitest.config.ts` - Test configuration
-- `service/.env` - Backend environment variables
+- `package.json` - Frontend dependencies and scripts
+- `vite.config.ts` - Vite build configuration with Node.js 24 optimizations
+- `tsconfig.json` - TypeScript configuration for frontend
+- `tailwind.config.js` - Tailwind CSS configuration
+- `eslint.config.js` - Frontend-specific ESLint rules
+- `.prettierrc` - Frontend-specific Prettier rules
+
+### Backend Configuration (`apps/api/`)
+
+- `package.json` - Backend dependencies and scripts
+- `tsconfig.json` - TypeScript configuration for backend
+- `tsup.config.ts` - Build configuration for backend
+- `vitest.config.ts` - Test configuration
+- `eslint.config.js` - Backend-specific ESLint rules
+- `.env` - Backend environment variables (create from .env.example)
 
 ## File Naming Conventions
 
@@ -148,7 +161,7 @@ service/src/
 ### Frontend Aliases
 
 ```typescript
-// Use @ alias for src imports
+// Use @ alias for src imports (in apps/web)
 import { useChat } from '@/hooks/useChat'
 import { ChatMessage } from '@/components/chat/Message'
 ```
@@ -156,29 +169,29 @@ import { ChatMessage } from '@/components/chat/Message'
 ### Backend Imports
 
 ```typescript
-// Use relative imports with .js extension (ESM)
+// Use relative imports with .js extension (ESM) (in apps/api)
 import { logger } from './utils/logger.js'
 import type { ChatMessage } from './chatgpt/types.js'
 ```
 
 ## Asset Organization
 
-### Static Assets (`public/`)
+### Static Assets (`apps/web/public/`)
 
 - `favicon.ico` / `favicon.svg` - Site icons
 - `pwa-*.png` - Progressive Web App icons
 
-### Source Assets (`src/assets/`)
+### Source Assets (`apps/web/src/assets/`)
 
 - `avatar.jpg` - Default user avatar
 - `recommend.json` - Recommended prompts data
 
 ## Build Output Structure
 
-### Frontend Build (`dist/`)
+### Frontend Build (`apps/web/dist/`)
 
 ```
-dist/
+apps/web/dist/
 ├── js/                   # JavaScript bundles with hash names
 ├── css/                  # CSS files with hash names
 ├── img/                  # Optimized images
@@ -186,10 +199,10 @@ dist/
 └── index.html            # Main HTML file
 ```
 
-### Backend Build (`service/build/`)
+### Backend Build (`apps/api/build/`)
 
 ```
-build/
+apps/api/build/
 ├── index.js              # Main server entry point
 ├── [modules].js          # Compiled TypeScript modules
 └── [assets]              # Any bundled assets
