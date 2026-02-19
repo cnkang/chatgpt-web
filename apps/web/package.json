@@ -35,7 +35,7 @@
     "highlight.js": "^11.11.1",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.28",
-    "markdown-it": "^14.1.0",
+    "markdown-it": "^14.1.1",
     "markdown-it-link-attributes": "^4.0.1",
     "naive-ui": "^2.43.2",
     "pinia": "^3.0.4",
