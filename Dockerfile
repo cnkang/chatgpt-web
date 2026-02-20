@@ -29,7 +29,8 @@ ENV VITE_GLOB_API_URL=${VITE_GLOB_API_URL}
 ENV VITE_GLOB_OPEN_LONG_REPLY=${VITE_GLOB_OPEN_LONG_REPLY}
 ENV VITE_GLOB_APP_PWA=${VITE_GLOB_APP_PWA}
 
-RUN cd apps/web && pnpm build
+# Build shared package first so workspace type/module outputs exist
+RUN pnpm --filter @chatgpt-web/shared build && cd apps/web && pnpm build
 
 # Build backend (apps/api)
 FROM node:24-alpine AS backend
@@ -50,8 +51,8 @@ COPY ./apps/api ./apps/api
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build backend
-RUN cd apps/api && pnpm build
+# Build shared package first so workspace type/module outputs exist
+RUN pnpm --filter @chatgpt-web/shared build && cd apps/api && pnpm build
 
 # Production runtime
 FROM node:24-alpine
