@@ -31,7 +31,7 @@ services:
       # Required: OpenAI API Configuration
       OPENAI_API_KEY: sk-your_official_api_key_here
       AI_PROVIDER: openai
-      DEFAULT_MODEL: gpt-4o
+      DEFAULT_MODEL: gpt-5.1
 
       # Optional: Security
       AUTH_SECRET_KEY: your_secret_key
@@ -82,7 +82,7 @@ docker run -d \
   -p 127.0.0.1:3002:3002 \
   -e OPENAI_API_KEY=sk-your_api_key_here \
   -e AI_PROVIDER=openai \
-  -e DEFAULT_MODEL=gpt-4o \
+  -e DEFAULT_MODEL=gpt-5.1 \
   -e AUTH_SECRET_KEY=your_secret_key \
   -e MAX_REQUEST_PER_HOUR=100 \
   -e TIMEOUT_MS=60000 \
@@ -109,7 +109,7 @@ environment:
 environment:
   AI_PROVIDER: openai
   OPENAI_API_KEY: sk-your_api_key_here
-  DEFAULT_MODEL: gpt-4o
+  DEFAULT_MODEL: gpt-5.1
   OPENAI_API_BASE_URL: https://api.openai.com
 ```
 
@@ -166,7 +166,7 @@ services:
       # Provider Configuration
       AI_PROVIDER: ${AI_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.1}
 
       # Security
       AUTH_SECRET_KEY: ${AUTH_SECRET_KEY}
@@ -238,7 +238,7 @@ volumes:
 # Provider Configuration
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_production_api_key_here
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 
 # Security
 AUTH_SECRET_KEY=your_very_secure_production_key

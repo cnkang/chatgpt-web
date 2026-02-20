@@ -25,7 +25,7 @@ Set these in Railway's environment settings:
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 
 NODE_ENV=production
 PORT=3002

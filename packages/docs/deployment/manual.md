@@ -95,7 +95,7 @@ nano apps/api/.env  # or vim, code, etc.
 # AI Provider Configuration
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-openai-api-key-here
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 
 # Security
 AUTH_SECRET_KEY=your-secure-secret-key-here
