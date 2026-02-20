@@ -19,7 +19,7 @@ Minimum backend configuration (`apps/api/.env`):
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 ```
 
 ## Daily Development
