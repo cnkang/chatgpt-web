@@ -4,7 +4,7 @@ import type { Request, Response } from 'express'
 import express from 'express'
 import { ConfigurationValidator } from './config/validator'
 import { auth } from './middleware/auth'
-import { limiter } from './middleware/limiter'
+import { authLimiter, limiter } from './middleware/limiter'
 import {
   createCorsMiddleware,
   createSecureLogger,
@@ -201,6 +201,7 @@ function registerChatRoutes(router: express.Router, chatModule: ChatModule) {
   router.post(
     '/verify',
     [
+      authLimiter, // Security: Prevent brute-force attacks on authentication
       validateContentType(['application/json']),
       validateRequestSize(1024), // 1KB limit for token verification
       sanitizeRequest,
@@ -219,8 +220,11 @@ function registerChatRoutes(router: express.Router, chatModule: ChatModule) {
 }
 
 function registerMigrationRoute(router: express.Router) {
+  // Security: Diagnostic endpoints require authentication in production
+  // to prevent information disclosure about internal application state.
   router.get(
     '/migration-info',
+    [auth],
     asyncHandler(async (_req, res) => {
       const migrationInfo = ConfigurationValidator.getMigrationInfo()
       const validationResult = ConfigurationValidator.validateSafely()
@@ -238,8 +242,11 @@ function registerMigrationRoute(router: express.Router) {
 }
 
 function registerSecurityRoute(router: express.Router) {
+  // Security: Diagnostic endpoints require authentication in production
+  // to prevent information disclosure about internal application state.
   router.get(
     '/security-status',
+    [auth],
     asyncHandler(async (_req, res) => {
       const securityResult = performSecurityValidation()
 
@@ -263,6 +270,7 @@ function registerSecurityRoute(router: express.Router) {
   // Add circuit breaker status endpoint
   router.get(
     '/circuit-breaker-status',
+    [auth],
     asyncHandler(async (_req, res) => {
       const status = apiCircuitBreaker.getStatus()
       res.send({
@@ -277,12 +285,24 @@ function registerSecurityRoute(router: express.Router) {
 function attachRouter(app: express.Express, router: express.Router) {
   app.use('', router)
   app.use('/api', router)
-  app.set('trust proxy', 1)
+
+  // Security: Configure trust proxy based on deployment topology.
+  // TRUST_PROXY env var allows explicit configuration per environment.
+  // Default: 1 (single reverse proxy, e.g. nginx or Docker network).
+  // Set to 0/false to disable, or a number matching your proxy hop count.
+  const trustProxy = process.env.TRUST_PROXY
+  if (trustProxy === 'false' || trustProxy === '0') {
+    app.set('trust proxy', false)
+  } else if (trustProxy) {
+    const parsed = Number.parseInt(trustProxy, 10)
+    app.set('trust proxy', Number.isNaN(parsed) ? trustProxy : parsed)
+  } else {
+    app.set('trust proxy', 1)
+  }
 }
 
 function listen(app: express.Express) {
-  const server = app.listen(PORT, () => console.warn(`Server is running on port ${PORT}`))
-  return server
+  return app.listen(PORT, () => console.warn(`Server is running on port ${PORT}`))
 }
 
 async function startServer() {
