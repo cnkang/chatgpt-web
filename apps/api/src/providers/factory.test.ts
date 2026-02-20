@@ -5,6 +5,7 @@
 
 import type { AIProvider, ChatCompletionChunk, ChatCompletionResponse, UsageInfo } from './base.js'
 import type { AIConfig, AzureOpenAIConfig, OpenAIConfig } from './config.js'
+import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AIProviderFactory,
@@ -90,7 +91,7 @@ class MockAzureProvider implements AIProvider {
   }
 
   async validateConfiguration(): Promise<boolean> {
-    return this.config.endpoint.includes('azure.com')
+    return isOfficialAzureOpenAIEndpoint(this.config.endpoint)
   }
 
   async getUsageInfo(): Promise<UsageInfo> {

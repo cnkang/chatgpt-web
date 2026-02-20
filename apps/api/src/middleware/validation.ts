@@ -27,29 +27,22 @@ interface ValidationErrorResponse {
 
 /**
  * Sanitizes string input to prevent XSS attacks
- * Simplified version without DOMPurify for better Node.js 24 compatibility
+ * Uses deterministic escaping to prevent HTML/script injection.
  */
 function sanitizeString(input: string): string {
-  // Basic sanitization without external dependencies
-  const sanitized = input
-    .replace(/javascript:/gi, '') // Remove javascript: protocols
-    .replace(/data:/gi, '') // Remove data: protocols
-    .replace(/vbscript:/gi, '') // Remove vbscript: protocols
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
-    .replace(/<!--[\s\S]*?-->/g, '') // Remove HTML comments
-    .replace(/<[^>]*>/g, '') // Remove any remaining tags
-    .replace(/[<>&]/g, match => {
-      // HTML entity encoding for dangerous characters (except quotes to retain readability)
-      const entities: Record<string, string> = {
-        '<': '&lt;',
-        '>': '&gt;',
-        '&': '&amp;',
-      }
-      return entities[match] || match
-    })
+  const entities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }
 
-  return sanitized.trim()
+  return input
+    .normalize('NFKC')
+    .replaceAll('\0', '')
+    .replace(/[&<>"']/g, match => entities[match] || match)
+    .trim()
 }
 
 /**

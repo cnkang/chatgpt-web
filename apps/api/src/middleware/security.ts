@@ -32,7 +32,6 @@ interface SecurityConfig {
     skipSuccessfulRequests: boolean
   }
   helmet: {
-    contentSecurityPolicy: boolean
     crossOriginEmbedderPolicy: boolean
     hsts: boolean
   }
@@ -62,7 +61,6 @@ const defaultSecurityConfig: SecurityConfig = {
     skipSuccessfulRequests: false,
   },
   helmet: {
-    contentSecurityPolicy: true,
     crossOriginEmbedderPolicy: false, // Disable for API compatibility
     hsts: process.env.NODE_ENV === 'production',
   },
@@ -73,30 +71,29 @@ const defaultSecurityConfig: SecurityConfig = {
  */
 export function createSecurityHeaders(config: SecurityConfig = defaultSecurityConfig) {
   const isDevelopment = process.env.NODE_ENV === 'development'
+  const cspDirectives = {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", 'data:', 'blob:'],
+    fontSrc: ["'self'", 'data:'],
+    connectSrc: isDevelopment
+      ? ["'self'", 'https:', 'wss:', 'http://localhost:*', 'ws://localhost:*']
+      : ["'self'", 'https:', 'wss:'],
+    workerSrc: ["'self'", 'blob:'],
+    childSrc: ["'self'", 'blob:'],
+    objectSrc: ["'none'"],
+    baseUri: ["'self'"],
+    formAction: ["'self'"],
+    frameAncestors: ["'none'"],
+    scriptSrcAttr: ["'none'"],
+    upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+  }
 
   return helmet({
-    contentSecurityPolicy: config.helmet.contentSecurityPolicy
-      ? {
-          directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", 'data:', 'blob:'],
-            fontSrc: ["'self'", 'data:'],
-            connectSrc: isDevelopment
-              ? ["'self'", 'https:', 'wss:', 'http://localhost:*', 'ws://localhost:*']
-              : ["'self'", 'https:', 'wss:'],
-            workerSrc: ["'self'", 'blob:'],
-            childSrc: ["'self'", 'blob:'],
-            objectSrc: ["'none'"],
-            baseUri: ["'self'"],
-            formAction: ["'self'"],
-            frameAncestors: ["'none'"],
-            scriptSrcAttr: ["'none'"],
-            upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
-          },
-        }
-      : false,
+    contentSecurityPolicy: {
+      directives: cspDirectives,
+    },
     crossOriginEmbedderPolicy: config.helmet.crossOriginEmbedderPolicy,
     hsts: config.helmet.hsts
       ? {
@@ -268,22 +265,39 @@ function sanitizeApiKeys(obj: unknown): unknown {
  * CORS middleware with security considerations
  */
 export function createCorsMiddleware() {
+  const configuredOrigins = process.env.ALLOWED_ORIGINS?.split(',')
+    .map(o => o.trim())
+    .filter(Boolean)
+  const allowedOrigins =
+    configuredOrigins && configuredOrigins.length > 0
+      ? configuredOrigins
+      : process.env.NODE_ENV === 'development'
+        ? ['http://localhost:1002', 'http://127.0.0.1:1002']
+        : []
+  const allowAnyOrigin = allowedOrigins.includes('*')
+
   return (req: Request, res: Response, next: NextFunction) => {
     const origin = req.get('Origin')
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*']
+    const isOriginAllowed = Boolean(origin && (allowAnyOrigin || allowedOrigins.includes(origin)))
 
-    // Set CORS headers
-    if (allowedOrigins.includes('*') || (origin && allowedOrigins.includes(origin))) {
-      res.header('Access-Control-Allow-Origin', origin || '*')
+    // Never combine wildcard origins with credentialed requests.
+    if (allowAnyOrigin) {
+      res.header('Access-Control-Allow-Origin', '*')
+    } else if (isOriginAllowed && origin) {
+      res.header('Access-Control-Allow-Origin', origin)
+      res.header('Access-Control-Allow-Credentials', 'true')
+      res.header('Vary', 'Origin')
     }
 
     res.header('Access-Control-Allow-Headers', 'authorization, Content-Type, X-Requested-With')
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    res.header('Access-Control-Allow-Credentials', 'true')
     res.header('Access-Control-Max-Age', '86400') // 24 hours
 
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
+      if (origin && !allowAnyOrigin && !isOriginAllowed) {
+        return res.status(403).end()
+      }
       return res.status(200).end()
     }
 

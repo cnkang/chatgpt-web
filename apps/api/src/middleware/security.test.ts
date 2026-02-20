@@ -162,7 +162,6 @@ describe('security middleware', () => {
           skipSuccessfulRequests: false,
         },
         helmet: {
-          contentSecurityPolicy: true,
           crossOriginEmbedderPolicy: false,
           hsts: true,
         },
@@ -330,6 +329,8 @@ describe('security middleware', () => {
         'Access-Control-Allow-Origin',
         'https://example.com',
       )
+      expect(mockRes.header).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
+      expect(mockRes.header).toHaveBeenCalledWith('Vary', 'Origin')
       expect(mockRes.header).toHaveBeenCalledWith(
         'Access-Control-Allow-Headers',
         expect.any(String),
@@ -348,10 +349,8 @@ describe('security middleware', () => {
       const middleware = createCorsMiddleware()
       middleware(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(mockRes.header).toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        'https://any-origin.com',
-      )
+      expect(mockRes.header).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
+      expect(mockRes.header).not.toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
       expect(mockNext).toHaveBeenCalled()
     })
 

@@ -107,16 +107,23 @@ export const ChatProcessRequestSchema = z.object({
     .min(1, 'Prompt cannot be empty')
     .max(32000, 'Prompt too long')
     .refine(val => {
-      // Basic XSS prevention - check for script tags and javascript: protocols
-      const dangerousPatterns = [
-        /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-        /javascript:/gi,
-        /on\w+\s*=/gi,
-        /<iframe/gi,
-        /<object/gi,
-        /<embed/gi,
+      // Basic XSS prevention - detect known dangerous fragments.
+      const normalized = val.toLowerCase()
+      const dangerousFragments = [
+        '<script',
+        '</script',
+        'javascript:',
+        '<iframe',
+        '</iframe',
+        '<object',
+        '</object',
+        '<embed',
+        '</embed',
+        'onerror=',
+        'onload=',
+        'onclick=',
       ]
-      return !dangerousPatterns.some(pattern => pattern.test(val))
+      return !dangerousFragments.some(fragment => normalized.includes(fragment))
     }, 'Invalid content detected'),
   options: ChatContextSchema,
   systemMessage: z.string().trim().max(8000, 'System message too long').optional(),
@@ -298,7 +305,7 @@ export const IdSchema = z
   .max(100, 'ID too long')
   .refine(val => {
     // Allow alphanumeric, hyphens, and underscores only
-    const safePattern = /^[\w\-]+$/
+    const safePattern = /^[\w-]+$/
     return safePattern.test(val)
   }, 'ID contains invalid characters')
 

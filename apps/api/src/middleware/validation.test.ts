@@ -17,23 +17,6 @@ import {
   validateRequestSize,
 } from './validation.js'
 
-// Mock DOMPurify
-vi.mock('dompurify', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    sanitize: vi.fn().mockImplementation((input: string) => {
-      // Simple mock sanitization - remove script tags
-      return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    }),
-  })),
-}))
-
-vi.mock('jsdom', () => ({
-  JSDOM: class MockJSDOM {
-    window = {}
-    constructor() {}
-  },
-}))
-
 describe('validation middleware', () => {
   let mockReq: Partial<Request>
   let mockRes: Partial<Response>
@@ -127,7 +110,7 @@ describe('validation middleware', () => {
       const middleware = validateBody(testSchema)
       middleware(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(mockReq.body.name).toBe('JohnDoe') // Script tag removed
+      expect(mockReq.body.name).toBe('John&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;Doe')
       expect(mockNext).toHaveBeenCalled()
     })
 
@@ -153,8 +136,10 @@ describe('validation middleware', () => {
       const middleware = validateBody(nestedSchema)
       middleware(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(mockReq.body.user.name).toBe('John')
-      expect(mockReq.body.user.profile.bio).toBe('Developer')
+      expect(mockReq.body.user.name).toBe('John&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
+      expect(mockReq.body.user.profile.bio).toBe(
+        'Developer&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;',
+      )
       expect(mockNext).toHaveBeenCalled()
     })
 
@@ -170,8 +155,12 @@ describe('validation middleware', () => {
       const middleware = validateBody(arraySchema)
       middleware(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(mockReq.body.items[0]).toBe('Item 1')
-      expect(mockReq.body.items[1]).toBe('Item 2')
+      expect(mockReq.body.items[0]).toBe(
+        'Item 1&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
+      )
+      expect(mockReq.body.items[1]).toBe(
+        'Item 2&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;',
+      )
       expect(mockNext).toHaveBeenCalled()
     })
 
@@ -247,7 +236,9 @@ describe('validation middleware', () => {
       const middleware = validateQuery(querySchema)
       middleware(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(mockReq.query.search).toBe('testquery') // Script tag removed
+      expect(mockReq.query.search).toBe(
+        'test&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;query',
+      )
       expect(mockNext).toHaveBeenCalled()
     })
   })
@@ -298,7 +289,9 @@ describe('validation middleware', () => {
       const middleware = validateParams(paramsSchema)
       middleware(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(mockReq.params.slug).toBe('testslug') // Script tag removed
+      expect(mockReq.params.slug).toBe(
+        'test&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;slug',
+      )
       expect(mockNext).toHaveBeenCalled()
     })
   })
@@ -369,9 +362,15 @@ describe('validation middleware', () => {
 
       sanitizeRequest(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(mockReq.body.message).toBe('HelloWorld')
-      expect(mockReq.query.search).toBe('queryterm')
-      expect(mockReq.params.id).toBe('paramvalue')
+      expect(mockReq.body.message).toBe(
+        'Hello&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;World',
+      )
+      expect(mockReq.query.search).toBe(
+        'query&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;term',
+      )
+      expect(mockReq.params.id).toBe(
+        'param&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;value',
+      )
       expect(mockNext).toHaveBeenCalled()
     })
 
@@ -494,27 +493,27 @@ describe('validation middleware', () => {
       {
         name: 'script tags',
         input: '<script>alert("xss")</script>',
-        expected: '',
+        expected: '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
       },
       {
         name: 'javascript protocol',
         input: 'javascript:alert("xss")',
-        expected: 'alert("xss")',
+        expected: 'javascript:alert(&quot;xss&quot;)',
       },
       {
         name: 'data protocol',
         input: 'data:text/html,<script>alert(1)</script>',
-        expected: 'text/html,',
+        expected: 'data:text/html,&lt;script&gt;alert(1)&lt;/script&gt;',
       },
       {
         name: 'event handlers',
         input: '<img src="x" onerror="alert(1)">',
-        expected: '',
+        expected: '&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;',
       },
       {
         name: 'HTML comments',
         input: '<!-- malicious comment -->content',
-        expected: 'content',
+        expected: '&lt;!-- malicious comment --&gt;content',
       },
     ]
 

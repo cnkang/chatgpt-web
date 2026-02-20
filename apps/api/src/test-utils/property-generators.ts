@@ -6,6 +6,7 @@
  */
 
 import * as fc from 'fast-check'
+import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
 
 // ============================================================================
 // Core Data Generators
@@ -22,7 +23,7 @@ export function apiKeyGenerator() {
  * Generates valid Azure OpenAI endpoints
  */
 export function azureEndpointGenerator() {
-  return fc.webUrl({ validSchemes: ['https'] }).filter(url => url.includes('openai.azure.com'))
+  return fc.webUrl({ validSchemes: ['https'] }).filter(url => isOfficialAzureOpenAIEndpoint(url))
 }
 
 /**

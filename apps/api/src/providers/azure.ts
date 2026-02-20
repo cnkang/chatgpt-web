@@ -14,6 +14,7 @@ import {
 import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
 import { retryWithBackoff } from '../utils/retry.js'
+import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
 import type {
   AIProvider,
   ChatCompletionChunk,
@@ -711,7 +712,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       }
 
       // Validate endpoint format
-      if (!this.config.endpoint.includes('openai.azure.com')) {
+      if (!isOfficialAzureOpenAIEndpoint(this.config.endpoint)) {
         return false
       }
 
