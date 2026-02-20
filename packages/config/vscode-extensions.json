@@ -3,7 +3,7 @@
     "vue.volar",
     "vue.typescript-vue-plugin",
     "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint",
+    "biomejs.biome",
     "bradlc.vscode-tailwindcss",
     "ms-vscode.vscode-typescript-next",
     "antfu.iconify",

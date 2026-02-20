@@ -17,12 +17,12 @@
     "lint": {
       "outputs": [],
       "dependsOn": [],
-      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "eslint.config.js", ".eslintrc*"]
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "biome.json"]
     },
     "lint:fix": {
       "outputs": [],
       "dependsOn": [],
-      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "eslint.config.js", ".eslintrc*"]
+      "inputs": ["src/**/*.ts", "src/**/*.vue", "src/**/*.js", "biome.json"]
     },
     "test": {
       "dependsOn": ["^build"],

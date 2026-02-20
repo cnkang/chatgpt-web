@@ -2,9 +2,10 @@
 
 Shared configuration files for the ChatGPT Web monorepo.
 
+Linting is configured via the repository root `biome.json`.
+
 ## Exports
 
-- `eslint` - ESLint configuration
 - `prettier` - Prettier configuration
 - `typescript` - Base TypeScript configuration
 - `tsup` - Build configuration
@@ -12,11 +13,7 @@ Shared configuration files for the ChatGPT Web monorepo.
 
 ## Usage
 
-```javascript
-// eslint.config.js
-import config from '@chatgpt-web/config/eslint'
-export default config
-
+```json
 // tsconfig.json
 {
   "extends": "@chatgpt-web/config/typescript"

@@ -16,7 +16,7 @@ To reduce PR volume and improve management efficiency, related dependencies are 
 
 - **Vue ecosystem**: Vue-related packages
 - **Build tools**: Vite, Rollup, and other build tools
-- **ESLint ecosystem**: ESLint-related packages
+- **Code quality tools**: Biome and formatting-related packages
 - **TypeScript ecosystem**: TypeScript and type definitions
 - **CSS tools**: Tailwind CSS, PostCSS, etc.
 - **Development tools**: Husky, Prettier, and other dev tools
@@ -37,7 +37,7 @@ Major version updates for the following dependencies are ignored and require man
 
 - Vue
 - TypeScript
-- ESLint
+- Biome
 
 ### PR Limits
 
