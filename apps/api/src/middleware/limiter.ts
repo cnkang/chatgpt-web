@@ -2,7 +2,7 @@ import type { Request, Response } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import { isNotEmptyString } from '../utils/is'
 
-const MAX_REQUEST_PER_HOUR = process.env.MAX_REQUEST_PER_HOUR
+const { MAX_REQUEST_PER_HOUR } = process.env
 
 const maxCount =
   isNotEmptyString(MAX_REQUEST_PER_HOUR) && !Number.isNaN(Number(MAX_REQUEST_PER_HOUR))
@@ -23,4 +23,23 @@ const limiter = rateLimit({
   },
 })
 
-export { limiter }
+/**
+ * Stricter rate limiter for authentication endpoints.
+ * Security: Prevents brute-force attacks against the /verify endpoint
+ * by limiting to 10 attempts per 15-minute window per IP.
+ */
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟窗口
+  max: 10, // 每个IP每15分钟最多10次尝试
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: async (_req: Request, res: Response) => {
+    res.status(429).json({
+      status: 'Fail',
+      message: 'Too many authentication attempts, please try again after 15 minutes',
+      data: null,
+    })
+  },
+})
+
+export { authLimiter, limiter }
