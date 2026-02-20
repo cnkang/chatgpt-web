@@ -160,7 +160,6 @@ export class CleanupValidator {
       totalFilesScanned = files.length
 
       for (const file of files) {
-        // eslint-disable-next-line no-await-in-loop
         const fileViolations = await this.scanFile(file)
         violations.push(...fileViolations)
       }
@@ -242,11 +241,9 @@ export class CleanupValidator {
             continue
           }
 
-          // eslint-disable-next-line no-await-in-loop
           const stats = await stat(fullPath)
 
           if (stats.isDirectory()) {
-            // eslint-disable-next-line no-await-in-loop
             await scanDirectory(fullPath)
           } else if (stats.isFile() && this.shouldInclude(fullPath)) {
             files.push(fullPath)

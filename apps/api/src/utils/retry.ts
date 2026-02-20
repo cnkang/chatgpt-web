@@ -169,11 +169,9 @@ export async function retryWithBackoff<T>(
     try {
       // Add timeout if specified
       if (finalConfig.timeoutMs) {
-        // eslint-disable-next-line no-await-in-loop
         return await withTimeout(fn(), finalConfig.timeoutMs)
       }
 
-      // eslint-disable-next-line no-await-in-loop
       return await fn()
     } catch (error) {
       lastError = error
@@ -199,7 +197,6 @@ export async function retryWithBackoff<T>(
         maxAttempts: finalConfig.maxAttempts,
       })
 
-      // eslint-disable-next-line no-await-in-loop
       await sleep(delay)
     }
   }
@@ -314,7 +311,6 @@ export class RateLimitedRetry {
       const timeSinceLastExecution = now - this.lastExecutionTime
 
       if (timeSinceLastExecution < this.minInterval) {
-        // eslint-disable-next-line no-await-in-loop
         await sleep(this.minInterval - timeSinceLastExecution)
       }
 
@@ -322,7 +318,6 @@ export class RateLimitedRetry {
       if (operation) {
         this.lastExecutionTime = Date.now()
 
-        // eslint-disable-next-line no-await-in-loop
         await operation()
       }
     }

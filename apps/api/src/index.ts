@@ -1,6 +1,5 @@
 import type { ChatMessage, RequestProps } from '@chatgpt-web/shared'
 import { isNotEmptyString } from '@chatgpt-web/shared'
-import dotenv from 'dotenv'
 import type { Request, Response } from 'express'
 import express from 'express'
 import { ConfigurationValidator } from './config/validator'
@@ -31,13 +30,19 @@ import { logger, requestLogger } from './utils/logger'
 import { CircuitBreaker, retryWithBackoff } from './utils/retry'
 import { chatProcessRequestSchema, tokenVerificationSchema } from './validation/schemas'
 
-// Load environment variables early so derived configuration (like PORT) is accurate.
-dotenv.config()
+// Load .env in Node.js 24+ without external dependencies.
+try {
+  process.loadEnvFile()
+} catch (error) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    throw error
+  }
+}
 
 const parsedPort = Number.parseInt(process.env.PORT || '3002', 10)
 const PORT = Number.isNaN(parsedPort) ? 3002 : parsedPort
 
-type ChatModule = typeof import('./chatgpt/index.js')
+type ChatModule = typeof import('./chatgpt/provider-adapter.js')
 
 // Create circuit breaker for external API calls
 const apiCircuitBreaker = new CircuitBreaker({
@@ -283,17 +288,8 @@ function listen(app: express.Express) {
 async function startServer() {
   validateConfigOrExit()
 
-  // Dynamic import of appropriate chat module based on AI_PROVIDER
-  const aiProvider = process.env.AI_PROVIDER || 'openai'
-  let chatModule: ChatModule
-
-  if (aiProvider === 'azure' || aiProvider === 'openai') {
-    // Use new provider system for both Azure and OpenAI
-    chatModule = await import('./chatgpt/provider-adapter.js')
-  } else {
-    // Fallback to legacy OpenAI implementation
-    chatModule = await import('./chatgpt/index.js')
-  }
+  // Use the provider adapter for both OpenAI and Azure providers.
+  const chatModule: ChatModule = await import('./chatgpt/provider-adapter.js')
 
   const app = express()
   const router = express.Router()

@@ -3,7 +3,13 @@
  * Adapts the new AI provider system to the legacy chatgpt interface
  */
 
-import type { ApiModel, ChatContext, ChatMessage, ModelConfig } from '@chatgpt-web/shared'
+import type {
+  ApiModel,
+  ChatContext,
+  ChatMessage,
+  ModelConfig,
+  RequestOptions,
+} from '@chatgpt-web/shared'
 import { isNotEmptyString } from '@chatgpt-web/shared'
 import { AzureOpenAIProvider } from '../providers/azure.js'
 import type { AIProvider, ChatCompletionRequest } from '../providers/base.js'
@@ -11,7 +17,6 @@ import { getConfig } from '../providers/config.js'
 import { AIProviderFactory, registerProvider } from '../providers/factory.js'
 import { OpenAIProvider } from '../providers/openai.js'
 import { sendResponse } from '../utils'
-import type { RequestOptions } from './types'
 
 // Register providers
 registerProvider('openai', OpenAIProvider)

@@ -2,9 +2,8 @@ import vue from '@vitejs/plugin-vue'
 import path from 'node:path'
 import type { PluginOption } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
-import { VitePWA } from 'vite-plugin-pwa'
 
-function setupPlugins(env: ImportMetaEnv): PluginOption[] {
+function setupPlugins(): PluginOption[] {
   return [
     vue({
       // Optimize Vue compilation for Vue 3.5+ features
@@ -21,18 +20,6 @@ function setupPlugins(env: ImportMetaEnv): PluginOption[] {
         },
       },
     }),
-    env.VITE_GLOB_APP_PWA === 'true' &&
-      VitePWA({
-        injectRegister: 'auto',
-        manifest: {
-          name: 'chatGPT',
-          short_name: 'chatGPT',
-          icons: [
-            { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-            { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          ],
-        },
-      }),
   ]
 }
 
@@ -55,7 +42,7 @@ export default defineConfig(env => {
         '@': path.resolve(__dirname, 'src'),
       },
     },
-    plugins: setupPlugins(viteEnv),
+    plugins: setupPlugins(),
     server: {
       host: '0.0.0.0',
       port: 1002,
@@ -129,17 +116,7 @@ export default defineConfig(env => {
               if (id.includes('katex')) {
                 return 'katex'
               }
-              if (id.includes('markdown-it')) {
-                return 'markdown'
-              }
-              if (id.includes('highlight.js')) {
-                return 'highlight'
-              }
-
               // Utility libraries
-              if (id.includes('crypto-js')) {
-                return 'crypto'
-              }
               if (id.includes('@iconify')) {
                 return 'icons'
               }
@@ -213,12 +190,8 @@ export default defineConfig(env => {
       exclude: [
         // Exclude large libraries for on-demand loading and splitting
         'katex',
-        'highlight.js',
         'naive-ui', // Let UI library load on demand
-        'markdown-it',
-        '@vscode/markdown-it-katex',
         'html-to-image',
-        'crypto-js',
       ],
       // Node.js 24 specific optimizations - ESNext target
       esbuildOptions: {
