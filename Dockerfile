@@ -92,10 +92,11 @@ ENV AI_PROVIDER=openai
 # OpenAI Configuration
 ENV OPENAI_API_KEY=
 ENV OPENAI_API_BASE_URL=https://api.openai.com
+ENV SKIP_API_DOMAIN_CHECK=false
 ENV OPENAI_ORGANIZATION=
 
 # Default Model Configuration
-ENV DEFAULT_MODEL=gpt-4o
+ENV DEFAULT_MODEL=gpt-5.1
 ENV OPENAI_API_MODEL=
 
 # Azure OpenAI Configuration

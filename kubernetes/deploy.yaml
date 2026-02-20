@@ -29,10 +29,12 @@ spec:
               value: sk-xxx
             - name: OPENAI_API_BASE_URL
               value: 'https://api.openai.com'
+            - name: SKIP_API_DOMAIN_CHECK
+              value: 'false'
             - name: DEFAULT_MODEL
-              value: gpt-4o
+              value: gpt-5.1
             - name: OPENAI_API_MODEL
-              value: gpt-4o
+              value: gpt-5.1
             - name: AUTH_SECRET_KEY
               value: '123456'
             - name: SESSION_SECRET

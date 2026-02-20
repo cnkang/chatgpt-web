@@ -14,14 +14,15 @@ services:
       # Provider Configuration
       # ===========================================
       AI_PROVIDER: ${AI_PROVIDER:-openai}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
-      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-4o}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.1}
+      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-5.1}
 
       # ===========================================
       # OpenAI Configuration (AI_PROVIDER=openai)
       # ===========================================
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-https://api.openai.com}
+      SKIP_API_DOMAIN_CHECK: ${SKIP_API_DOMAIN_CHECK:-false}
       OPENAI_API_DISABLE_DEBUG: ${OPENAI_API_DISABLE_DEBUG:-}
       OPENAI_ORGANIZATION: ${OPENAI_ORGANIZATION:-}
 
