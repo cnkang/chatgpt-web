@@ -1,6 +1,6 @@
 # AI Providers
 
-The backend uses a provider abstraction layer to support official OpenAI and Azure OpenAI.
+The backend uses a provider abstraction layer to support OpenAI-compatible APIs and Azure OpenAI.
 
 Key files:
 
@@ -22,8 +22,9 @@ Key files:
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 OPENAI_API_BASE_URL=https://api.openai.com
+SKIP_API_DOMAIN_CHECK=false
 OPENAI_ORGANIZATION=org-your-org-id
 ```
 
@@ -43,4 +44,6 @@ DEFAULT_MODEL=your-deployment-name
 
 - Prefer `DEFAULT_MODEL`.
 - `OPENAI_API_MODEL` is also supported for compatibility.
+- Set `SKIP_API_DOMAIN_CHECK=true` only when you intentionally use an OpenAI-compatible third-party endpoint with `AI_PROVIDER=openai`.
+- `SKIP_API_DOMAIN_CHECK` does not bypass Azure endpoint validation.
 - Fallback providers and multi-provider routing are not wired into the current runtime.

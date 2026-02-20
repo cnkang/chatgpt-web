@@ -255,15 +255,25 @@ Inspect the current circuit breaker state used around provider calls.
 
 ### OpenAI Provider
 
-Configure the application to use OpenAI's official API:
+Configure the application to use OpenAI API (official or compatible):
 
 ```bash
 # Environment Variables
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_official_api_key_here
 OPENAI_API_BASE_URL=https://api.openai.com
-DEFAULT_MODEL=gpt-4o
+SKIP_API_DOMAIN_CHECK=false
+DEFAULT_MODEL=gpt-5.1
 ```
+
+If you use an OpenAI-compatible third-party endpoint, set:
+
+```bash
+OPENAI_API_BASE_URL=https://your-compatible-provider.example.com/v1
+SKIP_API_DOMAIN_CHECK=true
+```
+
+`SKIP_API_DOMAIN_CHECK` only applies to `AI_PROVIDER=openai`. Azure endpoint checks remain strict.
 
 **Supported Models:**
 
