@@ -1,36 +1,42 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#4b9e5f" />
-    <meta content="yes" name="apple-mobile-web-app-capable" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="apple-touch-icon" href="/favicon.ico" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover"
-    />
-    <script>
-      ;(() => {
-        try {
-          const rawSetting = localStorage.getItem('appSetting')
-          const stored = rawSetting ? JSON.parse(rawSetting) : null
-          const theme = stored?.data?.theme
-          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-          const isDark = theme === 'dark' || (theme === 'auto' && prefersDark)
-          const root = document.documentElement
-          if (isDark) root.classList.add('dark')
-          else root.classList.remove('dark')
-          root.style.colorScheme = isDark ? 'dark' : 'light'
-        } catch {}
-      })()
-    </script>
-    <!-- Content Security Policy for Mermaid and other dynamic libraries -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#4b9e5f" />
+  <meta content="yes" name="apple-mobile-web-app-capable" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="/favicon.ico" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover" />
+  <script>
+    ; (() => {
+      try {
+        const rawSetting = localStorage.getItem('appSetting')
+        const stored = rawSetting ? JSON.parse(rawSetting) : null
+        const theme = stored?.data?.theme
+        const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
+        const isDark = theme === 'dark' || (theme === 'auto' && prefersDark)
+        const root = document.documentElement
+        if (isDark) root.classList.add('dark')
+        else root.classList.remove('dark')
+        root.style.colorScheme = isDark ? 'dark' : 'light'
+      } catch { }
+    })()
+  </script>
+  <!--
+      Content Security Policy.
+      CSP relaxation justification:
+      - unsafe-eval in script-src: Required by Mermaid diagram rendering library.
+      - unsafe-inline in script-src: Required for the inline theme-detection script
+        above that prevents FOUC. Vite may also inject inline scripts during build.
+        A nonce-based approach would require server-side HTML rendering.
+      - unsafe-inline in style-src: Required by Naive UI component library which
+        injects dynamic inline styles for component rendering.
+    -->
+  <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-eval' 'unsafe-inline';
         style-src 'self' 'unsafe-inline';
@@ -42,77 +48,78 @@
         object-src 'none';
         base-uri 'self';
         form-action 'self';
-      "
-    />
-    <title>ChatGPT Web</title>
-  </head>
+      " />
+  <title>ChatGPT Web</title>
+</head>
 
-  <body class="dark:bg-black">
-    <div id="app">
-      <style>
-        .loading-wrap {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
+<body class="dark:bg-black">
+  <div id="app">
+    <style>
+      .loading-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .balls {
+        width: 4em;
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .balls div {
+        width: 0.8em;
+        height: 0.8em;
+        border-radius: 50%;
+        background-color: #4b9e5f;
+      }
+
+      .balls div:nth-of-type(1) {
+        transform: translateX(-100%);
+        animation: left-swing 0.5s ease-in alternate infinite;
+      }
+
+      .balls div:nth-of-type(3) {
+        transform: translateX(-95%);
+        animation: right-swing 0.5s ease-out alternate infinite;
+      }
+
+      @keyframes left-swing {
+
+        50%,
+        100% {
+          transform: translateX(95%);
         }
+      }
 
-        .balls {
-          width: 4em;
-          display: flex;
-          flex-flow: row nowrap;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .balls div {
-          width: 0.8em;
-          height: 0.8em;
-          border-radius: 50%;
-          background-color: #4b9e5f;
-        }
-
-        .balls div:nth-of-type(1) {
-          transform: translateX(-100%);
-          animation: left-swing 0.5s ease-in alternate infinite;
-        }
-
-        .balls div:nth-of-type(3) {
+      @keyframes right-swing {
+        50% {
           transform: translateX(-95%);
-          animation: right-swing 0.5s ease-out alternate infinite;
         }
 
-        @keyframes left-swing {
-          50%,
-          100% {
-            transform: translateX(95%);
-          }
+        100% {
+          transform: translateX(100%);
         }
+      }
 
-        @keyframes right-swing {
-          50% {
-            transform: translateX(-95%);
-          }
-
-          100% {
-            transform: translateX(100%);
-          }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #121212;
         }
-
-        @media (prefers-color-scheme: dark) {
-          body {
-            background: #121212;
-          }
-        }
-      </style>
-      <div class="loading-wrap">
-        <div class="balls">
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
+      }
+    </style>
+    <div class="loading-wrap">
+      <div class="balls">
+        <div></div>
+        <div></div>
+        <div></div>
       </div>
     </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
