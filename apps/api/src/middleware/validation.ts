@@ -281,7 +281,7 @@ export function sanitizeRequest(req: Request, res: Response, next: NextFunction)
         Object.keys(req.query).forEach(key => {
           const value = req.query[key]
           if (typeof value === 'string') {
-            ;(req.query as any)[key] = sanitizeString(value)
+            ;(req.query as Record<string, unknown>)[key] = sanitizeString(value)
           }
         })
       }
