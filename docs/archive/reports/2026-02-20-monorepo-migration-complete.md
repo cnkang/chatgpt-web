@@ -1,5 +1,7 @@
 # Monorepo Migration Complete ✅
 
+> Archived report (2026-02-20). For current setup guidance, use `packages/docs/setup/monorepo-setup.md`.
+
 ## Migration Summary
 
 Successfully migrated ChatGPT Web from a traditional structure to a modern monorepo architecture using PNPM workspaces and Turborepo.

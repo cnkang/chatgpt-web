@@ -1,5 +1,7 @@
 # 项目状态报告
 
+> 历史归档（2026-01-19）。当前文档请优先查看 `packages/docs/`。
+
 **生成日期**: 2026-01-19  
 **项目版本**: 2.11.1+  
 **Node.js 版本**: 24.0.0+
@@ -176,14 +178,14 @@ chatgpt-web/
 
 ## 📞 获取帮助
 
-- 📖 [文档中心](./docs/README.md)
+- 📖 [文档中心](../../README.md)
 - 🐛 [问题反馈](https://github.com/cnkang/chatgpt-web/issues)
 - 💬 [讨论区](https://github.com/cnkang/chatgpt-web/discussions)
-- 🤝 [贡献指南](./docs/development/contributing.md)
+- 🤝 [贡献指南](../../development/contributing.md)
 
 ## 📝 更新日志
 
-详细的版本更新记录请查看 [变更日志](./docs/changelog/CHANGELOG.md)。
+详细的版本更新记录请查看 [变更日志](../../changelog/CHANGELOG.md)。
 
 ---
 

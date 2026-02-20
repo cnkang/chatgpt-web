@@ -28,3 +28,4 @@ pnpm --filter @chatgpt-web/docs serve
 
 - `docs/` 更偏向补充说明与历史文档。
 - `packages/docs/` 是当前维护最活跃、结构最完整的文档集合。
+- 历史过程性文档统一归档到 `docs/archive/`，避免污染仓库根目录。

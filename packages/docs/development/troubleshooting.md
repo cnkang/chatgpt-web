@@ -350,6 +350,29 @@ curl -H "api-key: $AZURE_OPENAI_API_KEY" \
   "$AZURE_OPENAI_ENDPOINT/openai/deployments?api-version=$AZURE_OPENAI_API_VERSION"
 ```
 
+#### Azure v1 Responses API Streaming Stuck in "Thinking"
+
+**Problem**: With `AZURE_OPENAI_USE_RESPONSES_API=true`, the UI remains in a loading/thinking state and no streaming text appears.
+
+**Cause**: Azure v1 Responses streaming emits events such as `response.output_text.delta` with text in `delta`, not OpenAI-style `choices[].delta.content` chunks.
+
+**Solution**:
+
+```bash
+# Ensure Responses API mode is explicitly enabled
+AZURE_OPENAI_USE_RESPONSES_API=true
+
+# Rebuild and restart with the latest API provider implementation
+pnpm --filter @chatgpt-web/api build
+docker build -t chatgpt-web:local .
+docker run --rm -it -p 3002:3002 --env-file apps/api/.env chatgpt-web:local
+
+# Validate streaming event handling in logs
+docker logs -f <container-name> | grep "response.output_text.delta"
+```
+
+If you still see no deltas, re-check `AZURE_OPENAI_ENDPOINT`, deployment name, and API version alignment with your Azure resource.
+
 #### Rate Limiting Issues
 
 **Problem**: Too many requests error
@@ -396,6 +419,29 @@ COPY . .
 # Build application
 RUN pnpm build
 ```
+
+#### `/api/session` Returns 500 in Docker
+
+**Problem**:
+
+```bash
+TypeError: Cannot set property query of #<IncomingMessage> which has only a getter
+```
+
+**Cause**: In some runtime/router combinations, request properties such as `req.query` / `req.params` are getter-only.
+
+**Solution**:
+
+```bash
+# Rebuild with the latest validation middleware changes
+pnpm --filter @chatgpt-web/api build
+docker build -t chatgpt-web:local .
+
+# Restart container and verify endpoint
+curl -X POST http://localhost:3002/api/session -H "Content-Type: application/json"
+```
+
+If the endpoint still fails, inspect middleware logs and confirm the deployed image tag matches the newly built image.
 
 #### Multi-architecture Build Issues
 
