@@ -20,6 +20,9 @@ on:
 env:
   NODE_VERSION: '24.x'
 
+permissions:
+  contents: read
+
 jobs:
   # Analyze cache usage and efficiency
   cache-analysis:

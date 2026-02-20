@@ -32,11 +32,14 @@ jobs:
 
       - name: Classify update risk
         id: classify
+        env:
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
         run: |
           set -euo pipefail
 
-          update_type="${{ steps.metadata.outputs.update-type }}"
-          dependency_type="${{ steps.metadata.outputs.dependency-type }}"
+          update_type="$UPDATE_TYPE"
+          dependency_type="$DEPENDENCY_TYPE"
 
           safe_to_automerge="false"
           reason="Manual review required."
@@ -80,28 +83,62 @@ jobs:
 
       - name: Comment safe updates
         if: steps.classify.outputs.safe_to_automerge == 'true'
-        run: |
-          gh pr comment "$PR_URL" --edit-last --create-if-none --body "✅ Auto-merge enabled\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.classify.outputs.update_type }}\nDependency Type: ${{ steps.classify.outputs.dependency_type }}\nReason: ${{ steps.classify.outputs.reason }}\n\nThis PR will be merged automatically after required checks pass."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+          UPDATE_TYPE: ${{ steps.classify.outputs.update_type }}
+          DEPENDENCY_TYPE: ${{ steps.classify.outputs.dependency_type }}
+          REASON: ${{ steps.classify.outputs.reason }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          body=$(cat <<EOF
+          ✅ Auto-merge enabled
+
+          Dependency: $DEPENDENCY_NAMES
+          Update Type: $UPDATE_TYPE
+          Dependency Type: $DEPENDENCY_TYPE
+          Reason: $REASON
+
+          This PR will be merged automatically after required checks pass.
+          EOF
+          )
+          gh pr comment "$PR_URL" --edit-last --create-if-none --body "$body"
 
       - name: Comment manual-review updates
         if: steps.classify.outputs.safe_to_automerge != 'true'
-        run: |
-          gh pr comment "$PR_URL" --edit-last --create-if-none --body "🔍 Manual review required\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.classify.outputs.update_type }}\nDependency Type: ${{ steps.classify.outputs.dependency_type }}\nReason: ${{ steps.classify.outputs.reason }}\n\nPlease review changelog and compatibility before merging."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+          UPDATE_TYPE: ${{ steps.classify.outputs.update_type }}
+          DEPENDENCY_TYPE: ${{ steps.classify.outputs.dependency_type }}
+          REASON: ${{ steps.classify.outputs.reason }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          body=$(cat <<EOF
+          🔍 Manual review required
+
+          Dependency: $DEPENDENCY_NAMES
+          Update Type: $UPDATE_TYPE
+          Dependency Type: $DEPENDENCY_TYPE
+          Reason: $REASON
+
+          Please review changelog and compatibility before merging.
+          EOF
+          )
+          gh pr comment "$PR_URL" --edit-last --create-if-none --body "$body"
 
       - name: Approve safe updates
         if: steps.classify.outputs.safe_to_automerge == 'true'
         continue-on-error: true
-        run: |
-          gh pr review "$PR_URL" --approve --body "Approved by automation: ${{ steps.classify.outputs.reason }}"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          REASON: ${{ steps.classify.outputs.reason }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh pr review "$PR_URL" --approve --body "Approved by automation: $REASON"
 
       - name: Ensure general Dependabot label
         run: |
@@ -130,10 +167,12 @@ jobs:
       - name: Check merge eligibility
         if: steps.pr.outputs.number != ''
         id: gate
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           set -euo pipefail
 
-          pr_json="$(gh pr view "${{ steps.pr.outputs.number }}" --json author,isDraft,labels,mergeable,mergeStateStatus,statusCheckRollup,url,title,body)"
+          pr_json="$(gh pr view "$PR_NUMBER" --json author,isDraft,labels,mergeable,mergeStateStatus,statusCheckRollup,url,title,body)"
 
           is_dependabot="$(echo "$pr_json" | jq -r '.author.login | test("dependabot")')"
           is_draft="$(echo "$pr_json" | jq -r '.isDraft')"
@@ -162,7 +201,13 @@ jobs:
 
       - name: Merge safe dependency update
         if: steps.gate.outputs.should_merge == 'true'
-        run: |
-          gh pr merge "${{ steps.gate.outputs.pr_url }}" --squash --delete-branch
         env:
+          PR_URL: ${{ steps.gate.outputs.pr_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$PR_URL" || ! "$PR_URL" =~ ^https://github\.com/[^/]+/[^/]+/pull/[0-9]+$ ]]; then
+            echo "Invalid pull request URL: $PR_URL"
+            exit 1
+          fi
+          gh pr merge "$PR_URL" --squash --delete-branch

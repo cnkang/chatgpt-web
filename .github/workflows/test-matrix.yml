@@ -27,6 +27,10 @@ on:
 env:
   NODE_VERSION: '24.x'
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   # Determine test matrix based on inputs
   setup-matrix:
