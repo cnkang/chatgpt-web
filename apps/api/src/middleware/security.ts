@@ -38,11 +38,30 @@ interface SecurityConfig {
 }
 
 /**
+ * Resolves the session secret, enforcing a secure value in production.
+ * Security: SESSION_SECRET must be explicitly set in production to prevent
+ * session forgery attacks using the well-known default value.
+ */
+function resolveSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET
+  const isProduction = process.env.NODE_ENV === 'production'
+
+  if (isProduction && (!secret || secret === 'default-session-secret-change-in-production')) {
+    throw new Error(
+      'SESSION_SECRET must be set to a secure random value in production. ' +
+        "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
+    )
+  }
+
+  return secret || 'default-session-secret-change-in-production'
+}
+
+/**
  * Default security configuration
  */
 const defaultSecurityConfig: SecurityConfig = {
   session: {
-    secret: process.env.SESSION_SECRET || 'default-session-secret-change-in-production',
+    secret: resolveSessionSecret(),
     name: 'chatgpt-web-session',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     secure: process.env.NODE_ENV === 'production',
@@ -67,7 +86,17 @@ const defaultSecurityConfig: SecurityConfig = {
 }
 
 /**
- * Creates Helmet security middleware with custom configuration
+ * Creates Helmet security middleware with custom configuration.
+ *
+ * CSP justification for relaxed directives:
+ * - unsafe-eval in script-src: Required by Mermaid diagram rendering library
+ *   which uses dynamic code evaluation for diagram parsing.
+ * - unsafe-inline in script-src: Required for the inline theme-detection script
+ *   in index.html that prevents flash of unstyled content (FOUC). Vite may also
+ *   inject inline scripts during build. A nonce-based approach would require
+ *   server-side rendering of the HTML which is not supported in this static SPA.
+ * - unsafe-inline in style-src: Required by Naive UI component library which
+ *   injects dynamic inline styles for component rendering.
  */
 export function createSecurityHeaders(config: SecurityConfig = defaultSecurityConfig) {
   const isDevelopment = process.env.NODE_ENV === 'development'
@@ -262,18 +291,39 @@ function sanitizeApiKeys(obj: unknown): unknown {
 }
 
 /**
- * CORS middleware with security considerations
+ * CORS middleware with security considerations.
+ * Security: Wildcard origins (*) are blocked in production to prevent
+ * unintended cross-origin access to the API.
  */
 export function createCorsMiddleware() {
+  const isProduction = process.env.NODE_ENV === 'production'
   const configuredOrigins = process.env.ALLOWED_ORIGINS?.split(',')
     .map(o => o.trim())
     .filter(Boolean)
   const allowedOrigins =
     configuredOrigins && configuredOrigins.length > 0
       ? configuredOrigins
-      : process.env.NODE_ENV === 'development'
-        ? ['http://localhost:1002', 'http://127.0.0.1:1002']
-        : []
+      : isProduction
+        ? [] // No default origins in production - must be explicitly configured
+        : ['http://localhost:1002', 'http://127.0.0.1:1002']
+
+  // Security: Block wildcard CORS in production to prevent broad cross-origin access
+  if (isProduction && allowedOrigins.includes('*')) {
+    console.error(
+      '✗ Security: Wildcard CORS origin (*) is not allowed in production. ' +
+        'Set ALLOWED_ORIGINS to specific trusted origins.',
+    )
+    // Filter out wildcard, falling back to no allowed origins
+    const filtered = allowedOrigins.filter(o => o !== '*')
+    if (filtered.length === 0) {
+      console.error(
+        '  No valid origins remain after removing wildcard. CORS will reject all cross-origin requests.',
+      )
+    }
+    allowedOrigins.length = 0
+    allowedOrigins.push(...filtered)
+  }
+
   const allowAnyOrigin = allowedOrigins.includes('*')
 
   return (req: Request, res: Response, next: NextFunction) => {
