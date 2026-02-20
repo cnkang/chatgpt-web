@@ -30,5 +30,8 @@ Create a `.env` file next to `docker-compose.yml` (inside `docker-compose/`) and
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
 SESSION_SECRET=replace-with-a-long-random-string
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
+# Optional for OpenAI-compatible third-party endpoints:
+# OPENAI_API_BASE_URL=https://your-compatible-provider.example.com/v1
+# SKIP_API_DOMAIN_CHECK=true
 ```

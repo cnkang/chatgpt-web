@@ -11,7 +11,7 @@
 
 ## Overview
 
-ChatGPT Web is a modern, monorepo-based web application for the official OpenAI API and Azure OpenAI:
+ChatGPT Web is a modern, monorepo-based web application for OpenAI-compatible APIs and Azure OpenAI:
 
 - Frontend: Vue 3.5+ (`apps/web`)
 - Backend: Express 5 (`apps/api`)
@@ -20,7 +20,7 @@ ChatGPT Web is a modern, monorepo-based web application for the official OpenAI 
 
 ## Highlights
 
-- Official provider support only (OpenAI and Azure OpenAI)
+- OpenAI/Azure provider support with optional OpenAI-compatible third-party endpoint mode
 - Clean UI with streaming responses
 - Monorepo scripts via pnpm + Turborepo
 - Production-ready Dockerfile included
@@ -60,8 +60,17 @@ Minimum backend config in `apps/api/.env`:
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 ```
+
+Optional (OpenAI-compatible third-party endpoint):
+
+```bash
+OPENAI_API_BASE_URL=https://your-compatible-provider.example.com/v1
+SKIP_API_DOMAIN_CHECK=true
+```
+
+Note: `SKIP_API_DOMAIN_CHECK` only affects the `openai` provider path. Azure endpoint validation remains strict.
 
 ### 4. Start the App
 

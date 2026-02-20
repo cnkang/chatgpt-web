@@ -11,7 +11,7 @@
 
 ## 概览
 
-ChatGPT Web 是一个基于 Monorepo 的现代化应用，支持 OpenAI 官方 API 与 Azure OpenAI：
+ChatGPT Web 是一个基于 Monorepo 的现代化应用，支持 OpenAI 兼容 API 与 Azure OpenAI：
 
 - 前端：Vue 3.5+（`apps/web`）
 - 后端：Express 5（`apps/api`）
@@ -20,7 +20,7 @@ ChatGPT Web 是一个基于 Monorepo 的现代化应用，支持 OpenAI 官方 A
 
 ## 亮点
 
-- 仅支持官方 Provider（OpenAI / Azure OpenAI）
+- 支持 OpenAI/Azure Provider，并可按需启用 OpenAI 兼容第三方端点
 - 支持流式响应与现代化 UI
 - 使用 pnpm + Turborepo 管理 Monorepo
 - 内置生产可用 Dockerfile
@@ -60,8 +60,17 @@ cp apps/api/.env.example apps/api/.env
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 ```
+
+可选（OpenAI 兼容第三方端点）：
+
+```bash
+OPENAI_API_BASE_URL=https://your-compatible-provider.example.com/v1
+SKIP_API_DOMAIN_CHECK=true
+```
+
+说明：`SKIP_API_DOMAIN_CHECK` 仅对 `openai` provider 生效，Azure 端点校验仍然保持严格模式。
 
 ### 4. 启动应用
 
