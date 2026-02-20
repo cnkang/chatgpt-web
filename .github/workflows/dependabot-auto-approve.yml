@@ -1,23 +1,27 @@
-# Dependabot auto-approve workflow
-# Automatically label and comment on Dependabot PRs based on update type
+# Dependabot automation workflow
+# Auto-merge safe updates and route risky updates to manual review.
 
 name: Dependabot Auto-approve
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  check_suite:
+    types: [completed]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
 
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number || github.event.check_suite.id || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   auto-approve:
+    if: github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-
-    # Only execute for PRs created by Dependabot
-    if: github.actor == 'dependabot[bot]'
 
     steps:
       - name: Fetch Dependabot metadata
@@ -26,40 +30,139 @@ jobs:
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
 
-      - name: Label and comment on patch updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      - name: Classify update risk
+        id: classify
         run: |
-          echo "Processing patch update: ${{ steps.metadata.outputs.dependency-names }}"
-          gh pr edit "$PR_URL" --add-label "dependencies,patch-update,auto-approve-ready"
-          gh pr comment "$PR_URL" --body "✅ Patch Update Ready for Auto-Approval\n\nThis is a patch version update (e.g., 1.0.0 → 1.0.1) which typically includes:\n- Bug fixes\n- Security patches\n- Non-breaking changes\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.metadata.outputs.update-type }}\n\nThis PR is safe to merge after CI checks pass. 🚀"
+          set -euo pipefail
+
+          update_type="${{ steps.metadata.outputs.update-type }}"
+          dependency_type="${{ steps.metadata.outputs.dependency-type }}"
+
+          safe_to_automerge="false"
+          reason="Manual review required."
+
+          # Best-practice defaults:
+          # 1) Auto-merge patch and minor updates.
+          # 2) Keep major updates for manual review.
+          if [[ "$update_type" == "version-update:semver-patch" || "$update_type" == "version-update:semver-minor" ]]; then
+            safe_to_automerge="true"
+            reason="Patch/minor update."
+          fi
+
+          echo "safe_to_automerge=$safe_to_automerge" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+          echo "update_type=$update_type" >> "$GITHUB_OUTPUT"
+          echo "dependency_type=$dependency_type" >> "$GITHUB_OUTPUT"
+
+      - name: Label safe updates
+        if: steps.classify.outputs.safe_to_automerge == 'true'
+        run: |
+          gh pr edit "$PR_URL" --add-label "dependencies,dependabot,auto-merge-candidate"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Label and comment on minor updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      - name: Label manual-review updates
+        if: steps.classify.outputs.safe_to_automerge != 'true'
         run: |
-          echo "Processing minor update: ${{ steps.metadata.outputs.dependency-names }}"
-          gh pr edit "$PR_URL" --add-label "dependencies,minor-update,needs-review"
-          gh pr comment "$PR_URL" --body "🔍 Minor Version Update - Review Recommended\n\nThis is a minor version update (e.g., 1.0.0 → 1.1.0) which may include:\n- New features\n- Enhancements\n- Backward-compatible changes\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.metadata.outputs.update-type }}\n\nPlease review the changelog before merging to ensure compatibility. 📋"
+          gh pr edit "$PR_URL" --add-label "dependencies,dependabot,needs-review"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Label and comment on major updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+      - name: Label breaking-change updates
+        if: steps.classify.outputs.update_type == 'version-update:semver-major'
         run: |
-          echo "Processing major update: ${{ steps.metadata.outputs.dependency-names }}"
-          gh pr edit "$PR_URL" --add-label "dependencies,major-update,needs-review,breaking-change"
-          gh pr comment "$PR_URL" --body "⚠️ Major Version Update - Manual Review Required\n\nThis is a major version update (e.g., 1.0.0 → 2.0.0) which may include:\n- Breaking changes\n- API modifications\n- Removed features\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.metadata.outputs.update-type }}\n\n⚠️ IMPORTANT: Please carefully review the changelog and test thoroughly before merging. This update may require code changes. 🔧"
+          gh pr edit "$PR_URL" --add-label "major-update,breaking-change"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add general Dependabot label
+      - name: Comment safe updates
+        if: steps.classify.outputs.safe_to_automerge == 'true'
         run: |
-          echo "Adding general Dependabot labels"
+          gh pr comment "$PR_URL" --edit-last --create-if-none --body "✅ Auto-merge enabled\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.classify.outputs.update_type }}\nDependency Type: ${{ steps.classify.outputs.dependency_type }}\nReason: ${{ steps.classify.outputs.reason }}\n\nThis PR will be merged automatically after required checks pass."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment manual-review updates
+        if: steps.classify.outputs.safe_to_automerge != 'true'
+        run: |
+          gh pr comment "$PR_URL" --edit-last --create-if-none --body "🔍 Manual review required\n\nDependency: ${{ steps.metadata.outputs.dependency-names }}\nUpdate Type: ${{ steps.classify.outputs.update_type }}\nDependency Type: ${{ steps.classify.outputs.dependency_type }}\nReason: ${{ steps.classify.outputs.reason }}\n\nPlease review changelog and compatibility before merging."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve safe updates
+        if: steps.classify.outputs.safe_to_automerge == 'true'
+        continue-on-error: true
+        run: |
+          gh pr review "$PR_URL" --approve --body "Approved by automation: ${{ steps.classify.outputs.reason }}"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ensure general Dependabot label
+        run: |
           gh pr edit "$PR_URL" --add-label "dependabot"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  merge-safe-updates:
+    if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve linked pull request
+        id: pr
+        run: |
+          set -euo pipefail
+          pr_number="$(jq -r '.check_suite.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH")"
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+
+      - name: Exit if no linked pull request
+        if: steps.pr.outputs.number == ''
+        run: |
+          echo "No pull request linked to this check suite."
+
+      - name: Check merge eligibility
+        if: steps.pr.outputs.number != ''
+        id: gate
+        run: |
+          set -euo pipefail
+
+          pr_json="$(gh pr view "${{ steps.pr.outputs.number }}" --json author,isDraft,labels,mergeable,mergeStateStatus,statusCheckRollup,url,title,body)"
+
+          is_dependabot="$(echo "$pr_json" | jq -r '.author.login | test("dependabot")')"
+          is_draft="$(echo "$pr_json" | jq -r '.isDraft')"
+          has_candidate_label="$(echo "$pr_json" | jq -r '[.labels[].name] | index("auto-merge-candidate") != null')"
+          has_breaking_label="$(echo "$pr_json" | jq -r '[.labels[].name] | index("breaking-change") != null')"
+          has_breaking_text="$(echo "$pr_json" | jq -r '((.title // "") + "\n" + (.body // "")) | ascii_downcase | test("breaking[ -]change|breaking[ -]changes|incompatible")')"
+          is_mergeable="$(echo "$pr_json" | jq -r '.mergeable == "MERGEABLE"')"
+          merge_state_clean="$(echo "$pr_json" | jq -r '.mergeStateStatus == "CLEAN" or .mergeStateStatus == "HAS_HOOKS"')"
+          has_checks="$(echo "$pr_json" | jq -r '[.statusCheckRollup[]?] | length > 0')"
+          checks_green="$(echo "$pr_json" | jq -r '
+            [.statusCheckRollup[]? |
+              if .status == "COMPLETED"
+              then (.conclusion == "SUCCESS" or .conclusion == "NEUTRAL" or .conclusion == "SKIPPED")
+              else false
+              end
+            ] | all
+          ')"
+
+          should_merge="false"
+          if [[ "$is_dependabot" == "true" && "$is_draft" == "false" && "$has_candidate_label" == "true" && "$has_breaking_label" == "false" && "$has_breaking_text" == "false" && "$is_mergeable" == "true" && "$merge_state_clean" == "true" && "$has_checks" == "true" && "$checks_green" == "true" ]]; then
+            should_merge="true"
+          fi
+
+          echo "should_merge=$should_merge" >> "$GITHUB_OUTPUT"
+          echo "pr_url=$(echo "$pr_json" | jq -r '.url')" >> "$GITHUB_OUTPUT"
+
+      - name: Merge safe dependency update
+        if: steps.gate.outputs.should_merge == 'true'
+        run: |
+          gh pr merge "${{ steps.gate.outputs.pr_url }}" --squash --delete-branch
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
