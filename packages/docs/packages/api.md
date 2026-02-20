@@ -29,7 +29,7 @@ pnpm --filter @chatgpt-web/api test
 
 ## Runtime Configuration
 
-Configuration is read from environment variables (via `dotenv`).
+Configuration is read from environment variables (native `process.loadEnvFile()` on Node.js 24+).
 
 Start here:
 
