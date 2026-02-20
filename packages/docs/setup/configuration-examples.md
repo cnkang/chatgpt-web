@@ -14,7 +14,7 @@ The source of truth is still:
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 OPENAI_API_BASE_URL=https://api.openai.com
 SESSION_SECRET=replace-with-a-long-random-string
 ```
@@ -50,7 +50,7 @@ SESSION_SECRET=replace-with-a-long-random-string
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 
 NODE_ENV=production
 LOG_LEVEL=info
@@ -74,7 +74,7 @@ OPENAI_API_DISABLE_DEBUG=true
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 
 # Prefer HTTPS proxies
 HTTPS_PROXY=http://proxy.company.com:8080
@@ -103,7 +103,7 @@ services:
     environment:
       AI_PROVIDER: openai
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.1}
       SESSION_SECRET: ${SESSION_SECRET}
       NODE_ENV: production
 ```
@@ -120,8 +120,8 @@ These are supported by the current configuration loader:
 
 ```bash
 # Model alias
-DEFAULT_MODEL=gpt-4o
-OPENAI_API_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
+OPENAI_API_MODEL=gpt-5.1
 
 # CORS alias
 ALLOWED_ORIGINS=https://your-app.example.com

@@ -23,7 +23,7 @@ cp apps/api/.env.example apps/api/.env
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-4o
+DEFAULT_MODEL=gpt-5.1
 ```
 
 ### Minimal Azure OpenAI Setup
@@ -45,8 +45,8 @@ These variables are read directly by the backend code.
 
 ```bash
 AI_PROVIDER=openai
-DEFAULT_MODEL=gpt-4o
-OPENAI_API_MODEL=gpt-4o   # Compatibility alias (also used by legacy paths)
+DEFAULT_MODEL=gpt-5.1
+OPENAI_API_MODEL=gpt-5.1   # Compatibility alias (also used by legacy paths)
 ```
 
 Notes:
@@ -59,6 +59,7 @@ Notes:
 ```bash
 OPENAI_API_KEY=sk-your-official-api-key
 OPENAI_API_BASE_URL=https://api.openai.com
+SKIP_API_DOMAIN_CHECK=false
 OPENAI_API_DISABLE_DEBUG=false
 OPENAI_ORGANIZATION=org-your-org-id
 ```
@@ -132,6 +133,8 @@ Notes:
 
 - `ALLOWED_ORIGINS` and `CORS_ORIGIN` are treated as aliases by the current config loader.
 - `ENABLE_REASONING_MODELS` and `ENABLE_REASONING` are treated as aliases.
+- `SKIP_API_DOMAIN_CHECK=true` allows `AI_PROVIDER=openai` to use OpenAI-compatible third-party API domains (and skips strict OpenAI key-format checks).
+- `SKIP_API_DOMAIN_CHECK` does not disable Azure endpoint domain validation.
 
 ## Frontend (`.env` at Repo Root)
 
@@ -168,7 +171,7 @@ services:
     environment:
       AI_PROVIDER: openai
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-4o}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.1}
       SESSION_SECRET: ${SESSION_SECRET}
       NODE_ENV: production
 ```
