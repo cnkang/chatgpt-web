@@ -13,6 +13,7 @@ import {
 import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
 import { retryWithBackoff } from '../utils/retry.js'
+import { shouldSkipApiDomainCheck } from '../utils/url-security.js'
 import type {
   AIProvider,
   ChatCompletionChunk,
@@ -236,7 +237,10 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
   async validateConfiguration(): Promise<boolean> {
     try {
       // Simple validation - check if we have a valid API key format
-      if (!this.client.apiKey || !this.client.apiKey.startsWith('sk-')) {
+      if (
+        !this.client.apiKey ||
+        (!shouldSkipApiDomainCheck() && !this.client.apiKey.startsWith('sk-'))
+      ) {
         return false
       }
 
