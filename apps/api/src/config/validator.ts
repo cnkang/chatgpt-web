@@ -421,7 +421,7 @@ Setup Steps:
 
 Example configuration:
 OPENAI_API_KEY=sk-proj-...
-OPENAI_API_MODEL=gpt-4o
+OPENAI_API_MODEL=gpt-5.1
 OPENAI_API_BASE_URL=https://api.openai.com
 
 Please set your API key and restart the application.
