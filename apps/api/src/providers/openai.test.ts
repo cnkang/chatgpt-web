@@ -83,6 +83,7 @@ describe('openai provider', () => {
   beforeEach(async () => {
     // Reset all mocks
     vi.clearAllMocks()
+    delete process.env.SKIP_API_DOMAIN_CHECK
 
     // Set required environment variable for OpenAI
     process.env.OPENAI_API_KEY = 'sk-test-key'
@@ -363,6 +364,20 @@ describe('openai provider', () => {
 
       const isValid = await provider.validateConfiguration()
       expect(isValid).toBe(false)
+    })
+
+    it('should allow non-sk API keys when SKIP_API_DOMAIN_CHECK is enabled', async () => {
+      process.env.SKIP_API_DOMAIN_CHECK = 'true'
+      provider = new OpenAIProvider({
+        apiKey: 'third-party-token',
+        baseUrl: 'https://third-party.example.com/v1',
+      })
+
+      mockOpenAI.models.list.mockResolvedValue({ data: [] })
+
+      const isValid = await provider.validateConfiguration()
+      expect(isValid).toBe(true)
+      expect(mockOpenAI.models.list).toHaveBeenCalled()
     })
   })
 

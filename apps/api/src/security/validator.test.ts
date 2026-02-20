@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   validateAuthenticationMethods,
   validateCodeSecurity,
+  validateConfigurationSecurity,
   validateEnvironmentSecurity,
 } from './validator.js'
 
@@ -15,6 +16,10 @@ describe('security Validator - Unofficial API Pattern Detection', () => {
     delete process.env.OPENAI_ACCESS_TOKEN
     delete process.env.API_REVERSE_PROXY
     delete process.env.OPENAI_API_KEY
+    delete process.env.OPENAI_API_BASE_URL
+    delete process.env.AZURE_OPENAI_ENDPOINT
+    delete process.env.AI_PROVIDER
+    delete process.env.SKIP_API_DOMAIN_CHECK
   })
 
   afterEach(() => {
@@ -215,6 +220,54 @@ describe('security Validator - Unofficial API Pattern Detection', () => {
 
       expect(result.isSecure).toBe(true)
       expect(result.risks).toHaveLength(0)
+    })
+
+    it('should skip strict OpenAI key format check when SKIP_API_DOMAIN_CHECK is enabled', () => {
+      process.env.OPENAI_API_KEY = 'third-party-token'
+      process.env.SKIP_API_DOMAIN_CHECK = 'true'
+
+      const result = validateAuthenticationMethods()
+
+      expect(result.risks.some(risk => risk.type === 'INVALID_API_KEY_FORMAT')).toBe(false)
+      expect(result.isSecure).toBe(true)
+    })
+  })
+
+  describe('configuration Security Validation', () => {
+    it('should flag unofficial OpenAI base URL by default', () => {
+      process.env.AI_PROVIDER = 'openai'
+      process.env.OPENAI_API_KEY = 'sk-1234567890abcdef1234567890abcdef1234567890abcdef'
+      process.env.OPENAI_API_BASE_URL = 'https://third-party.example.com/v1'
+
+      const result = validateConfigurationSecurity()
+
+      expect(result.isSecure).toBe(false)
+      expect(result.risks.some(risk => risk.type === 'UNOFFICIAL_BASE_URL')).toBe(true)
+    })
+
+    it('should skip OpenAI base URL domain check when SKIP_API_DOMAIN_CHECK is enabled', () => {
+      process.env.AI_PROVIDER = 'openai'
+      process.env.OPENAI_API_KEY = 'third-party-token'
+      process.env.OPENAI_API_BASE_URL = 'https://third-party.example.com/v1'
+      process.env.SKIP_API_DOMAIN_CHECK = 'true'
+
+      const result = validateConfigurationSecurity()
+
+      expect(result.risks.some(risk => risk.type === 'UNOFFICIAL_BASE_URL')).toBe(false)
+      expect(result.isSecure).toBe(true)
+    })
+
+    it('should still enforce Azure endpoint domain check when SKIP_API_DOMAIN_CHECK is enabled', () => {
+      process.env.AI_PROVIDER = 'azure'
+      process.env.AZURE_OPENAI_API_KEY = 'azure-key'
+      process.env.AZURE_OPENAI_ENDPOINT = 'https://azure-compatible.example.com'
+      process.env.AZURE_OPENAI_DEPLOYMENT = 'deploy'
+      process.env.SKIP_API_DOMAIN_CHECK = 'true'
+
+      const result = validateConfigurationSecurity()
+
+      expect(result.risks.some(risk => risk.type === 'UNOFFICIAL_BASE_URL')).toBe(true)
+      expect(result.isSecure).toBe(false)
     })
   })
 })
