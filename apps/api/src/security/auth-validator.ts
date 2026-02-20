@@ -4,6 +4,7 @@
  */
 
 import { isNotEmptyString } from '../utils/is'
+import { shouldSkipApiDomainCheck } from '../utils/url-security'
 
 /**
  * Official OpenAI API key patterns
@@ -28,6 +29,7 @@ const OFFICIAL_BASE_URL_PATTERNS = [
 export function validateOfficialAuthentication(): AuthValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
+  const skipApiDomainCheck = shouldSkipApiDomainCheck()
 
   // Check for required API key
   const apiKey = process.env.OPENAI_API_KEY
@@ -43,7 +45,7 @@ export function validateOfficialAuthentication(): AuthValidationResult {
 
   // Validate API key format
   const isValidFormat = OFFICIAL_API_KEY_PATTERNS.some(pattern => pattern.test(apiKey))
-  if (!isValidFormat) {
+  if (!skipApiDomainCheck && !isValidFormat) {
     warnings.push(
       'API key format does not match standard OpenAI patterns. Ensure it is from the official OpenAI platform.',
     )
@@ -53,7 +55,7 @@ export function validateOfficialAuthentication(): AuthValidationResult {
   const baseUrl = process.env.OPENAI_API_BASE_URL
   if (isNotEmptyString(baseUrl)) {
     const isOfficialUrl = OFFICIAL_BASE_URL_PATTERNS.some(pattern => pattern.test(baseUrl))
-    if (!isOfficialUrl) {
+    if (!skipApiDomainCheck && !isOfficialUrl) {
       errors.push(
         `Unofficial base URL detected: ${baseUrl}. Only official OpenAI endpoints are allowed.`,
       )

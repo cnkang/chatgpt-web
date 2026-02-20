@@ -5,7 +5,11 @@
  */
 
 import { isNotEmptyString } from '../utils/is'
-import { isOfficialAzureOpenAIEndpoint, isOfficialOpenAIEndpoint } from '../utils/url-security'
+import {
+  isOfficialAzureOpenAIEndpoint,
+  isOfficialOpenAIEndpoint,
+  shouldSkipApiDomainCheck,
+} from '../utils/url-security'
 
 /**
  * Security risk patterns that should not exist in the codebase
@@ -72,6 +76,7 @@ export function validateEnvironmentSecurity(): SecurityValidationResult {
 export function validateAuthenticationMethods(): SecurityValidationResult {
   const risks: SecurityRisk[] = []
   const aiProvider = process.env.AI_PROVIDER || 'openai'
+  const skipApiDomainCheck = shouldSkipApiDomainCheck()
 
   // Check for required official API key based on provider
   if (aiProvider === 'azure') {
@@ -130,10 +135,11 @@ export function validateAuthenticationMethods(): SecurityValidationResult {
   })
 
   // Validate API key format if present based on provider
+  // Skip strict format checks when custom OpenAI-compatible endpoints are explicitly allowed.
   if (aiProvider === 'azure') {
     // Skip API key format validation for Azure as formats may change
     // Azure API key validation will be handled by the actual API call
-  } else {
+  } else if (!skipApiDomainCheck) {
     const apiKey = process.env.OPENAI_API_KEY
     if (isNotEmptyString(apiKey)) {
       const officialPatterns = [
@@ -191,6 +197,7 @@ export function validateCodeSecurity(content: string, filePath: string): Securit
 export function validateConfigurationSecurity(): SecurityValidationResult {
   const risks: SecurityRisk[] = []
   const aiProvider = process.env.AI_PROVIDER || 'openai'
+  const skipApiDomainCheck = shouldSkipApiDomainCheck()
 
   if (aiProvider === 'azure') {
     // Skip API key format validation for Azure as formats may change
@@ -210,7 +217,12 @@ export function validateConfigurationSecurity(): SecurityValidationResult {
   } else {
     // Validate OpenAI API key format (should start with sk- for OpenAI)
     const apiKey = process.env.OPENAI_API_KEY
-    if (isNotEmptyString(apiKey) && !apiKey.startsWith('sk-') && !apiKey.startsWith('sk_')) {
+    if (
+      !skipApiDomainCheck &&
+      isNotEmptyString(apiKey) &&
+      !apiKey.startsWith('sk-') &&
+      !apiKey.startsWith('sk_')
+    ) {
       risks.push({
         type: 'INVALID_API_KEY_FORMAT',
         description: 'API key does not follow official OpenAI format',
@@ -221,14 +233,13 @@ export function validateConfigurationSecurity(): SecurityValidationResult {
 
     // Validate base URL if provided
     const baseUrl = process.env.OPENAI_API_BASE_URL
-    if (isNotEmptyString(baseUrl) && !isOfficialOpenAIEndpoint(baseUrl)) {
-          risks.push({
-            type: 'UNOFFICIAL_BASE_URL',
-            description:
-              'Base URL does not point to official OpenAI endpoint or uses invalid protocol',
-            severity: 'HIGH',
-            mitigation: 'Use official OpenAI API endpoint with HTTPS (https://api.openai.com)',
-          })
+    if (!skipApiDomainCheck && isNotEmptyString(baseUrl) && !isOfficialOpenAIEndpoint(baseUrl)) {
+      risks.push({
+        type: 'UNOFFICIAL_BASE_URL',
+        description: 'Base URL does not point to official OpenAI endpoint or uses invalid protocol',
+        severity: 'HIGH',
+        mitigation: 'Use official OpenAI API endpoint with HTTPS (https://api.openai.com)',
+      })
     }
   }
 
