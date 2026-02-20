@@ -378,6 +378,19 @@ describe('security middleware', () => {
       )
       expect(mockNext).toHaveBeenCalled()
     })
+
+    it('should reject null origin preflight requests', () => {
+      process.env.ALLOWED_ORIGINS = 'https://allowed.com'
+      mockReq.method = 'OPTIONS'
+      mockReq.get = vi.fn().mockReturnValue('null')
+
+      const middleware = createCorsMiddleware()
+      middleware(mockReq as Request, mockRes as Response, mockNext)
+
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.end).toHaveBeenCalled()
+      expect(mockNext).not.toHaveBeenCalled()
+    })
   })
 
   describe('createSecureLogger', () => {

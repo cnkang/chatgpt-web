@@ -277,14 +277,19 @@ export function createCorsMiddleware() {
   const allowAnyOrigin = allowedOrigins.includes('*')
 
   return (req: Request, res: Response, next: NextFunction) => {
-    const origin = req.get('Origin')
-    const isOriginAllowed = Boolean(origin && (allowAnyOrigin || allowedOrigins.includes(origin)))
+    const origin = req.get('Origin')?.trim()
+    const isNullOrigin = origin === 'null'
+    const matchedAllowedOrigin =
+      !isNullOrigin && origin
+        ? allowedOrigins.find(allowedOrigin => allowedOrigin === origin)
+        : undefined
+    const isOriginAllowed = allowAnyOrigin || Boolean(matchedAllowedOrigin)
 
     // Never combine wildcard origins with credentialed requests.
     if (allowAnyOrigin) {
       res.header('Access-Control-Allow-Origin', '*')
-    } else if (isOriginAllowed && origin) {
-      res.header('Access-Control-Allow-Origin', origin)
+    } else if (matchedAllowedOrigin) {
+      res.header('Access-Control-Allow-Origin', matchedAllowedOrigin)
       res.header('Access-Control-Allow-Credentials', 'true')
       res.header('Vary', 'Origin')
     }
@@ -295,7 +300,7 @@ export function createCorsMiddleware() {
 
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
-      if (origin && !allowAnyOrigin && !isOriginAllowed) {
+      if (!allowAnyOrigin && (isNullOrigin || (origin && !isOriginAllowed))) {
         return res.status(403).end()
       }
       return res.status(200).end()
