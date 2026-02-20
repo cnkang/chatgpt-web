@@ -7,18 +7,18 @@
     "build": "mkdir -p dist && echo 'Documentation build complete' > dist/.gitkeep",
     "dev": "echo 'Documentation package - no dev server needed'",
     "serve": "python3 -m http.server 8080",
-    "validate": "NODE_OPTIONS=--no-deprecation markdownlint **/*.md",
-    "lint": "NODE_OPTIONS=--no-deprecation markdownlint **/*.md",
-    "lint:fix": "NODE_OPTIONS=--no-deprecation markdownlint **/*.md --fix",
+    "validate": "NODE_OPTIONS=--no-deprecation markdownlint-cli2 \"**/*.md\"",
+    "lint": "NODE_OPTIONS=--no-deprecation markdownlint-cli2 \"**/*.md\"",
+    "lint:fix": "NODE_OPTIONS=--no-deprecation markdownlint-cli2 --fix \"**/*.md\"",
     "format": "prettier --write **/*.md",
     "format:check": "prettier --check **/*.md",
     "type-check": "echo 'No TypeScript in docs package'",
     "test": "echo 'No tests in docs package'",
-    "quality": "run-p validate format:check",
-    "quality:fix": "run-s lint:fix format",
+    "quality": "pnpm run validate && pnpm run format:check",
+    "quality:fix": "pnpm run lint:fix && pnpm run format",
     "clean": "echo 'Nothing to clean in docs package'"
   },
   "devDependencies": {
-    "markdownlint-cli": "^0.47.0"
+    "markdownlint-cli2": "^0.21.0"
   }
 }

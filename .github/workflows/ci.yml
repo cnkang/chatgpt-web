@@ -14,34 +14,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set node
-        uses: actions/setup-node@v6
+      - name: Setup Node.js and PNPM
+        uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: 24.x
 
-      - name: Setup
-        run: npm i -g @antfu/ni
-
       - name: Install
-        run: nci
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Lint
-        run: nr lint:fix
+        run: pnpm lint
 
   typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set node
-        uses: actions/setup-node@v6
+      - name: Setup Node.js and PNPM
+        uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: 24.x
 
-      - name: Setup
-        run: npm i -g @antfu/ni
-
       - name: Install
-        run: nci
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Typecheck
-        run: nr type-check
+        run: pnpm type-check

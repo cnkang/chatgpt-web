@@ -32,23 +32,22 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
-    "lint": "eslint . --fix",
-    "lint:fix": "eslint . --fix",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "echo 'No tests in shared package'",
     "test:integration": "echo 'No integration tests in shared package'",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "quality": "run-p type-check lint format:check",
-    "quality:fix": "run-s lint:fix format type-check",
-    "clean": "rimraf dist"
+    "quality": "pnpm run type-check && pnpm run lint && pnpm run format:check",
+    "quality:fix": "pnpm run lint:fix && pnpm run format && pnpm run type-check",
+    "clean": "node -e \"const fs=require('node:fs'); fs.rmSync('dist',{recursive:true,force:true});\""
   },
   "dependencies": {
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@chatgpt-web/config": "workspace:*",
     "fast-check": "^4.5.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"

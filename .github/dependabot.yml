@@ -34,13 +34,13 @@ updates:
           - 'minor'
           - 'patch'
 
-      # ESLint ecosystem
-      eslint-ecosystem:
+      # Code quality tools
+      code-quality-tools:
         patterns:
-          - 'eslint*'
-          - '@eslint*'
-          - 'eslint-*'
-          - '@antfu/eslint-config'
+          - '@biomejs/*'
+          - 'biome*'
+          - 'prettier'
+          - 'lint-staged'
         update-types:
           - 'minor'
           - 'patch'
@@ -70,10 +70,6 @@ updates:
       dev-tools:
         patterns:
           - 'husky'
-          - 'lint-staged'
-          - 'prettier'
-          - 'rimraf'
-          - 'npm-run-all'
         update-types:
           - 'minor'
           - 'patch'
@@ -109,8 +105,6 @@ updates:
       - dependency-name: 'vue'
         update-types: ['version-update:semver-major']
       - dependency-name: 'typescript'
-        update-types: ['version-update:semver-major']
-      - dependency-name: 'eslint'
         update-types: ['version-update:semver-major']
 
     # Allowed update types
