@@ -11,6 +11,8 @@ const isTestEnv =
   process.env.VITEST === 'true' ||
   Boolean(process.env.VITEST_WORKER_ID)
 
+const blockedObjectKeys = new Set(['__proto__', 'prototype', 'constructor'])
+
 /**
  * Validation error response interface
  */
@@ -58,11 +60,11 @@ function sanitizeObject(obj: unknown): unknown {
   }
 
   if (obj && typeof obj === 'object') {
-    const sanitized: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(obj)) {
-      sanitized[key] = sanitizeObject(value)
-    }
-    return sanitized
+    const sanitizedEntries = Object.entries(obj)
+      .filter(([key]) => !blockedObjectKeys.has(key))
+      .map(([key, value]) => [key, sanitizeObject(value)] as const)
+
+    return Object.fromEntries(sanitizedEntries)
   }
 
   return obj

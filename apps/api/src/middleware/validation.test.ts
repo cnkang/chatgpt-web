@@ -164,6 +164,39 @@ describe('validation middleware', () => {
       expect(mockNext).toHaveBeenCalled()
     })
 
+    it('should drop dangerous object keys during sanitization', () => {
+      const payload: Record<string, unknown> = {
+        safe: '<img src="x" onerror="alert(1)">',
+      }
+
+      Object.defineProperty(payload, '__proto__', {
+        value: 'pollution-attempt',
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      })
+      payload['prototype'] = 'prototype-attempt'
+      payload['constructor'] = 'constructor-attempt'
+
+      mockReq.body = { payload }
+
+      const schema = z.object({
+        payload: z.record(z.string(), z.unknown()),
+      })
+
+      const middleware = validateBody(schema)
+      middleware(mockReq as Request, mockRes as Response, mockNext)
+
+      const sanitizedPayload = mockReq.body.payload as Record<string, unknown>
+      expect(sanitizedPayload.safe).toBe(
+        '&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;',
+      )
+      expect(Object.hasOwn(sanitizedPayload, '__proto__')).toBe(false)
+      expect(Object.hasOwn(sanitizedPayload, 'prototype')).toBe(false)
+      expect(Object.hasOwn(sanitizedPayload, 'constructor')).toBe(false)
+      expect(mockNext).toHaveBeenCalled()
+    })
+
     it('should handle validation errors gracefully', () => {
       // Mock Zod to throw an error
       const faultySchema = {
