@@ -7,6 +7,6 @@ export default {
       'pnpm type-check',
       'echo "Pre-commit checks passed!"',
     ],
-    'commit-msg': ['npx --no -- commitlint --edit $1'],
+    'commit-msg': ['node --experimental-strip-types ./tools/validate-commit-msg.ts "$1"'],
   },
 }
