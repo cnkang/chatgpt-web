@@ -20,12 +20,15 @@ concurrency:
 
 jobs:
   auto-approve:
-    if: github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' && github.event.pull_request.draft == false
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false && contains(github.event.pull_request.user.login, 'dependabot')
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
+        continue-on-error: true
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
@@ -33,6 +36,7 @@ jobs:
       - name: Classify update risk
         id: classify
         env:
+          METADATA_OK: ${{ steps.metadata.outcome == 'success' }}
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
           DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
         run: |
@@ -47,7 +51,10 @@ jobs:
           # Best-practice defaults:
           # 1) Auto-merge patch and minor updates.
           # 2) Keep major updates for manual review.
-          if [[ "$update_type" == "version-update:semver-patch" || "$update_type" == "version-update:semver-minor" ]]; then
+          # If metadata is unavailable, stay in manual-review mode.
+          if [[ "$METADATA_OK" != "true" ]]; then
+            reason="Dependabot metadata unavailable; manual review required."
+          elif [[ "$update_type" == "version-update:semver-patch" || "$update_type" == "version-update:semver-minor" ]]; then
             safe_to_automerge="true"
             reason="Patch/minor update."
           fi
@@ -61,6 +68,7 @@ jobs:
         if: steps.classify.outputs.safe_to_automerge == 'true'
         run: |
           gh pr edit "$PR_URL" --add-label "dependencies,dependabot,auto-merge-candidate"
+          gh pr edit "$PR_URL" --remove-label "needs-review" || true
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,6 +77,7 @@ jobs:
         if: steps.classify.outputs.safe_to_automerge != 'true'
         run: |
           gh pr edit "$PR_URL" --add-label "dependencies,dependabot,needs-review"
+          gh pr edit "$PR_URL" --remove-label "auto-merge-candidate" || true
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -150,6 +159,8 @@ jobs:
   merge-safe-updates:
     if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success'
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Resolve linked pull request
@@ -177,6 +188,7 @@ jobs:
           is_dependabot="$(echo "$pr_json" | jq -r '.author.login | test("dependabot")')"
           is_draft="$(echo "$pr_json" | jq -r '.isDraft')"
           has_candidate_label="$(echo "$pr_json" | jq -r '[.labels[].name] | index("auto-merge-candidate") != null')"
+          has_needs_review_label="$(echo "$pr_json" | jq -r '[.labels[].name] | index("needs-review") != null')"
           has_breaking_label="$(echo "$pr_json" | jq -r '[.labels[].name] | index("breaking-change") != null')"
           has_breaking_text="$(echo "$pr_json" | jq -r '((.title // "") + "\n" + (.body // "")) | ascii_downcase | test("breaking[ -]change|breaking[ -]changes|incompatible")')"
           is_mergeable="$(echo "$pr_json" | jq -r '.mergeable == "MERGEABLE"')"
@@ -192,7 +204,7 @@ jobs:
           ')"
 
           should_merge="false"
-          if [[ "$is_dependabot" == "true" && "$is_draft" == "false" && "$has_candidate_label" == "true" && "$has_breaking_label" == "false" && "$has_breaking_text" == "false" && "$is_mergeable" == "true" && "$merge_state_clean" == "true" && "$has_checks" == "true" && "$checks_green" == "true" ]]; then
+          if [[ "$is_dependabot" == "true" && "$is_draft" == "false" && "$has_candidate_label" == "true" && "$has_needs_review_label" == "false" && "$has_breaking_label" == "false" && "$has_breaking_text" == "false" && "$is_mergeable" == "true" && "$merge_state_clean" == "true" && "$has_checks" == "true" && "$checks_green" == "true" ]]; then
             should_merge="true"
           fi
 
