@@ -427,9 +427,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
         let responseId = ''
         const currentModel = request.model
 
-        // eslint-disable-next-line no-await-in-loop
         while (true) {
-          // eslint-disable-next-line no-await-in-loop
           const { done, value } = await reader.read()
 
           if (done) {
@@ -525,8 +523,6 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
                   logger.warn('Failed to parse stream chunk', { line: trimmedLine, error })
                 }
               } else if (trimmedLine.startsWith('event:')) {
-                // SSE event type line, skip
-                continue
               } else {
                 // Handle events without "data:" prefix
                 try {
