@@ -5,6 +5,7 @@
  */
 
 import { isNotEmptyString } from '../utils/is'
+import { isOfficialAzureOpenAIEndpoint, isOfficialOpenAIEndpoint } from '../utils/url-security'
 
 /**
  * Security risk patterns that should not exist in the codebase
@@ -101,16 +102,13 @@ export function validateAuthenticationMethods(): SecurityValidationResult {
           'Set AZURE_OPENAI_DEPLOYMENT environment variable with your Azure OpenAI deployment name',
       })
     }
-  } else {
-    // Validate OpenAI configuration
-    if (!isNotEmptyString(process.env.OPENAI_API_KEY)) {
-      risks.push({
-        type: 'MISSING_OFFICIAL_AUTH',
-        description: 'Missing official OpenAI API key',
-        severity: 'HIGH',
-        mitigation: 'Set OPENAI_API_KEY environment variable with your official OpenAI API key',
-      })
-    }
+  } else if (!isNotEmptyString(process.env.OPENAI_API_KEY)) {
+    risks.push({
+      type: 'MISSING_OFFICIAL_AUTH',
+      description: 'Missing official OpenAI API key',
+      severity: 'HIGH',
+      mitigation: 'Set OPENAI_API_KEY environment variable with your official OpenAI API key',
+    })
   }
 
   // Check for any unofficial authentication remnants
@@ -200,52 +198,37 @@ export function validateConfigurationSecurity(): SecurityValidationResult {
 
     // Validate Azure endpoint if provided
     const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT
-    if (isNotEmptyString(azureEndpoint)) {
-      if (!azureEndpoint.includes('openai.azure.com')) {
-        risks.push({
-          type: 'UNOFFICIAL_BASE_URL',
-          description: 'Azure endpoint does not point to official Azure OpenAI service',
-          severity: 'HIGH',
-          mitigation: 'Use official Azure OpenAI endpoints (*.openai.azure.com)',
-        })
-      }
-      if (!azureEndpoint.startsWith('https://')) {
-        risks.push({
-          type: 'UNOFFICIAL_BASE_URL',
-          description: 'Azure endpoint should use HTTPS protocol',
-          severity: 'HIGH',
-          mitigation: 'Ensure AZURE_OPENAI_ENDPOINT starts with "https://"',
-        })
-      }
+    if (isNotEmptyString(azureEndpoint) && !isOfficialAzureOpenAIEndpoint(azureEndpoint)) {
+      risks.push({
+        type: 'UNOFFICIAL_BASE_URL',
+        description:
+          'Azure endpoint does not point to official Azure OpenAI service or uses invalid protocol',
+        severity: 'HIGH',
+        mitigation: 'Use official Azure OpenAI endpoints with HTTPS (https://*.openai.azure.com)',
+      })
     }
   } else {
     // Validate OpenAI API key format (should start with sk- for OpenAI)
     const apiKey = process.env.OPENAI_API_KEY
-    if (isNotEmptyString(apiKey)) {
-      if (!apiKey.startsWith('sk-') && !apiKey.startsWith('sk_')) {
-        risks.push({
-          type: 'INVALID_API_KEY_FORMAT',
-          description: 'API key does not follow official OpenAI format',
-          severity: 'MEDIUM',
-          mitigation: 'Ensure OPENAI_API_KEY starts with "sk-" and is from OpenAI platform',
-        })
-      }
+    if (isNotEmptyString(apiKey) && !apiKey.startsWith('sk-') && !apiKey.startsWith('sk_')) {
+      risks.push({
+        type: 'INVALID_API_KEY_FORMAT',
+        description: 'API key does not follow official OpenAI format',
+        severity: 'MEDIUM',
+        mitigation: 'Ensure OPENAI_API_KEY starts with "sk-" and is from OpenAI platform',
+      })
     }
 
     // Validate base URL if provided
     const baseUrl = process.env.OPENAI_API_BASE_URL
-    if (isNotEmptyString(baseUrl)) {
-      const officialDomains = ['api.openai.com']
-      const isOfficialDomain = officialDomains.some(domain => baseUrl.includes(domain))
-
-      if (!isOfficialDomain) {
-        risks.push({
-          type: 'UNOFFICIAL_BASE_URL',
-          description: 'Base URL does not point to official OpenAI endpoints',
-          severity: 'HIGH',
-          mitigation: 'Use official OpenAI API endpoints only (api.openai.com)',
-        })
-      }
+    if (isNotEmptyString(baseUrl) && !isOfficialOpenAIEndpoint(baseUrl)) {
+          risks.push({
+            type: 'UNOFFICIAL_BASE_URL',
+            description:
+              'Base URL does not point to official OpenAI endpoint or uses invalid protocol',
+            severity: 'HIGH',
+            mitigation: 'Use official OpenAI API endpoint with HTTPS (https://api.openai.com)',
+          })
     }
   }
 
