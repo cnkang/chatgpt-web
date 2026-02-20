@@ -80,7 +80,7 @@ chatgpt-web/
 ### 开发体验
 
 - ✅ TypeScript 严格模式（零错误）
-- ✅ ESLint 零警告策略
+- ✅ Biome 零错误策略
 - ✅ 热模块替换（HMR）
 - ✅ 现代构建系统（Vite + Turbo）
 
@@ -106,7 +106,7 @@ chatgpt-web/
 
 - PNPM 10+
 - Turborepo 2+
-- ESLint 9+
+- Biome 2+
 - Prettier 3+
 - Vitest 4+
 
@@ -150,8 +150,8 @@ chatgpt-web/
 ### 代码质量
 
 - TypeScript 错误: 0
-- ESLint 错误: 0
-- ESLint 警告: 0
+- Biome 错误: 0
+- Biome 警告: 0
 - 测试覆盖率: 待提升
 
 ### 文档质量

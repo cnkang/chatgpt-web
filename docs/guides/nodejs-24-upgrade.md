@@ -29,7 +29,7 @@
 
 #### 开发依赖
 
-- **@antfu/eslint-config**: 3.16.0 → 6.7.3
+- **@biomejs/biome**: 统一为 Biome 进行 lint/格式化
 - **vue-tsc**: 2.2.12 → 3.2.1
 - **@types/node**: 24.10.4 → 25.0.3
 - **husky**: 8.0.3 → 9.1.7
@@ -37,9 +37,8 @@
 #### 后端依赖 (apps/api)
 
 - **express-rate-limit**: 6.11.2 → 8.2.1
-- **https-proxy-agent**: 5.0.1 → 7.0.6
-- **socks-proxy-agent**: 7.0.0 → 8.0.5
-- **dotenv**: 16.6.1 → 17.2.3
+- **dotenv**: 已移除（Node.js 24+ 使用原生 `process.loadEnvFile()`）
+- **chatgpt / axios / proxy-agent 适配依赖**: 已从运行路径移除，降低依赖面
 
 ### 4. 配置文件更新
 
@@ -55,11 +54,10 @@
 - 移除了已弃用的 Legacy API 警告
 - 保持现有 i18n 功能完整性
 
-#### ESLint 配置优化
+#### Biome 工具链迁移
 
-- 忽略构建目录 (`apps/api/build/**`, `dist/**`)
-- 优化了规则配置
-- 支持最新的代码风格
+- 已从 ESLint 迁移至 Biome
+- 统一 lint 与格式化流程，减少工具链复杂度
 
 #### Mermaid 插件升级
 

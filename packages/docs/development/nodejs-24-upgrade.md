@@ -29,7 +29,7 @@ This project has been upgraded to support Node.js 24 LTS and updated all major d
 
 #### Development Dependencies
 
-- **@antfu/eslint-config**: 3.16.0 → 6.7.3
+- **@biomejs/biome**: adopted as the unified linter/formatter
 - **vue-tsc**: 2.2.12 → 3.2.1
 - **@types/node**: 24.10.4 → 25.0.3
 - **husky**: 8.0.3 → 9.1.7
@@ -37,9 +37,8 @@ This project has been upgraded to support Node.js 24 LTS and updated all major d
 #### Backend Dependencies (apps/api)
 
 - **express-rate-limit**: 6.11.2 → 8.2.1
-- **https-proxy-agent**: 5.0.1 → 7.0.6
-- **socks-proxy-agent**: 7.0.0 → 8.0.5
-- **dotenv**: 16.6.1 → 17.2.3
+- **dotenv**: removed (replaced by native `process.loadEnvFile()` on Node.js 24+)
+- **chatgpt / axios / proxy-agent adapters**: removed from runtime path to reduce dependency surface
 
 ### 4. Configuration File Updates
 
@@ -55,11 +54,10 @@ This project has been upgraded to support Node.js 24 LTS and updated all major d
 - Removed deprecated Legacy API warnings
 - Maintains existing i18n functionality integrity
 
-#### ESLint Configuration Optimization
+#### Biome Tooling Adoption
 
-- Ignores build directories (`apps/api/build/**`, `dist/**`)
-- Optimized rule configuration
-- Supports latest code style
+- Replaced ESLint with Biome for linting
+- Unified formatting and lint checks through modern tooling
 
 #### Mermaid Plugin Upgrade
 
