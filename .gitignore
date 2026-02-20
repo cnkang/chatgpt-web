@@ -16,6 +16,15 @@ dist
 dist-ssr
 build
 coverage
+**/dist
+**/dist-ssr
+**/build
+**/coverage
+**/out
+**/.next
+**/.nuxt
+**/.output
+**/*.tsbuildinfo
 *.local
 
 # Cache directories
