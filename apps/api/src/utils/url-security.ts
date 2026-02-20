@@ -14,6 +14,19 @@ function hasExactHostOrSubdomain(hostname: string, baseHost: string): boolean {
   return hostname === baseHost || hostname.endsWith(`.${baseHost}`)
 }
 
+function isEnvFlagEnabled(value: string | undefined): boolean {
+  if (!value) {
+    return false
+  }
+
+  const normalized = value.trim().toLowerCase()
+  return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on'
+}
+
+export function shouldSkipApiDomainCheck(): boolean {
+  return isEnvFlagEnabled(process.env.SKIP_API_DOMAIN_CHECK)
+}
+
 export function isOfficialOpenAIEndpoint(value: string): boolean {
   const parsed = parseUrl(value)
   if (!parsed) {
