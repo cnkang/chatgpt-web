@@ -1,3 +1,90 @@
+## v3.0.2
+
+`2026-02-20`
+
+### 🎯 OpenAI-Compatible Endpoint Support
+
+#### Third-Party API Integration
+
+- **SKIP_API_DOMAIN_CHECK Flag**: New environment variable to enable OpenAI-compatible third-party endpoints
+- **Flexible API Key Format**: Support for non-standard API key formats when using third-party providers
+- **Custom Base URLs**: Allow unofficial base URLs for OpenAI-compatible services
+- **Azure Validation Preserved**: Azure OpenAI endpoint validation remains strict for security
+
+#### Configuration Enhancements
+
+- **Environment Variable**: Added `SKIP_API_DOMAIN_CHECK` to all deployment configurations
+- **Documentation Updates**: Comprehensive guides for third-party endpoint setup
+- **Default Model Update**: Updated default model from gpt-4o to gpt-5.1 across all examples
+- **Backward Compatible**: Existing configurations continue to work without changes
+
+### 🔒 Security Improvements
+
+#### Validation Hardening
+
+- **Dangerous Object Keys**: Block prototype pollution via `__proto__`, `constructor`, and `prototype` keys
+- **CI Security**: Pin third-party GitHub Actions to commit SHAs for supply chain security
+- **Input Sanitization**: Enhanced validation sanitization to prevent object injection attacks
+
+### 🛠 Build & Infrastructure
+
+#### Docker Optimization
+
+- **Shared Package Build**: Ensure shared package is built before app builds in Docker
+- **Build Reliability**: Improved multi-stage build process for monorepo structure
+
+#### CI/CD Enhancements
+
+- **Dependabot Integration**: Infer semver from PR titles when metadata is missing
+- **Action Security**: All third-party actions now pinned to specific commit hashes
+- **Workflow Reliability**: Enhanced CI pipeline stability and error handling
+
+### 📦 Dependency Updates
+
+- **@types/node**: 25.1.0 → 25.3.0
+- **redis**: 5.10.0 → 5.11.0
+- **@exodus/bytes**: 1.10.0 → 1.14.1
+- **CSS Tools**: Updated 17 packages in the css-tools group
+
+### 📚 Documentation Updates
+
+#### Comprehensive Coverage
+
+- **Third-Party Endpoints**: Complete guide for OpenAI-compatible API setup
+- **Configuration Examples**: Updated all deployment examples with new environment variables
+- **Migration Guide**: Instructions for enabling third-party endpoint support
+- **API Documentation**: Clarified provider compatibility and configuration scope
+
+#### Deployment Guides
+
+- **Docker**: Updated Dockerfile and docker-compose configurations
+- **Kubernetes**: Added SKIP_API_DOMAIN_CHECK to deployment manifests
+- **Railway**: Updated deployment guide with new configuration options
+- **Manual Deployment**: Enhanced setup instructions with third-party endpoint examples
+
+### 🧪 Testing Improvements
+
+- **Flag Coverage**: Comprehensive tests for SKIP_API_DOMAIN_CHECK functionality
+- **Provider Tests**: Verify third-party API key acceptance and URL validation
+- **Azure Tests**: Ensure Azure validation remains strict regardless of flag
+- **Integration Tests**: Enhanced test coverage for configuration validation
+
+### 📋 Migration Notes
+
+For users upgrading from v3.0.1:
+
+1. **No Breaking Changes**: All existing configurations continue to work
+2. **Optional Feature**: Set `SKIP_API_DOMAIN_CHECK=true` only if using third-party endpoints
+3. **Default Behavior**: Without the flag, validation remains strict (official OpenAI only)
+4. **Azure Users**: No changes needed, Azure validation is always strict
+
+### 🎉 Benefits
+
+- **Flexibility**: Support for OpenAI-compatible third-party services
+- **Security**: Opt-in model ensures strict validation by default
+- **Compatibility**: Works with various OpenAI-compatible providers
+- **Documentation**: Clear guidance for setup and configuration
+
 ## v3.0.1
 
 `2026-01-13`
