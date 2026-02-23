@@ -1,4 +1,4 @@
-import { useAuthStore, useSettingStore } from '@/store'
+import { useSettingStore } from '@/store'
 import { post } from '@/utils/request'
 import type { FetchProgressEvent } from '@/utils/request/fetch'
 
@@ -27,20 +27,13 @@ export function fetchChatAPIProcess<T = unknown>(params: {
   onDownloadProgress?: (progressEvent: FetchProgressEvent) => void
 }) {
   const settingStore = useSettingStore()
-  const authStore = useAuthStore()
 
-  let data: Record<string, unknown> = {
+  const data: Record<string, unknown> = {
     prompt: params.prompt,
     options: params.options,
-  }
-
-  if (authStore.isChatGPTAPI) {
-    data = {
-      ...data,
-      systemMessage: settingStore.systemMessage,
-      temperature: settingStore.temperature,
-      top_p: settingStore.top_p,
-    }
+    systemMessage: settingStore.systemMessage,
+    temperature: settingStore.temperature,
+    top_p: settingStore.top_p,
   }
 
   return post<T>({

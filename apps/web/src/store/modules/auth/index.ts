@@ -20,6 +20,7 @@ export const useAuthStore = defineStore('auth-store', {
   }),
 
   getters: {
+    /** Whether the backend uses the official API (always true since unofficial proxy was removed) */
     isChatGPTAPI(state): boolean {
       return state.session?.model === 'ChatGPTAPI' || state.session?.model === 'AzureOpenAI'
     },

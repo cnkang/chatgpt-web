@@ -31,14 +31,6 @@ const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
 
-// 确保 TypeScript 知道 scrollRef 被使用（通过在 onMounted 中访问它）
-onMounted(() => {
-  // 这确保了 scrollRef 被 TypeScript 识别为已使用
-  if (scrollRef.value) {
-    // scrollRef 已经通过模板 ref 绑定，这里只是为了 TypeScript
-  }
-})
-
 const { uuid } = route.params as { uuid: string }
 
 const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
@@ -309,7 +301,6 @@ function handleExport() {
         window.URL.revokeObjectURL(imgUrl)
         d.loading = false
         ms.success(t('chat.exportSuccess'))
-        Promise.resolve()
       } catch {
         ms.error(t('chat.exportFailed'))
       } finally {
