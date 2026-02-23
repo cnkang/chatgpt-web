@@ -3,7 +3,7 @@
  * Ensures only official API key authentication is supported
  */
 
-import { isNotEmptyString } from '../utils/is'
+import { isNotEmptyString } from '@chatgpt-web/shared'
 import { shouldSkipApiDomainCheck } from '../utils/url-security'
 
 /**

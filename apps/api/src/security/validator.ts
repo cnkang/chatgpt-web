@@ -4,7 +4,7 @@
  * from the unofficial proxy API implementation.
  */
 
-import { isNotEmptyString } from '../utils/is'
+import { isNotEmptyString } from '@chatgpt-web/shared'
 import {
   isOfficialAzureOpenAIEndpoint,
   isOfficialOpenAIEndpoint,
