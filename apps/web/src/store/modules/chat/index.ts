@@ -52,6 +52,8 @@ export const useChatStore = defineStore('chat-store', {
     },
 
     async deleteHistory(index: number) {
+      if (index < 0 || index >= this.history.length) return
+
       this.history.splice(index, 1)
       this.chat.splice(index, 1)
 
@@ -61,26 +63,11 @@ export const useChatStore = defineStore('chat-store', {
         return
       }
 
-      if (index > 0 && index <= this.history.length) {
-        const uuid = this.history[index - 1].uuid
-        this.active = uuid
-        this.reloadRoute(uuid)
-        return
-      }
-
-      if (index === 0) {
-        if (this.history.length > 0) {
-          const uuid = this.history[0].uuid
-          this.active = uuid
-          this.reloadRoute(uuid)
-        }
-      }
-
-      if (index > this.history.length) {
-        const uuid = this.history[this.history.length - 1].uuid
-        this.active = uuid
-        this.reloadRoute(uuid)
-      }
+      // Activate the nearest remaining conversation
+      const newIndex = Math.min(index, this.history.length - 1)
+      const uuid = this.history[newIndex].uuid
+      this.active = uuid
+      this.reloadRoute(uuid)
     },
 
     async setActive(uuid: number) {
@@ -103,16 +90,17 @@ export const useChatStore = defineStore('chat-store', {
     addChatByUuid(uuid: number, chat: Chat) {
       if (!uuid || uuid === 0) {
         if (this.history.length === 0) {
-          const uuid = Date.now()
-          this.history.push({ uuid, title: chat.text, isEdit: false })
-          this.chat.push({ uuid, data: [chat] })
-          this.active = uuid
+          const newUuid = Date.now()
+          this.history.push({ uuid: newUuid, title: chat.text, isEdit: false })
+          this.chat.push({ uuid: newUuid, data: [chat] })
+          this.active = newUuid
           this.recordState()
         } else {
           this.chat[0].data.push(chat)
           if (this.history[0].title === t('chat.newChatTitle')) this.history[0].title = chat.text
           this.recordState()
         }
+        return
       }
 
       const index = this.chat.findIndex(
