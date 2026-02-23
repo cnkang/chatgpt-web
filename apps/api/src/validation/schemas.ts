@@ -16,7 +16,7 @@ import {
   optionalStringSchema,
   stringSchema,
 } from '@chatgpt-web/shared'
-import { z } from 'zod'
+import type { z } from 'zod'
 
 // Re-export schemas for backward compatibility
 export const chatProcessRequestSchema = ChatProcessRequestSchema
