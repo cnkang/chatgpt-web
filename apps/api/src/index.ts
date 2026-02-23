@@ -7,7 +7,6 @@ import { auth, safeEqual } from './middleware/auth'
 import { authLimiter, limiter } from './middleware/limiter'
 import {
   createCorsMiddleware,
-  createSecureLogger,
   createSecurityHeaders,
   createSessionMiddleware,
   secureApiKeys,
@@ -96,8 +95,8 @@ async function applySecurityMiddleware(app: express.Express) {
   // Apply CORS middleware
   app.use(createCorsMiddleware())
 
-  // Apply secure logging
-  app.use(createSecureLogger())
+  // Note: Request logging is handled by requestLogger() above.
+  // createSecureLogger() is intentionally omitted to avoid duplicate logs.
 
   // Apply API key security
   app.use(secureApiKeys)
@@ -174,7 +173,7 @@ function registerChatRoutes(router: express.Router, chatModule: ChatModule) {
 
   router.post(
     '/session',
-    [sanitizeRequest],
+    [limiter, sanitizeRequest],
     asyncHandler(async (_req, res) => {
       const { AUTH_SECRET_KEY } = process.env
       const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)

@@ -4,7 +4,6 @@
  */
 
 import type { NextFunction, Request, Response } from 'express'
-import { rateLimit } from 'express-rate-limit'
 import type { SessionOptions } from 'express-session'
 import session from 'express-session'
 import helmet from 'helmet'
@@ -187,39 +186,13 @@ export async function createSessionMiddleware(
 }
 
 /**
- * Creates enhanced rate limiting middleware
- */
-export function createRateLimiter(config: SecurityConfig = defaultSecurityConfig) {
-  return rateLimit({
-    windowMs: config.rateLimit.windowMs,
-    max: config.rateLimit.max,
-    skipSuccessfulRequests: config.rateLimit.skipSuccessfulRequests,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-      status: 'Fail',
-      message: `Too many requests from this IP, please try again after ${Math.ceil(config.rateLimit.windowMs / (60 * 1000))} minutes`,
-      data: null,
-    },
-    handler: (_req: Request, res: Response) => {
-      res.status(429).json({
-        status: 'Fail',
-        message: `Rate limit exceeded. Try again in ${Math.ceil(config.rateLimit.windowMs / (60 * 1000))} minutes`,
-        data: null,
-      })
-    },
-  })
-}
-
-/**
  * API key security middleware
- * Ensures API keys are never exposed in logs or responses
+ * Ensures API keys are never exposed in logs or responses (including streaming)
  */
 export function secureApiKeys(req: Request, res: Response, next: NextFunction) {
-  // Remove sensitive headers from logs
+  // Patch res.json to sanitize API keys in JSON responses
   const originalJson = res.json
   res.json = function (this: Response, body: unknown) {
-    // Ensure no API keys are accidentally included in responses
     if (body && typeof body === 'object') {
       const sanitizedBody = sanitizeApiKeys(body)
       return originalJson.call(this, sanitizedBody)
@@ -227,14 +200,35 @@ export function secureApiKeys(req: Request, res: Response, next: NextFunction) {
     return originalJson.call(this, body)
   } as Response['json']
 
+  // Patch res.write to sanitize API keys in streaming responses
+  if (typeof res.write === 'function') {
+    const originalWrite = res.write.bind(res)
+    res.write = ((chunk: unknown, ...args: unknown[]): boolean => {
+      if (typeof chunk === 'string') {
+        const sanitized = sanitizeApiKeyString(chunk)
+        return (originalWrite as (...a: unknown[]) => boolean)(sanitized, ...args)
+      }
+      return (originalWrite as (...a: unknown[]) => boolean)(chunk, ...args)
+    }) as typeof res.write
+  }
+
   // Sanitize request headers for logging
   if (req.headers.authorization) {
-    // Replace authorization header with masked version for logging
     const maskedAuth = req.headers.authorization.replace(/Bearer\s+(.{4}).*/, 'Bearer $1****')
     req.headers['x-masked-auth'] = maskedAuth
   }
 
   next()
+}
+
+/**
+ * Sanitizes a raw string by masking common API key patterns.
+ * Used for streaming responses where the body is a plain string.
+ */
+function sanitizeApiKeyString(str: string): string {
+  return str
+    .replace(/sk-[a-zA-Z0-9]{20,}/g, 'sk-****')
+    .replace(/sk-proj-[a-zA-Z0-9]{20,}/g, 'sk-proj-****')
 }
 
 /**

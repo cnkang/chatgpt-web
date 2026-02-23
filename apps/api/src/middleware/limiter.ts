@@ -1,5 +1,4 @@
 import { isNotEmptyString } from '@chatgpt-web/shared'
-import type { Request, Response } from 'express'
 import { rateLimit } from 'express-rate-limit'
 
 const { MAX_REQUEST_PER_HOUR } = process.env
@@ -16,12 +15,10 @@ const limiter = rateLimit({
   max: maxCount,
   standardHeaders: true,
   legacyHeaders: false,
-  message: async (_req: Request, res: Response) => {
-    res.status(429).json({
-      status: 'Fail',
-      message: `Too many requests from this IP, please try again after ${Math.ceil(windowMs / (60 * 1000))} minutes`,
-      data: null,
-    })
+  message: {
+    status: 'Fail',
+    message: `Too many requests from this IP, please try again after ${Math.ceil(windowMs / (60 * 1000))} minutes`,
+    data: null,
   },
 })
 
@@ -35,12 +32,10 @@ const authLimiter = rateLimit({
   max: 10, // 10 attempts per IP per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
-  message: async (_req: Request, res: Response) => {
-    res.status(429).json({
-      status: 'Fail',
-      message: 'Too many authentication attempts, please try again after 15 minutes',
-      data: null,
-    })
+  message: {
+    status: 'Fail',
+    message: 'Too many authentication attempts, please try again after 15 minutes',
+    data: null,
   },
 })
 

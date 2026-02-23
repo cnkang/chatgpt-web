@@ -6,18 +6,15 @@
 import type { NextFunction, Request, Response } from 'express'
 import type { Session } from 'express-session'
 import type { HelmetOptions } from 'helmet'
-import type { Options as ExpressRateLimitOptions } from 'express-rate-limit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createCorsMiddleware,
-  createRateLimiter,
   createSecureLogger,
   createSecurityHeaders,
   secureApiKeys,
   validateSecurityEnvironment,
 } from './security.js'
 
-type RequestWithCount = Request & { requestCount?: number }
 type MockRequest = Partial<Request> & { requestCount?: number }
 type MockResponse = Partial<Response>
 
@@ -34,25 +31,6 @@ vi.mock('helmet', () => ({
       }
       res.setHeader('X-Content-Type-Options', 'nosniff')
       res.setHeader('X-Frame-Options', 'DENY')
-      next()
-    }
-  }),
-}))
-
-vi.mock('express-rate-limit', () => ({
-  rateLimit: vi.fn().mockImplementation((options: ExpressRateLimitOptions) => {
-    return (req: Request, _res: Response, next: NextFunction) => {
-      // Simulate rate limiting logic
-      const requestCount = (req as RequestWithCount).requestCount || 0
-      const limitValue =
-        typeof options.max === 'number'
-          ? options.max
-          : typeof options.limit === 'number'
-            ? options.limit
-            : 0
-      if (requestCount >= limitValue) {
-        return options.handler(req, _res, () => undefined, options)
-      }
       next()
     }
   }),
@@ -190,43 +168,6 @@ describe('security middleware', () => {
         expect.any(String),
       )
       expect(mockNext).toHaveBeenCalled()
-    })
-  })
-
-  describe('createRateLimiter', () => {
-    it('should create rate limiting middleware', () => {
-      const middleware = createRateLimiter()
-      expect(middleware).toBeDefined()
-      expect(typeof middleware).toBe('function')
-    })
-
-    it('should allow requests under the limit', () => {
-      const middleware = createRateLimiter()
-      mockReq.requestCount = 50 // Under default limit of 100
-
-      middleware(mockReq as Request, mockRes as Response, mockNext)
-      expect(mockNext).toHaveBeenCalled()
-    })
-
-    it('should block requests over the limit', () => {
-      const middleware = createRateLimiter()
-      mockReq.requestCount = 150 // Over default limit of 100
-
-      middleware(mockReq as Request, mockRes as Response, mockNext)
-      expect(mockRes.status).toHaveBeenCalledWith(429)
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'Fail',
-          message: expect.stringContaining('Rate limit exceeded'),
-        }),
-      )
-    })
-
-    it('should use custom rate limit from environment', () => {
-      process.env.MAX_REQUEST_PER_HOUR = '50'
-
-      const middleware = createRateLimiter()
-      expect(middleware).toBeDefined()
     })
   })
 
