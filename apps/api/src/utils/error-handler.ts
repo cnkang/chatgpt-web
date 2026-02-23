@@ -4,6 +4,7 @@
  */
 
 import type { NextFunction, Request, Response } from 'express'
+import { randomUUID } from 'node:crypto'
 
 /**
  * Standard error response interface
@@ -93,9 +94,7 @@ export function errorHandler(
   _next: NextFunction,
 ) {
   // Generate request ID for tracking
-  const requestId =
-    (req.headers['x-request-id'] as string) ||
-    `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  const requestId = (req.headers['x-request-id'] as string) || randomUUID()
 
   const isAppError = error instanceof AppError
   const statusCode = isAppError ? error.statusCode : 500
@@ -134,8 +133,8 @@ export function errorHandler(
 export function asyncHandler<T = unknown>(
   fn: (req: Request, res: Response, next: NextFunction) => Promise<T>,
 ) {
-  return (req: Request, res: Response, next: NextFunction): Promise<T | void> => {
-    return Promise.resolve(fn(req, res, next)).catch(next)
+  return (req: Request, res: Response, next: NextFunction): void => {
+    Promise.resolve(fn(req, res, next)).catch(next)
   }
 }
 
@@ -208,10 +207,11 @@ export function setupGracefulShutdown(server: ClosableServer) {
     })
 
     // Force shutdown after 30 seconds
+    // Use .unref() so the timer doesn't keep the event loop alive if the server closes cleanly
     setTimeout(() => {
       console.error('Forced shutdown after timeout')
       process.exit(1)
-    }, 30000)
+    }, 30000).unref()
   }
 
   process.on('SIGTERM', () => shutdown('SIGTERM'))

@@ -7,6 +7,7 @@ import type { NextFunction, Request, Response } from 'express'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AppError,
+  ErrorType,
   asyncHandler,
   createAuthenticationError,
   createAuthorizationError,
@@ -19,7 +20,6 @@ import {
   createTimeoutError,
   createValidationError,
   errorHandler,
-  ErrorType,
   notFoundHandler,
   setupGracefulShutdown,
 } from './error-handler.js'
@@ -193,7 +193,9 @@ describe('error handler', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
-            requestId: expect.stringMatching(/^req_\d+_[a-z0-9]+$/),
+            requestId: expect.stringMatching(
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+            ),
           }),
         }),
       )
@@ -220,10 +222,12 @@ describe('error handler', () => {
       const asyncFn = vi.fn().mockResolvedValue('success')
       const wrappedFn = asyncHandler(asyncFn)
 
-      const result = await wrappedFn(mockReq as Request, mockRes as Response, mockNext)
+      wrappedFn(mockReq as Request, mockRes as Response, mockNext)
 
-      expect(result).toBe('success')
-      expect(asyncFn).toHaveBeenCalledWith(mockReq, mockRes, mockNext)
+      // Wait for the microtask to complete
+      await vi.waitFor(() => {
+        expect(asyncFn).toHaveBeenCalledWith(mockReq, mockRes, mockNext)
+      })
       expect(mockNext).not.toHaveBeenCalled()
     })
 

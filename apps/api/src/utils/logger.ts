@@ -4,6 +4,7 @@
  */
 
 import type { NextFunction, Request, Response } from 'express'
+import { randomUUID } from 'node:crypto'
 
 /**
  * Log levels
@@ -40,7 +41,7 @@ interface LogContext {
  * Sensitive data patterns to mask
  */
 const SENSITIVE_PATTERNS = [
-  // API keys and tokens
+  // API keys and tokens — match by key name
   /apikey/gi,
   /api_key/gi,
   /api-key/gi,
@@ -50,11 +51,11 @@ const SENSITIVE_PATTERNS = [
   /authorization/gi,
   /bearer/gi,
 
-  // OpenAI specific
+  // Provider-specific key names
   /openai_api_key/gi,
   /openai-api-key/gi,
-  /sk-[a-z0-9]{48}/gi, // OpenAI API key pattern
-  /sk-proj-[a-z0-9]{48}/gi, // OpenAI project API key pattern
+  /azure_openai_api_key/gi,
+  /azure-openai-api-key/gi,
 
   // Credit card patterns
   /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
@@ -99,7 +100,7 @@ function sanitizeData(data: unknown, depth: number = 0): unknown {
       })
 
       if (isSensitiveKey && typeof value === 'string') {
-        sanitized[key] = maskSensitiveString(value)
+        sanitized[key] = maskSensitiveValue(value)
       } else {
         sanitized[key] = sanitizeData(value, depth + 1)
       }
@@ -112,17 +113,35 @@ function sanitizeData(data: unknown, depth: number = 0): unknown {
 }
 
 /**
- * Masks sensitive strings
+ * Masks a value that was identified as sensitive by its key name.
+ * Shows only a short prefix so the key type is recognisable, masks the rest.
+ */
+function maskSensitiveValue(str: string): string {
+  if (str.length <= 4) return '****'
+  return `${str.slice(0, 4)}****`
+}
+
+/**
+ * Masks sensitive patterns found inline within arbitrary strings.
+ * Covers OpenAI keys (sk-...), Azure hex keys, Bearer tokens,
+ * credit card numbers, and email addresses.
  */
 function maskSensitiveString(str: string): string {
   let masked = str
 
-  // Mask API keys and tokens
-  masked = masked.replace(/sk-[a-z0-9]{48}/gi, 'sk-****')
-  masked = masked.replace(/sk-proj-[a-z0-9]{48}/gi, 'sk-proj-****')
+  // OpenAI API keys: sk-... or sk-proj-... (variable length)
+  masked = masked.replace(/\bsk-[a-zA-Z0-9_-]{20,}/g, match => `${match.slice(0, 5)}****`)
+
+  // Azure API keys: 32-char hex strings (only when they look standalone)
+  masked = masked.replace(/\b[0-9a-f]{32}\b/gi, match => `${match.slice(0, 4)}****`)
+
+  // Bearer tokens
   masked = masked.replace(/Bearer\s+[\w\-.]+/gi, 'Bearer ****')
 
-  // Mask credit card numbers
+  // Generic long alphanumeric tokens (40+ chars, likely API keys)
+  masked = masked.replace(/\b[A-Za-z0-9_-]{40,}\b/g, match => `${match.slice(0, 4)}****`)
+
+  // Credit card numbers
   masked = masked.replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '**** **** **** ****')
 
   // Partially mask emails
@@ -324,7 +343,7 @@ export function requestLogger() {
     const requestId =
       (typeof headerRequestId === 'string' && headerRequestId) ||
       (Array.isArray(headerRequestId) && headerRequestId[0]) ||
-      `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      randomUUID()
 
     // Add request ID to request object
     ;(req as Request & { requestId?: string }).requestId = requestId

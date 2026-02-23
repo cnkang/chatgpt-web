@@ -82,14 +82,12 @@ export class ConfigurationManager {
       errors.push('AI provider is required')
     }
 
-    if (this.config.ai.provider === 'openai') {
-      if (!this.config.ai.openai?.apiKey) {
-        errors.push('OpenAI API key is required when using OpenAI provider')
-      }
+    if (this.config.ai.provider === 'openai' && !this.config.ai.openai?.apiKey) {
+      errors.push('OpenAI API key is required when using OpenAI provider')
     }
 
     if (this.config.ai.provider === 'azure') {
-      const azure = this.config.ai.azure
+      const { azure } = this.config.ai
       if (!azure?.apiKey) {
         errors.push('Azure API key is required when using Azure provider')
       }

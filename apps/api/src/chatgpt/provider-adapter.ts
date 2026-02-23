@@ -24,7 +24,7 @@ registerProvider('azure', AzureOpenAIProvider)
 
 let provider: AIProvider | null = null
 let apiModel: ApiModel
-let initError: Error | null = null
+let initPromise: Promise<void> | null = null
 
 // Initialize provider based on configuration
 async function initializeProvider(): Promise<void> {
@@ -39,27 +39,31 @@ async function initializeProvider(): Promise<void> {
 
 /**
  * Ensure provider is initialized before use.
- * Lazy initialization avoids process.exit at module load time,
- * making the module testable and allowing graceful error propagation.
+ * Uses a shared promise to prevent concurrent initialization races.
+ * If a previous attempt failed, a new attempt is started.
  */
 async function ensureProvider(): Promise<AIProvider> {
   if (provider) return provider
 
-  try {
-    await initializeProvider()
-    initError = null
-    if (!provider) throw new Error('Provider initialization completed but provider is null')
-    return provider
-  } catch (error) {
-    initError = error instanceof Error ? error : new Error(String(error))
-    console.error('Provider initialization failed:', initError)
-    throw initError
+  if (!initPromise) {
+    initPromise = initializeProvider().catch(error => {
+      // Reset so the next call retries
+      initPromise = null
+      throw error
+    })
   }
+
+  await initPromise
+
+  if (!provider) throw new Error('Provider initialization completed but provider is null')
+  return provider
 }
 
-// Eagerly start initialization but don't kill the process on failure
-initializeProvider().catch(error => {
-  initError = error instanceof Error ? error : new Error(String(error))
+// Eagerly start initialization but don't kill the process on failure.
+// ensureProvider deduplicates via the shared initPromise.
+initPromise = initializeProvider().catch(error => {
+  initPromise = null
+  const initError = error instanceof Error ? error : new Error(String(error))
   console.error('Provider initialization failed (will retry on first request):', initError)
 })
 
@@ -190,23 +194,23 @@ async function chatReplyProcess(options: RequestOptions) {
 
     // Map provider errors to legacy format
     if (error instanceof Error) {
-      const message = error.message
+      const { message: errorMessage } = error
 
-      if (message.includes('401') || message.includes('authentication')) {
+      if (errorMessage.includes('401') || errorMessage.includes('authentication')) {
         return sendResponse({
           type: 'Fail',
           message: '[AI Provider] Authentication failed - please check your API key',
         })
       }
 
-      if (message.includes('429') || message.includes('rate limit')) {
+      if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
         return sendResponse({
           type: 'Fail',
           message: '[AI Provider] Rate limit exceeded - please try again later',
         })
       }
 
-      if (message.includes('timeout')) {
+      if (errorMessage.includes('timeout')) {
         return sendResponse({
           type: 'Fail',
           message: '[AI Provider] Request timeout - please try again',
@@ -215,7 +219,7 @@ async function chatReplyProcess(options: RequestOptions) {
 
       return sendResponse({
         type: 'Fail',
-        message: `[AI Provider] ${message}`,
+        message: `[AI Provider] ${errorMessage}`,
       })
     }
 
