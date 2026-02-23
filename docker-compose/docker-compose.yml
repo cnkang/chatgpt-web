@@ -14,8 +14,8 @@ services:
       # Provider Configuration
       # ===========================================
       AI_PROVIDER: ${AI_PROVIDER:-openai}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.1}
-      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-5.1}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.2}
+      OPENAI_API_MODEL: ${OPENAI_API_MODEL:-gpt-5.2}
 
       # ===========================================
       # OpenAI Configuration (AI_PROVIDER=openai)

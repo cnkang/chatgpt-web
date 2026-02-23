@@ -26,19 +26,28 @@ spec:
             - name: AI_PROVIDER
               value: openai
             - name: OPENAI_API_KEY
-              value: sk-xxx
+              valueFrom:
+                secretKeyRef:
+                  name: chatgpt-web-secrets
+                  key: openai-api-key
             - name: OPENAI_API_BASE_URL
               value: 'https://api.openai.com'
             - name: SKIP_API_DOMAIN_CHECK
               value: 'false'
             - name: DEFAULT_MODEL
-              value: gpt-5.1
+              value: gpt-5.2
             - name: OPENAI_API_MODEL
-              value: gpt-5.1
+              value: gpt-5.2
             - name: AUTH_SECRET_KEY
-              value: '123456'
+              valueFrom:
+                secretKeyRef:
+                  name: chatgpt-web-secrets
+                  key: auth-secret-key
             - name: SESSION_SECRET
-              value: 'replace-with-a-long-random-string'
+              valueFrom:
+                secretKeyRef:
+                  name: chatgpt-web-secrets
+                  key: session-secret
             - name: ALLOWED_ORIGINS
               value: 'https://your-app.example.com'
             - name: TIMEOUT_MS
@@ -72,3 +81,21 @@ spec:
   selector:
     app: chatgpt-web
   type: ClusterIP
+---
+# Create this Secret before deploying. Replace placeholder values with real credentials.
+# Example:
+#   kubectl create secret generic chatgpt-web-secrets \
+#     --from-literal=openai-api-key='sk-xxx' \
+#     --from-literal=auth-secret-key='your-auth-secret' \
+#     --from-literal=session-secret='your-session-secret'
+apiVersion: v1
+kind: Secret
+metadata:
+  name: chatgpt-web-secrets
+  labels:
+    app: chatgpt-web
+type: Opaque
+stringData:
+  openai-api-key: 'REPLACE_ME'
+  auth-secret-key: 'REPLACE_ME'
+  session-secret: 'REPLACE_ME'

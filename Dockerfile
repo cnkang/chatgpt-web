@@ -96,7 +96,7 @@ ENV SKIP_API_DOMAIN_CHECK=false
 ENV OPENAI_ORGANIZATION=
 
 # Default Model Configuration
-ENV DEFAULT_MODEL=gpt-5.1
+ENV DEFAULT_MODEL=gpt-5.2
 ENV OPENAI_API_MODEL=
 
 # Azure OpenAI Configuration
@@ -138,6 +138,10 @@ ENV HTTPS=
 ENV CORS_CREDENTIALS=true
 
 EXPOSE 3002
+
+# Run as non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
