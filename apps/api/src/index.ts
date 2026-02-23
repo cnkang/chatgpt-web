@@ -3,7 +3,7 @@ import { isNotEmptyString } from '@chatgpt-web/shared'
 import type { Request, Response } from 'express'
 import express from 'express'
 import { ConfigurationValidator } from './config/validator'
-import { auth } from './middleware/auth'
+import { auth, safeEqual } from './middleware/auth'
 import { authLimiter, limiter } from './middleware/limiter'
 import {
   createCorsMiddleware,
@@ -27,7 +27,7 @@ import {
   setupGracefulShutdown,
 } from './utils/error-handler'
 import { logger, requestLogger } from './utils/logger'
-import { CircuitBreaker, retryWithBackoff } from './utils/retry'
+import { CircuitBreaker } from './utils/retry'
 import { chatProcessRequestSchema, tokenVerificationSchema } from './validation/schemas'
 
 // Load .env in Node.js 24+ without external dependencies.
@@ -143,28 +143,20 @@ function registerChatRoutes(router: express.Router, chatModule: ChatModule) {
       const { prompt, options = {}, systemMessage, temperature, top_p } = req.body as RequestProps
       let firstChunk = true
 
-      // Use circuit breaker and retry logic for chat processing
+      // Use circuit breaker for external API fault tolerance
+      // Note: provider internally handles retries, no outer retry needed
       await apiCircuitBreaker.execute(async () => {
-        await retryWithBackoff(
-          async () => {
-            await chatReplyProcess({
-              message: prompt,
-              lastContext: options,
-              process: (chat: ChatMessage) => {
-                res.write(firstChunk ? JSON.stringify(chat) : `\n${JSON.stringify(chat)}`)
-                firstChunk = false
-              },
-              systemMessage,
-              temperature,
-              top_p,
-            })
+        await chatReplyProcess({
+          message: prompt,
+          lastContext: options,
+          process: (chat: ChatMessage) => {
+            res.write(firstChunk ? JSON.stringify(chat) : `\n${JSON.stringify(chat)}`)
+            firstChunk = false
           },
-          {
-            maxAttempts: 3,
-            baseDelay: 1000,
-            retryableErrors: ['NETWORK_ERROR', 'TIMEOUT_ERROR', 'EXTERNAL_API_ERROR'],
-          },
-        )
+          systemMessage,
+          temperature,
+          top_p,
+        })
       })
 
       res.end()
@@ -175,15 +167,7 @@ function registerChatRoutes(router: express.Router, chatModule: ChatModule) {
     '/config',
     [validateContentType(['application/json']), sanitizeRequest, auth],
     asyncHandler(async (_req, res) => {
-      const response = await retryWithBackoff(
-        async () => {
-          return await chatConfig()
-        },
-        {
-          maxAttempts: 2,
-          baseDelay: 500,
-        },
-      )
+      const response = await chatConfig()
       res.send(response)
     }),
   )
@@ -209,9 +193,10 @@ function registerChatRoutes(router: express.Router, chatModule: ChatModule) {
     ],
     asyncHandler(async (req, res) => {
       const { token } = req.body as { token: string }
+      const secret = process.env.AUTH_SECRET_KEY ?? ''
 
-      if (process.env.AUTH_SECRET_KEY !== token) {
-        throw new Error('密钥无效 | Secret key is invalid')
+      if (!secret || !safeEqual(token, secret)) {
+        throw new Error('Secret key is invalid')
       }
 
       res.send({ status: 'Success', message: 'Verify successfully', data: null })

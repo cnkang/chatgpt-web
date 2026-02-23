@@ -22,29 +22,45 @@ import { sendResponse } from '../utils'
 registerProvider('openai', OpenAIProvider)
 registerProvider('azure', AzureOpenAIProvider)
 
-let provider: AIProvider
+let provider: AIProvider | null = null
 let apiModel: ApiModel
+let initError: Error | null = null
 
 // Initialize provider based on configuration
 async function initializeProvider(): Promise<void> {
   const config = getConfig()
   const factory = AIProviderFactory.getInstance()
 
-  try {
-    provider = await factory.createWithValidation(config.ai)
-    apiModel = config.ai.provider === 'azure' ? 'AzureOpenAI' : 'ChatGPTAPI'
+  provider = await factory.createWithValidation(config.ai)
+  apiModel = config.ai.provider === 'azure' ? 'AzureOpenAI' : 'ChatGPTAPI'
 
-    console.warn(`✓ AI Provider initialized: ${config.ai.provider}`)
+  console.warn(`✓ AI Provider initialized: ${config.ai.provider}`)
+}
+
+/**
+ * Ensure provider is initialized before use.
+ * Lazy initialization avoids process.exit at module load time,
+ * making the module testable and allowing graceful error propagation.
+ */
+async function ensureProvider(): Promise<AIProvider> {
+  if (provider) return provider
+
+  try {
+    await initializeProvider()
+    initError = null
+    if (!provider) throw new Error('Provider initialization completed but provider is null')
+    return provider
   } catch (error) {
-    console.error('Failed to initialize AI provider:', error)
-    throw error
+    initError = error instanceof Error ? error : new Error(String(error))
+    console.error('Provider initialization failed:', initError)
+    throw initError
   }
 }
 
-// Initialize provider on module load
+// Eagerly start initialization but don't kill the process on failure
 initializeProvider().catch(error => {
-  console.error('Provider initialization failed:', error)
-  process.exit(1)
+  initError = error instanceof Error ? error : new Error(String(error))
+  console.error('Provider initialization failed (will retry on first request):', initError)
 })
 
 /**
@@ -54,9 +70,7 @@ async function chatReplyProcess(options: RequestOptions) {
   const { message, lastContext, process: onProgress, systemMessage, temperature, top_p } = options
 
   try {
-    if (!provider) {
-      throw new Error('AI provider not initialized')
-    }
+    const activeProvider = await ensureProvider()
 
     // Build messages array
     const messages: ChatMessage[] = []
@@ -87,7 +101,7 @@ async function chatReplyProcess(options: RequestOptions) {
       let fullContent = ''
       const responseId = `msg-${Date.now()}`
 
-      for await (const chunk of provider.createStreamingChatCompletion(request)) {
+      for await (const chunk of activeProvider.createStreamingChatCompletion(request)) {
         const choice = chunk.choices[0]
         if (choice?.delta?.content) {
           fullContent += choice.delta.content
@@ -150,7 +164,7 @@ async function chatReplyProcess(options: RequestOptions) {
       })
     } else {
       // Use non-streaming for simple responses
-      const response = await provider.createChatCompletion(request)
+      const response = await activeProvider.createChatCompletion(request)
       const choice = response.choices[0]
 
       if (!choice?.message?.content) {
@@ -217,14 +231,10 @@ async function chatReplyProcess(options: RequestOptions) {
  */
 async function fetchUsage(): Promise<string> {
   try {
-    if (!provider) {
-      return '-'
-    }
-
-    const usage = await provider.getUsageInfo()
+    const activeProvider = await ensureProvider()
+    const usage = await activeProvider.getUsageInfo()
     return usage.totalTokens > 0 ? `${usage.totalTokens}` : '-'
-  } catch (error) {
-    console.error('Failed to fetch usage:', error)
+  } catch {
     return '-'
   }
 }

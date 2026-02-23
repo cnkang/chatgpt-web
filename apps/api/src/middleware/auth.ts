@@ -1,13 +1,29 @@
+import { isNotEmptyString } from '@chatgpt-web/shared'
 import type { NextFunction, Request, Response } from 'express'
-import { isNotEmptyString } from '../utils/is'
+import { timingSafeEqual } from 'node:crypto'
+
+/**
+ * Constant-time string comparison to prevent timing attacks.
+ */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) {
+    // Compare against self so the time is still constant for the length of bufA
+    timingSafeEqual(bufA, bufA)
+    return false
+  }
+  return timingSafeEqual(bufA, bufB)
+}
 
 async function auth(req: Request, res: Response, next: NextFunction) {
   const authSecretKey = process.env.AUTH_SECRET_KEY
   if (isNotEmptyString(authSecretKey)) {
     try {
       const authorization = req.header('Authorization')
-      if (!authorization || authorization.replace('Bearer ', '').trim() !== authSecretKey.trim()) {
-        throw new Error('Error: 无访问权限 | No access rights')
+      const token = authorization?.replace('Bearer ', '').trim() ?? ''
+      if (!authorization || !safeEqual(token, authSecretKey.trim())) {
+        throw new Error('Error: No access rights')
       }
       next()
     } catch (error) {
@@ -23,4 +39,4 @@ async function auth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export { auth }
+export { auth, safeEqual }
