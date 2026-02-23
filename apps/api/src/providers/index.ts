@@ -43,10 +43,11 @@ export type { ProviderFactory } from './factory.js'
 
 export {
   AIProviderFactory,
+  clearProviders,
   createProvider,
   createProviderWithValidation,
   getAvailableProviders,
-  ProviderRegistry,
+  isProviderRegistered,
   registerProvider,
 } from './factory.js'
 

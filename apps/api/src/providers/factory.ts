@@ -18,52 +18,62 @@ export interface ProviderFactory<T extends AIProvider = AIProvider> {
   getSupportedProviders: () => string[]
 }
 
+// -----------------------------------
+// Provider Registry – module-level Map with exported functions
+// ---------------------------------------------------------------------------
+
+const providers = new Map<string, ProviderConstructor<unknown, AIProvider>>()
+
 /**
- * Provider registry for managing available providers
+ * Register a provider class
  */
-export class ProviderRegistry {
-  private static providers = new Map<string, ProviderConstructor<unknown, AIProvider>>()
-
-  /**
-   * Register a provider class
-   */
-  static register<TConfig, T extends AIProvider>(
-    name: string,
-    providerClass: ProviderConstructor<TConfig, T>,
-  ): void {
-    this.providers.set(name, providerClass as ProviderConstructor<unknown, AIProvider>)
-  }
-
-  /**
-   * Get a provider class by name
-   */
-  static get<TConfig, T extends AIProvider>(
-    name: string,
-  ): ProviderConstructor<TConfig, T> | undefined {
-    return this.providers.get(name) as ProviderConstructor<TConfig, T> | undefined
-  }
-
-  /**
-   * Get all registered provider names
-   */
-  static getRegisteredProviders(): string[] {
-    return Array.from(this.providers.keys())
-  }
-
-  /**
-   * Check if a provider is registered
-   */
-  static isRegistered(name: string): boolean {
-    return this.providers.has(name)
-  }
-
-  /**
-   * Clear all registered providers (mainly for testing)
-   */
-  static clear(): void {
-    this.providers.clear()
-  }
+export function registerProvider<TConfig, T extends AIProvider>(
+  name: string,
+  providerClass: ProviderConstructor<TConfig, T>,
+): void {
+  providers.set(name, providerClass as ProviderConstructor<unknown, AIProvider>)
 }
+
+/**
+ * Get a provider class by name
+ */
+function getProviderClass<TConfig, T extends AIProvider>(
+  name: string,
+): ProviderConstructor<TConfig, T> | undefined {
+  return providers.get(name) as ProviderConstructor<TConfig, T> | undefined
+}
+
+/**
+ * Get all registered provider names
+ */
+function getRegisteredProviders(): string[] {
+  return Array.from(providers.keys())
+}
+
+/**
+ * Check if a provider is registered
+ */
+export function isProviderRegistered(name: string): boolean {
+  return providers.has(name)
+}
+
+/**
+ * Clear all registered providers (mainly for testing)
+ */
+export function clearProviders(): void {
+  providers.clear()
+}
+
+/**
+ * Get available provider names
+ */
+export function getAvailableProviders(): string[] {
+  return getRegisteredProviders()
+}
+
+// ---------------------------------------------------------------------------
+// AI Provider Factory
+// ---------------------------------------------------------------------------
 
 /**
  * Generic AI Provider Factory
@@ -108,7 +118,7 @@ export class AIProviderFactory<T extends AIProvider = AIProvider> implements Pro
    * Create OpenAI provider instance
    */
   createOpenAI(config: OpenAIConfig): T {
-    const ProviderClass = ProviderRegistry.get<OpenAIConfig, T>('openai')
+    const ProviderClass = getProviderClass<OpenAIConfig, T>('openai')
     if (!ProviderClass) {
       throw new Error('OpenAI provider is not registered. Make sure to register it first.')
     }
@@ -119,7 +129,7 @@ export class AIProviderFactory<T extends AIProvider = AIProvider> implements Pro
    * Create Azure OpenAI provider instance
    */
   createAzure(config: AzureOpenAIConfig): T {
-    const ProviderClass = ProviderRegistry.get<AzureOpenAIConfig, T>('azure')
+    const ProviderClass = getProviderClass<AzureOpenAIConfig, T>('azure')
     if (!ProviderClass) {
       throw new Error('Azure OpenAI provider is not registered. Make sure to register it first.')
     }
@@ -130,7 +140,7 @@ export class AIProviderFactory<T extends AIProvider = AIProvider> implements Pro
    * Get list of supported providers
    */
   getSupportedProviders(): string[] {
-    return ProviderRegistry.getRegisteredProviders()
+    return getRegisteredProviders()
   }
 
   /**
@@ -194,21 +204,4 @@ export async function createProviderWithValidation<T extends AIProvider = AIProv
 ): Promise<T> {
   const factory = AIProviderFactory.getInstance<T>()
   return factory.createWithValidation(config)
-}
-
-/**
- * Register a provider for use with the factory
- */
-export function registerProvider<TConfig, T extends AIProvider>(
-  name: string,
-  providerClass: ProviderConstructor<TConfig, T>,
-): void {
-  ProviderRegistry.register(name, providerClass)
-}
-
-/**
- * Get available provider names
- */
-export function getAvailableProviders(): string[] {
-  return ProviderRegistry.getRegisteredProviders()
 }

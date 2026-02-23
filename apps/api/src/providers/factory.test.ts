@@ -9,10 +9,11 @@ import type { AIProvider, ChatCompletionChunk, ChatCompletionResponse, UsageInfo
 import type { AIConfig, AzureOpenAIConfig, OpenAIConfig } from './config.js'
 import {
   AIProviderFactory,
-  ProviderRegistry,
+  clearProviders,
   createProvider,
   createProviderWithValidation,
   getAvailableProviders,
+  isProviderRegistered,
   registerProvider,
 } from './factory.js'
 
@@ -109,54 +110,42 @@ class MockAzureProvider implements AIProvider {
 
 describe('provider registry', () => {
   beforeEach(() => {
-    ProviderRegistry.clear()
+    clearProviders()
   })
 
   afterEach(() => {
-    ProviderRegistry.clear()
+    clearProviders()
   })
 
   describe('provider registration', () => {
     it('should register providers correctly', () => {
-      ProviderRegistry.register('openai', MockOpenAIProvider)
-      ProviderRegistry.register('azure', MockAzureProvider)
+      registerProvider('openai', MockOpenAIProvider)
+      registerProvider('azure', MockAzureProvider)
 
-      expect(ProviderRegistry.isRegistered('openai')).toBe(true)
-      expect(ProviderRegistry.isRegistered('azure')).toBe(true)
-      expect(ProviderRegistry.isRegistered('unknown')).toBe(false)
+      expect(isProviderRegistered('openai')).toBe(true)
+      expect(isProviderRegistered('azure')).toBe(true)
+      expect(isProviderRegistered('unknown')).toBe(false)
     })
 
     it('should get registered providers', () => {
-      ProviderRegistry.register('openai', MockOpenAIProvider)
-      ProviderRegistry.register('azure', MockAzureProvider)
+      registerProvider('openai', MockOpenAIProvider)
+      registerProvider('azure', MockAzureProvider)
 
-      const providers = ProviderRegistry.getRegisteredProviders()
+      const providers = getAvailableProviders()
       expect(providers).toContain('openai')
       expect(providers).toContain('azure')
       expect(providers).toHaveLength(2)
     })
 
-    it('should retrieve provider classes', () => {
-      ProviderRegistry.register('openai', MockOpenAIProvider)
-
-      const ProviderClass = ProviderRegistry.get('openai')
-      expect(ProviderClass).toBe(MockOpenAIProvider)
-    })
-
-    it('should return undefined for unregistered providers', () => {
-      const ProviderClass = ProviderRegistry.get('unknown')
-      expect(ProviderClass).toBeUndefined()
-    })
-
     it('should clear all providers', () => {
-      ProviderRegistry.register('openai', MockOpenAIProvider)
-      ProviderRegistry.register('azure', MockAzureProvider)
+      registerProvider('openai', MockOpenAIProvider)
+      registerProvider('azure', MockAzureProvider)
 
-      expect(ProviderRegistry.getRegisteredProviders()).toHaveLength(2)
+      expect(getAvailableProviders()).toHaveLength(2)
 
-      ProviderRegistry.clear()
+      clearProviders()
 
-      expect(ProviderRegistry.getRegisteredProviders()).toHaveLength(0)
+      expect(getAvailableProviders()).toHaveLength(0)
     })
   })
 })
@@ -165,14 +154,14 @@ describe('ai provider factory', () => {
   let factory: AIProviderFactory
 
   beforeEach(() => {
-    ProviderRegistry.clear()
-    ProviderRegistry.register('openai', MockOpenAIProvider)
-    ProviderRegistry.register('azure', MockAzureProvider)
+    clearProviders()
+    registerProvider('openai', MockOpenAIProvider)
+    registerProvider('azure', MockAzureProvider)
     factory = AIProviderFactory.getInstance()
   })
 
   afterEach(() => {
-    ProviderRegistry.clear()
+    clearProviders()
   })
 
   describe('singleton pattern', () => {
@@ -281,7 +270,7 @@ describe('ai provider factory', () => {
     })
 
     it('should throw error for unregistered OpenAI provider', () => {
-      ProviderRegistry.clear() // Remove registered providers
+      clearProviders() // Remove registered providers
 
       const config: OpenAIConfig = {
         apiKey: 'sk-test-key',
@@ -293,7 +282,7 @@ describe('ai provider factory', () => {
     })
 
     it('should throw error for unregistered Azure provider', () => {
-      ProviderRegistry.clear() // Remove registered providers
+      clearProviders() // Remove registered providers
 
       const config: AzureOpenAIConfig = {
         apiKey: 'azure-key',
@@ -411,13 +400,13 @@ describe('ai provider factory', () => {
 
 describe('convenience functions', () => {
   beforeEach(() => {
-    ProviderRegistry.clear()
-    ProviderRegistry.register('openai', MockOpenAIProvider)
-    ProviderRegistry.register('azure', MockAzureProvider)
+    clearProviders()
+    registerProvider('openai', MockOpenAIProvider)
+    registerProvider('azure', MockAzureProvider)
   })
 
   afterEach(() => {
-    ProviderRegistry.clear()
+    clearProviders()
   })
 
   describe('createProvider', () => {
@@ -454,11 +443,11 @@ describe('convenience functions', () => {
 
   describe('registerProvider', () => {
     it('should register provider using convenience function', () => {
-      ProviderRegistry.clear()
+      clearProviders()
 
       registerProvider('test', MockOpenAIProvider)
 
-      expect(ProviderRegistry.isRegistered('test')).toBe(true)
+      expect(isProviderRegistered('test')).toBe(true)
     })
   })
 
