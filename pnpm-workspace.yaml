@@ -2,12 +2,7 @@ pnpm:
   overrides:
     source-map: ^0.7.6
     sourcemap-codec: npm:@jridgewell/sourcemap-codec@^1.5.5
-shellEmulator: true
-trustPolicy: unsafe
 packages:
   - 'apps/*'
   - 'packages/*'
   - 'tools/*'
-overrides:
-  source-map: ^0.7.6
-  sourcemap-codec: npm:@jridgewell/sourcemap-codec@^1.5.5

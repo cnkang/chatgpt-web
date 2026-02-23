@@ -318,7 +318,11 @@ export class RateLimitedRetry {
       if (operation) {
         this.lastExecutionTime = Date.now()
 
-        await operation()
+        try {
+          await operation()
+        } catch {
+          // Error is already propagated via the promise in execute()
+        }
       }
     }
 
