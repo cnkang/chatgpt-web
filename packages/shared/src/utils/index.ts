@@ -277,7 +277,7 @@ export function validateTopP(topP: number): boolean {
 }
 
 export function validateMaxTokens(maxTokens: number): boolean {
-  return isNumber(maxTokens) && maxTokens > 0 && maxTokens <= 32000
+  return isNumber(maxTokens) && maxTokens > 0 && maxTokens <= 262144
 }
 
 export function validateModel(model: string): boolean {

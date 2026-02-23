@@ -27,7 +27,7 @@ The ChatGPT Web Modernization project has made significant progress in implement
 - **Vue.js 3.5+ Features**: ✅ Composition API, script setup syntax
 - **OpenAI API v1**: ✅ Native integration implemented
 - **Azure OpenAI Support**: ✅ Native client implemented
-- **Reasoning Models**: ✅ o1, o1-mini support added
+- **Reasoning Models**: ✅ o3, o3-mini, o4-mini support added
 - **Provider Abstraction**: ✅ Factory pattern implemented
 - **Modern Build System**: ✅ Vite optimized for Node.js 24
 

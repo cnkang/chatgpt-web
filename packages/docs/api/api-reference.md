@@ -263,7 +263,7 @@ AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_official_api_key_here
 OPENAI_API_BASE_URL=https://api.openai.com
 SKIP_API_DOMAIN_CHECK=false
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.2
 ```
 
 If you use an OpenAI-compatible third-party endpoint, set:
@@ -277,10 +277,9 @@ SKIP_API_DOMAIN_CHECK=true
 
 **Supported Models:**
 
+- `gpt-5.2`, `gpt-5.1`, `gpt-5` - Latest GPT-5.x models with enhanced capabilities
 - `gpt-4o`, `gpt-4o-mini` - Latest GPT-4o models
-- `gpt-4-turbo`, `gpt-4-turbo-preview` - GPT-4 Turbo models
-- `gpt-4`, `gpt-4-32k` - Standard GPT-4 models
-- `o1`, `o1-preview`, `o1-mini` - Reasoning models
+- `o3`, `o3-mini`, `o4-mini` - Reasoning models
 
 ### Azure OpenAI Provider
 
@@ -328,7 +327,7 @@ The chat endpoint returns streaming responses. Each line contains a JSON object:
 
 ### Reasoning Model Response
 
-When using reasoning models (o1, o1-preview, o1-mini), responses include reasoning steps:
+When using reasoning models (o3, o3-mini, o4-mini), responses include reasoning steps:
 
 ```json
 {

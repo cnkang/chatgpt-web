@@ -144,7 +144,7 @@ export const ChatCompletionRequestSchema = z.object({
   model: z.string().trim().min(1, 'Model is required'),
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
-  maxTokens: z.number().int().min(1).max(32000).optional(),
+  maxTokens: z.number().int().min(1).max(262144).optional(),
   stream: z.boolean().optional(),
   reasoningMode: z.boolean().optional(),
 })
@@ -295,7 +295,7 @@ export const ConfigRequestSchema = z.object({
   model: z.string().trim().optional(),
   temperature: optionalNumberSchema,
   top_p: z.number().min(0).max(1).optional(),
-  max_tokens: z.number().int().min(1).max(32000).optional(),
+  max_tokens: z.number().int().min(1).max(262144).optional(),
 })
 
 export const IdSchema = z

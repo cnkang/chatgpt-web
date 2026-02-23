@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { SvgIcon } from '@/components/common'
-import { NSelect, NTag, NTooltip } from 'naive-ui'
 import type { SelectGroupOption, SelectOption } from 'naive-ui'
+import { NSelect, NTag, NTooltip } from 'naive-ui'
 import { computed } from 'vue'
 
 interface ModelOption {
@@ -48,21 +48,21 @@ const modelOptions: ModelOption[] = [
     speed: 'fast',
   },
   {
-    value: 'o1-preview',
-    label: 'o1-preview',
+    value: 'o3',
+    label: 'o3',
     description: 'Advanced reasoning model for complex problem-solving',
     supportsReasoning: true,
-    maxTokens: 32768,
-    costMultiplier: 15,
+    maxTokens: 128000,
+    costMultiplier: 10,
     speed: 'slow',
   },
   {
-    value: 'o1-mini',
-    label: 'o1-mini',
-    description: 'Faster reasoning model for coding and math',
+    value: 'o4-mini',
+    label: 'o4-mini',
+    description: 'Fast and affordable reasoning model for coding and math',
     supportsReasoning: true,
-    maxTokens: 65536,
-    costMultiplier: 3,
+    maxTokens: 128000,
+    costMultiplier: 1.5,
     speed: 'medium',
   },
 ]

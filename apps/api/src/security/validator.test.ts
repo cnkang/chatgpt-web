@@ -49,7 +49,7 @@ describe('security Validator - Unofficial API Pattern Detection', () => {
       const codeWithAccessToken = `
         const config = {
           accessToken: process.env.OPENAI_ACCESS_TOKEN,
-          model: 'gpt-3.5-turbo'
+          model: 'gpt-4o'
         }
       `
 
@@ -129,7 +129,7 @@ describe('security Validator - Unofficial API Pattern Detection', () => {
         import { ChatGPTAPI } from 'chatgpt'
         const api = new ChatGPTAPI({
           apiKey: process.env.OPENAI_API_KEY,
-          completionParams: { model: 'gpt-3.5-turbo' }
+          completionParams: { model: 'gpt-4o' }
         })
       `
 

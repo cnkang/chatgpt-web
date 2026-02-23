@@ -156,27 +156,10 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     'gpt-4o-2024-05-13',
     'gpt-4o-mini-2024-07-18',
 
-    // GPT-4 Turbo models
-    'gpt-4-turbo',
-    'gpt-4-turbo-2024-04-09',
-    'gpt-4-0125-preview',
-    'gpt-4-1106-preview',
-
-    // GPT-4 models
-    'gpt-4',
-    'gpt-4-0613',
-    'gpt-4-32k',
-    'gpt-4-32k-0613',
-
-    // GPT-3.5 models (Azure naming convention)
-    'gpt-35-turbo',
-    'gpt-35-turbo-16k',
-    'gpt-35-turbo-0613',
-    'gpt-35-turbo-16k-0613',
-
     // Reasoning models (when available on Azure)
-    'o1-preview',
-    'o1-mini',
+    'o3',
+    'o3-mini',
+    'o4-mini',
   ]
 
   private client: AzureOpenAI
@@ -835,7 +818,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     supportsReasoning: boolean
     supportsStreaming: boolean
   } {
-    const reasoningModels = ['o1-preview', 'o1-mini']
+    const reasoningModels = ['o3', 'o3-mini', 'o4-mini']
     const isReasoningModel = reasoningModels.some(rm => model.includes(rm))
 
     // Model-specific token limits
@@ -844,7 +827,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     if (model.includes('gpt-5')) {
       // GPT-5.x models - latest generation with enhanced capabilities
       if (model.includes('gpt-5.2')) {
-        maxTokens = 200000 // GPT-5.2 has larger context window
+        maxTokens = 262144 // GPT-5.2: 256k context window
       } else {
         maxTokens = 128000 // Other GPT-5.x models
       }
@@ -853,18 +836,6 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       maxTokens = 128000
     } else if (model.includes('gpt-4o')) {
       maxTokens = model.includes('mini') ? 128000 : 128000
-    } else if (
-      model.includes('gpt-4-turbo') ||
-      model.includes('gpt-4-0125') ||
-      model.includes('gpt-4-1106')
-    ) {
-      maxTokens = 128000
-    } else if (model.includes('gpt-4-32k')) {
-      maxTokens = 32768
-    } else if (model.includes('gpt-4')) {
-      maxTokens = 8192
-    } else if (model.includes('gpt-35-turbo')) {
-      maxTokens = model.includes('16k') ? 16384 : 4096
     } else if (isReasoningModel) {
       maxTokens = 128000
     }

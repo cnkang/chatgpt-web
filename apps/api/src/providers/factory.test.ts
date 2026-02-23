@@ -3,23 +3,23 @@
  * Tests provider factory implementation according to task 7.2
  */
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
 import type { AIProvider, ChatCompletionChunk, ChatCompletionResponse, UsageInfo } from './base.js'
 import type { AIConfig, AzureOpenAIConfig, OpenAIConfig } from './config.js'
-import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AIProviderFactory,
+  ProviderRegistry,
   createProvider,
   createProviderWithValidation,
   getAvailableProviders,
-  ProviderRegistry,
   registerProvider,
 } from './factory.js'
 
 // Mock provider classes
 class MockOpenAIProvider implements AIProvider {
   readonly name = 'openai'
-  readonly supportedModels = ['gpt-4o', 'gpt-3.5-turbo']
+  readonly supportedModels = ['gpt-4o', 'gpt-5.2']
   readonly supportsStreaming = true
   readonly supportsReasoning = true
 
@@ -64,7 +64,7 @@ class MockOpenAIProvider implements AIProvider {
 
 class MockAzureProvider implements AIProvider {
   readonly name = 'azure'
-  readonly supportedModels = ['gpt-4o', 'gpt-35-turbo']
+  readonly supportedModels = ['gpt-4o', 'gpt-5.2']
   readonly supportsStreaming = true
   readonly supportsReasoning = true
 
@@ -187,7 +187,7 @@ describe('ai provider factory', () => {
     it('should create OpenAI provider', () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'sk-test-key',
@@ -221,7 +221,7 @@ describe('ai provider factory', () => {
     it('should throw error for unsupported provider', () => {
       const config: AIConfig = {
         provider: 'unsupported' as unknown as AIConfig['provider'],
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
       }
 
@@ -231,7 +231,7 @@ describe('ai provider factory', () => {
     it('should throw error for missing OpenAI config', () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         // Missing openai config
       }
@@ -320,7 +320,7 @@ describe('ai provider factory', () => {
     it('should create provider with successful validation', async () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'sk-valid-key', // Valid key format
@@ -334,7 +334,7 @@ describe('ai provider factory', () => {
     it('should reject provider with failed validation', async () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'invalid-key', // Invalid key format
@@ -351,7 +351,7 @@ describe('ai provider factory', () => {
     it('should create provider with retry on success', async () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'sk-valid-key',
@@ -377,7 +377,7 @@ describe('ai provider factory', () => {
 
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'sk-test-key',
@@ -395,7 +395,7 @@ describe('ai provider factory', () => {
     it('should fail after max retries', async () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'invalid-key', // Always fails validation
@@ -424,7 +424,7 @@ describe('convenience functions', () => {
     it('should create provider using convenience function', () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'sk-test-key',
@@ -440,7 +440,7 @@ describe('convenience functions', () => {
     it('should create provider with validation using convenience function', async () => {
       const config: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'sk-valid-key',

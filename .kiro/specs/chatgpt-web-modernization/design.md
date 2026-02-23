@@ -516,7 +516,7 @@ _For any_ error condition from AI providers, the error handling should be consis
 **Validates: Requirements 3.7, 7.4**
 
 **Property 9: Reasoning Model Support**
-_For any_ reasoning model request (o1, o1-mini), the client should handle model-specific parameters, limitations, and display reasoning steps when available in responses
+_For any_ reasoning model request (o3, o3-mini, o4-mini), the client should handle model-specific parameters, limitations, and display reasoning steps when available in responses
 **Validates: Requirements 4.1, 4.2, 4.3**
 
 **Property 10: Reasoning Model UI Indicators**

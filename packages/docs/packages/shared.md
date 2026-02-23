@@ -684,22 +684,30 @@ export const CONTENT_TYPES = {
 ```typescript
 // src/constants/models.ts
 export const OPENAI_MODELS = {
+  GPT_5_2: 'gpt-5.2',
+  GPT_5_1: 'gpt-5.1',
+  GPT_5: 'gpt-5',
   GPT_4O: 'gpt-4o',
   GPT_4O_MINI: 'gpt-4o-mini',
-  GPT_4_TURBO: 'gpt-4-turbo',
-  GPT_4: 'gpt-4',
-  GPT_3_5_TURBO: 'gpt-3.5-turbo',
-  O1_PREVIEW: 'o1-preview',
-  O1_MINI: 'o1-mini',
+  O3: 'o3',
+  O3_MINI: 'o3-mini',
+  O4_MINI: 'o4-mini',
 } as const
 
 export const AZURE_MODELS = {
+  GPT_5_2: 'gpt-5.2',
+  GPT_5_1: 'gpt-5.1',
+  GPT_5: 'gpt-5',
   GPT_4O: 'gpt-4o',
-  GPT_4: 'gpt-4',
-  GPT_35_TURBO: 'gpt-35-turbo',
+  GPT_4O_MINI: 'gpt-4o-mini',
+  MODEL_ROUTER: 'model-router',
 } as const
 
-export const REASONING_MODELS = [OPENAI_MODELS.O1_PREVIEW, OPENAI_MODELS.O1_MINI] as const
+export const REASONING_MODELS = [
+  OPENAI_MODELS.O3,
+  OPENAI_MODELS.O3_MINI,
+  OPENAI_MODELS.O4_MINI,
+] as const
 
 export const MODEL_LIMITS = {
   [OPENAI_MODELS.GPT_4O]: {
@@ -712,20 +720,20 @@ export const MODEL_LIMITS = {
     contextWindow: 128000,
     costPer1kTokens: { input: 0.00015, output: 0.0006 },
   },
-  [OPENAI_MODELS.O1_PREVIEW]: {
-    maxTokens: 32768,
-    contextWindow: 128000,
-    costPer1kTokens: { input: 0.015, output: 0.06 },
+  [OPENAI_MODELS.O3]: {
+    maxTokens: 128000,
+    contextWindow: 200000,
+    costPer1kTokens: { input: 0.01, output: 0.04 },
   },
-  [OPENAI_MODELS.O1_MINI]: {
-    maxTokens: 65536,
-    contextWindow: 128000,
-    costPer1kTokens: { input: 0.003, output: 0.012 },
+  [OPENAI_MODELS.O4_MINI]: {
+    maxTokens: 128000,
+    contextWindow: 200000,
+    costPer1kTokens: { input: 0.0011, output: 0.0044 },
   },
 } as const
 
 export const DEFAULT_MODEL = OPENAI_MODELS.GPT_4O
-export const DEFAULT_REASONING_MODEL = OPENAI_MODELS.O1_PREVIEW
+export const DEFAULT_REASONING_MODEL = OPENAI_MODELS.O3
 ```
 
 ### Error Constants

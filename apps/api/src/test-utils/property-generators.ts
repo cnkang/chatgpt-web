@@ -44,21 +44,14 @@ export function messageRoleGenerator() {
  * Generates OpenAI model names
  */
 export function modelNameGenerator() {
-  return fc.constantFrom(
-    'gpt-4o',
-    'gpt-4o-mini',
-    'gpt-4-turbo',
-    'gpt-3.5-turbo',
-    'o1-preview',
-    'o1-mini',
-  )
+  return fc.constantFrom('gpt-5.2', 'gpt-4o', 'gpt-4o-mini', 'o3', 'o4-mini')
 }
 
 /**
  * Generates reasoning model names specifically
  */
 export function reasoningModelGenerator() {
-  return fc.constantFrom('o1-preview', 'o1-mini')
+  return fc.constantFrom('o3', 'o3-mini', 'o4-mini')
 }
 
 /**
@@ -72,7 +65,7 @@ export function temperatureGenerator() {
  * Generates max tokens values
  */
 export function maxTokensGenerator() {
-  return fc.integer({ min: 1, max: 4096 })
+  return fc.integer({ min: 1, max: 16384 })
 }
 
 // ============================================================================

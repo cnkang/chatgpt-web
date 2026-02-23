@@ -32,7 +32,7 @@ This implementation plan transforms the existing ChatGPT web application into a 
     - Create OpenAI provider using official openai package
     - Support all v1 endpoints (chat, embeddings, assistants)
     - Implement streaming response handling
-    - Add reasoning model support (o1, o1-mini)
+    - Add reasoning model support (o3, o3-mini, o4-mini)
     - _Requirements: 3.1, 3.4, 3.6, 4.1, 4.3_
 
   - [ ]\* 2.4 Write property test for OpenAI API v1 compatibility

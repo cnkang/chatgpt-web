@@ -10,13 +10,13 @@ Provides developers and users with a reliable, feature-rich web interface for Ch
 
 - **Security**: Official API integration only, comprehensive input validation, security headers
 - **Modern Architecture**: Node.js 24, Vue.js 3.5+, TypeScript with zero errors
-- **AI Model Support**: Full support for latest OpenAI models including reasoning models (o1 series)
+- **AI Model Support**: Full support for latest OpenAI models including reasoning models (o3/o4 series)
 - **Enterprise Ready**: Azure OpenAI integration, rate limiting, session management
 
 ## Key Features
 
 - **Multi-Provider Support**: Seamless switching between OpenAI and Azure OpenAI
-- **Reasoning Models**: Full support for o1, o1-preview, o1-mini with step-by-step display
+- **Reasoning Models**: Full support for o3, o3-mini, o4-mini with step-by-step display
 - **Streaming Responses**: Real-time message streaming for both providers
 - **Rich Content**: Markdown rendering, code highlighting, math formulas (KaTeX), diagrams (Mermaid)
 - **Internationalization**: Multi-language support with Vue i18n

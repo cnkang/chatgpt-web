@@ -121,17 +121,25 @@ describe('openai provider', () => {
 
     it('should have supported models list', () => {
       expect(provider.supportedModels).toContain('gpt-4o')
-      expect(provider.supportedModels).toContain('gpt-3.5-turbo')
-      expect(provider.supportedModels).toContain('o1-preview')
-      expect(provider.supportedModels).toContain('o1-mini')
+      expect(provider.supportedModels).toContain('gpt-5.2')
+      expect(provider.supportedModels).toContain('o3')
+      expect(provider.supportedModels).toContain('o4-mini')
+      expect(provider.supportedModels).not.toContain('gpt-3.5-turbo')
+      expect(provider.supportedModels).not.toContain('gpt-4-turbo')
+      expect(provider.supportedModels).not.toContain('gpt-4')
+      expect(provider.supportedModels).not.toContain('o1-preview')
+      expect(provider.supportedModels).not.toContain('o1-mini')
     })
   })
 
   describe('model support and capabilities', () => {
     it('should correctly identify supported models', () => {
       expect(provider.isModelSupported('gpt-4o')).toBe(true)
-      expect(provider.isModelSupported('gpt-3.5-turbo')).toBe(true)
-      expect(provider.isModelSupported('o1-preview')).toBe(true)
+      expect(provider.isModelSupported('gpt-5.2')).toBe(true)
+      expect(provider.isModelSupported('o3')).toBe(true)
+      expect(provider.isModelSupported('o4-mini')).toBe(true)
+      expect(provider.isModelSupported('gpt-3.5-turbo')).toBe(false)
+      expect(provider.isModelSupported('o1-preview')).toBe(false)
       expect(provider.isModelSupported('unsupported-model')).toBe(false)
     })
 
@@ -143,15 +151,15 @@ describe('openai provider', () => {
     })
 
     it('should return correct capabilities for reasoning models', () => {
-      const capabilities = provider.getModelCapabilities('o1-preview')
+      const capabilities = provider.getModelCapabilities('o3')
       expect(capabilities.maxTokens).toBe(128000)
       expect(capabilities.supportsReasoning).toBe(true)
       expect(capabilities.supportsStreaming).toBe(false)
     })
 
-    it('should return correct capabilities for GPT-3.5 models', () => {
-      const capabilities = provider.getModelCapabilities('gpt-3.5-turbo')
-      expect(capabilities.maxTokens).toBe(4096)
+    it('should return correct capabilities for GPT-5.2 models', () => {
+      const capabilities = provider.getModelCapabilities('gpt-5.2')
+      expect(capabilities.maxTokens).toBe(262144)
       expect(capabilities.supportsReasoning).toBe(false)
       expect(capabilities.supportsStreaming).toBe(true)
     })
@@ -399,7 +407,7 @@ describe('openai provider', () => {
         id: 'chatcmpl-test',
         object: 'chat.completion',
         created: 1234567890,
-        model: 'o1-preview',
+        model: 'o3',
         choices: [
           {
             index: 0,
@@ -417,7 +425,7 @@ describe('openai provider', () => {
 
       const request: ChatCompletionRequest = {
         messages: [{ role: 'user', content: 'Solve this problem' }],
-        model: 'o1-preview',
+        model: 'o3',
       }
 
       const result = await provider.createChatCompletion(request)

@@ -331,7 +331,7 @@ export const chatSessionArbitrary = (): fc.Arbitrary<ChatSession> =>
   fc.record({
     id: fc.uuid(),
     messages: fc.array(chatMessageArbitrary(), { minLength: 0, maxLength: 50 }),
-    model: fc.constantFrom('gpt-4o', 'gpt-4o-mini', 'o1-preview'),
+    model: fc.constantFrom('gpt-4o', 'gpt-4o-mini', 'o3'),
     createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
     updatedAt: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
   })

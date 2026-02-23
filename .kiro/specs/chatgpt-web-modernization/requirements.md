@@ -13,7 +13,7 @@ This specification defines the comprehensive modernization and refactoring of th
 - **Backend_Service**: The Express.js-based API server
 - **Type_Checker**: The TypeScript compiler and type validation system
 - **Linter**: The ESLint code quality and style checker
-- **Reasoning_Model**: OpenAI models that support chain-of-thought reasoning (o1, o1-mini, etc.)
+- **Reasoning_Model**: OpenAI models that support chain-of-thought reasoning (o3, o3-mini, o4-mini, etc.)
 - **Security_Scanner**: Tools and practices for identifying security vulnerabilities
 - **Build_System**: The Vite-based build and bundling system
 
@@ -60,11 +60,11 @@ This specification defines the comprehensive modernization and refactoring of th
 
 ### Requirement 4: Reasoning Model Support
 
-**User Story:** As a user, I want to access OpenAI's reasoning models (o1, o1-mini), so that I can get more thoughtful and step-by-step responses for complex queries.
+**User Story:** As a user, I want to access OpenAI's reasoning models (o3, o3-mini, o4-mini), so that I can get more thoughtful and step-by-step responses for complex queries.
 
 #### Acceptance Criteria
 
-1. THE OpenAI_API_Client SHALL support reasoning models including o1 and o1-mini
+1. THE OpenAI_API_Client SHALL support reasoning models including o3, o3-mini, and o4-mini
 2. WHEN using reasoning models, THE Frontend_App SHALL display reasoning steps if available in the response
 3. THE OpenAI_API_Client SHALL handle reasoning model-specific parameters and limitations
 4. WHEN a reasoning model is selected, THE Frontend_App SHALL provide appropriate UI indicators for longer processing times

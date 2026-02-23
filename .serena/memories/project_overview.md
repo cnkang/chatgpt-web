@@ -63,12 +63,12 @@ chatgpt-web/
 
 ## 支持的 AI 模型
 
-- OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo, o1, o1-preview, o1-mini
+- OpenAI: gpt-5.2, gpt-5, gpt-4o, gpt-4o-mini, o3, o3-mini, o4-mini, model-router
 - Azure OpenAI: 支持所有在 Azure OpenAI 资源中可用的模型
 
 ## 特性
 
-- 推理模型支持（o1 系列）
+- 推理模型支持（o3/o4 系列）
 - 流式响应
 - 多会话管理
 - 代码高亮和格式化

@@ -175,7 +175,7 @@ describe('configurationValidator - Deprecated Configuration Rejection', () => {
       const config = ConfigurationValidator.getValidatedConfig()
 
       expect(config.apiKey).toBe('sk-fake-api-key-12345')
-      expect(config.model).toBe('gpt-3.5-turbo') // default
+      expect(config.model).toBe('gpt-5.2') // default
       expect(config.timeout).toBe(100000) // default
     })
   })

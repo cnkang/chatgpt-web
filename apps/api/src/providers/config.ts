@@ -134,7 +134,7 @@ export class ConfigurationManager {
       if (provider === 'azure' && azureDeployment) {
         defaultModel = azureDeployment
       } else {
-        defaultModel = 'gpt-5.1'
+        defaultModel = 'gpt-5.2'
       }
     }
 
@@ -143,7 +143,7 @@ export class ConfigurationManager {
         port: Number.parseInt(process.env.PORT || '3002', 10),
         host: process.env.HOST || '0.0.0.0',
         cors: {
-          origin: corsOriginRaw?.split(',') || '*',
+          origin: corsOriginRaw ? corsOriginRaw.split(',').map(o => o.trim()) : [],
           credentials: process.env.CORS_CREDENTIALS === 'true',
         },
       },

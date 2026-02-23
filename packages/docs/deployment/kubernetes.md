@@ -68,7 +68,7 @@ metadata:
 data:
   NODE_ENV: 'production'
   AI_PROVIDER: 'openai'
-  DEFAULT_MODEL: 'gpt-4o'
+  DEFAULT_MODEL: 'gpt-5.2'
   MAX_REQUEST_PER_HOUR: '1000'
   TIMEOUT_MS: '30000'
   LOG_LEVEL: 'info'

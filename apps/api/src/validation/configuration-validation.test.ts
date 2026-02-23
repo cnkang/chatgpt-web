@@ -110,7 +110,7 @@ describe('configuration Validation Integration', () => {
   describe('getValidatedConfig', () => {
     it('should return valid configuration when environment is correct', () => {
       process.env.OPENAI_API_KEY = 'sk-test-key-123'
-      process.env.OPENAI_API_MODEL = 'gpt-4'
+      process.env.OPENAI_API_MODEL = 'gpt-4o'
       process.env.OPENAI_API_BASE_URL = 'https://api.openai.com'
       process.env.TIMEOUT_MS = '60000'
       process.env.OPENAI_API_DISABLE_DEBUG = 'true'
@@ -120,7 +120,7 @@ describe('configuration Validation Integration', () => {
       const config = ConfigurationValidator.getValidatedConfig()
 
       expect(config.apiKey).toBe('sk-test-key-123')
-      expect(config.model).toBe('gpt-4')
+      expect(config.model).toBe('gpt-4o')
       expect(config.baseUrl).toBe('https://api.openai.com')
       expect(config.timeout).toBe(60000)
       expect(config.disableDebug).toBe(true)
@@ -138,7 +138,7 @@ describe('configuration Validation Integration', () => {
       const config = ConfigurationValidator.getValidatedConfig()
 
       expect(config.apiKey).toBe('sk-test-key-123')
-      expect(config.model).toBe('gpt-3.5-turbo')
+      expect(config.model).toBe('gpt-5.2')
       expect(config.baseUrl).toBeUndefined()
       expect(config.timeout).toBe(100000)
       expect(config.disableDebug).toBe(false)
@@ -404,7 +404,7 @@ describe('configuration Validation Properties', () => {
       },
       {
         OPENAI_API_KEY: 'sk-test-key-123',
-        OPENAI_API_MODEL: 'gpt-4',
+        OPENAI_API_MODEL: 'gpt-4o',
       },
       {
         OPENAI_API_KEY: 'sk-test-key-123',
@@ -412,7 +412,7 @@ describe('configuration Validation Properties', () => {
       },
       {
         OPENAI_API_KEY: 'sk-test-key-123',
-        OPENAI_API_MODEL: 'gpt-3.5-turbo',
+        OPENAI_API_MODEL: 'gpt-4o',
         OPENAI_API_BASE_URL: 'https://api.openai.com',
         TIMEOUT_MS: '60000',
         OPENAI_API_DISABLE_DEBUG: 'true',

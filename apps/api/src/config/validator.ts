@@ -1,4 +1,4 @@
-import { isNotEmptyString } from '../utils/is'
+import { isNotEmptyString } from '@chatgpt-web/shared'
 
 /**
  * Configuration validation result
@@ -209,7 +209,7 @@ export class ConfigurationValidator {
     return {
       apiKey: process.env.OPENAI_API_KEY!,
       baseUrl: process.env.OPENAI_API_BASE_URL,
-      model: process.env.OPENAI_API_MODEL || 'gpt-3.5-turbo',
+      model: process.env.OPENAI_API_MODEL || 'gpt-5.2',
       timeout: Number(process.env.TIMEOUT_MS) || 100000,
       disableDebug: process.env.OPENAI_API_DISABLE_DEBUG === 'true',
     }
@@ -421,7 +421,7 @@ Setup Steps:
 
 Example configuration:
 OPENAI_API_KEY=sk-proj-...
-OPENAI_API_MODEL=gpt-5.1
+OPENAI_API_MODEL=gpt-5.2
 OPENAI_API_BASE_URL=https://api.openai.com
 
 Please set your API key and restart the application.

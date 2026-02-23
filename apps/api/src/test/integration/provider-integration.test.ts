@@ -4,10 +4,10 @@
  * Validates Requirements: 7.3, 4.1, 6.1-6.8
  */
 
-import type { ChatCompletionRequest } from '../../providers/base.js'
-import type { AIConfig } from '../../providers/config.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AzureOpenAIProvider } from '../../providers/azure.js'
+import type { ChatCompletionRequest } from '../../providers/base.js'
+import type { AIConfig } from '../../providers/config.js'
 import { AIProviderFactory, ProviderRegistry, registerProvider } from '../../providers/factory.js'
 import { OpenAIProvider } from '../../providers/openai.js'
 
@@ -97,7 +97,7 @@ describe('provider integration tests', () => {
       // Test OpenAI provider creation
       const openAIConfig: AIConfig = {
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: {
           apiKey: 'sk-test-openai-key-1234567890abcdef1234567890abcdef1234567890',
@@ -138,7 +138,7 @@ describe('provider integration tests', () => {
       // Test OpenAI error handling
       const openAIProvider = factory.create({
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
@@ -166,7 +166,7 @@ describe('provider integration tests', () => {
     it('should support reasoning models across providers', async () => {
       const provider = factory.create({
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: true,
         openai: {
           apiKey: 'sk-test-key',
@@ -175,29 +175,29 @@ describe('provider integration tests', () => {
       })
 
       // Test reasoning model capabilities
-      const o1Capabilities = provider.getModelCapabilities('o1-preview')
-      expect(o1Capabilities.supportsReasoning).toBe(true)
-      expect(o1Capabilities.supportsStreaming).toBe(false) // Reasoning models don't support streaming
+      const o3Capabilities = provider.getModelCapabilities('o3')
+      expect(o3Capabilities.supportsReasoning).toBe(true)
+      expect(o3Capabilities.supportsStreaming).toBe(false) // Reasoning models don't support streaming
 
-      const o1MiniCapabilities = provider.getModelCapabilities('o1-mini')
-      expect(o1MiniCapabilities.supportsReasoning).toBe(true)
+      const o4MiniCapabilities = provider.getModelCapabilities('o4-mini')
+      expect(o4MiniCapabilities.supportsReasoning).toBe(true)
     })
 
     it('should handle reasoning model limitations correctly', async () => {
       const provider = factory.create({
         provider: 'openai',
-        defaultModel: 'o1-preview',
+        defaultModel: 'o3',
         enableReasoning: true,
         openai: { apiKey: 'sk-test-key' },
       })
 
       // Test that reasoning models are identified correctly
-      expect(provider.isModelSupported('o1-preview')).toBe(true)
-      expect(provider.isModelSupported('o1-mini')).toBe(true)
-      expect(provider.isModelSupported('o1')).toBe(true)
+      expect(provider.isModelSupported('o3')).toBe(true)
+      expect(provider.isModelSupported('o3-mini')).toBe(true)
+      expect(provider.isModelSupported('o4-mini')).toBe(true)
 
       // Test model capabilities
-      const capabilities = provider.getModelCapabilities('o1-preview')
+      const capabilities = provider.getModelCapabilities('o3')
       expect(capabilities.supportsReasoning).toBe(true)
       expect(capabilities.supportsStreaming).toBe(false)
       expect(capabilities.maxTokens).toBe(128000)
@@ -259,7 +259,7 @@ describe('provider integration tests', () => {
     it('should implement consistent error handling across providers', async () => {
       const openAIProvider = factory.create({
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
@@ -295,7 +295,7 @@ describe('provider integration tests', () => {
     it('should create providers with consistent interfaces', async () => {
       const openAIProvider = factory.create({
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
@@ -327,7 +327,7 @@ describe('provider integration tests', () => {
     it('should handle unsupported provider gracefully', async () => {
       const invalidConfig: AIConfig = {
         provider: 'unsupported' as unknown as AIConfig['provider'],
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
       }
 
@@ -339,7 +339,7 @@ describe('provider integration tests', () => {
     it('should provide accurate model capabilities across providers', async () => {
       const openAIProvider = factory.create({
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
@@ -366,7 +366,7 @@ describe('provider integration tests', () => {
       expect(azureGpt4oCapabilities.supportsStreaming).toBe(true)
 
       // Test reasoning model capabilities
-      const reasoningCapabilities = openAIProvider.getModelCapabilities('o1-preview')
+      const reasoningCapabilities = openAIProvider.getModelCapabilities('o3')
       expect(reasoningCapabilities.supportsReasoning).toBe(true)
       expect(reasoningCapabilities.supportsStreaming).toBe(false)
       expect(reasoningCapabilities.maxTokens).toBe(128000)
@@ -375,7 +375,7 @@ describe('provider integration tests', () => {
     it('should support model validation across providers', async () => {
       const openAIProvider = factory.create({
         provider: 'openai',
-        defaultModel: 'gpt-3.5-turbo',
+        defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
@@ -394,13 +394,15 @@ describe('provider integration tests', () => {
 
       // Test model support validation
       expect(openAIProvider.isModelSupported('gpt-4o')).toBe(true)
-      expect(openAIProvider.isModelSupported('gpt-3.5-turbo')).toBe(true)
-      expect(openAIProvider.isModelSupported('o1-preview')).toBe(true)
+      expect(openAIProvider.isModelSupported('gpt-5.2')).toBe(true)
+      expect(openAIProvider.isModelSupported('o3')).toBe(true)
+      expect(openAIProvider.isModelSupported('gpt-3.5-turbo')).toBe(false)
       expect(openAIProvider.isModelSupported('unsupported-model')).toBe(false)
 
       expect(azureProvider.isModelSupported('gpt-4o')).toBe(true)
-      expect(azureProvider.isModelSupported('gpt-35-turbo')).toBe(true) // Azure naming
-      expect(azureProvider.isModelSupported('o1-preview')).toBe(true)
+      expect(azureProvider.isModelSupported('gpt-5.2')).toBe(true)
+      expect(azureProvider.isModelSupported('o3')).toBe(true)
+      expect(azureProvider.isModelSupported('gpt-35-turbo')).toBe(false)
       expect(azureProvider.isModelSupported('unsupported-model')).toBe(false)
     })
   })

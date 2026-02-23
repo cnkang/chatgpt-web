@@ -80,7 +80,7 @@ export function useReasoning() {
 
   function setReasoningModel(modelName: string) {
     // Check if the model supports reasoning
-    const reasoningModels = ['o1-preview', 'o1-mini', 'o1']
+    const reasoningModels = ['o3', 'o3-mini', 'o4-mini']
     isReasoningModel.value = reasoningModels.some(model => modelName.toLowerCase().includes(model))
   }
 
@@ -90,9 +90,9 @@ export function useReasoning() {
 
   function getEstimatedTimeForModel(modelName: string): number {
     // Return estimated reasoning time based on model
-    if (modelName.includes('o1-preview')) return 45
-    if (modelName.includes('o1-mini')) return 25
-    if (modelName.includes('o1')) return 35
+    if (modelName.includes('o3') && !modelName.includes('mini')) return 45
+    if (modelName.includes('o4-mini')) return 20
+    if (modelName.includes('o3-mini')) return 25
     return 30
   }
 

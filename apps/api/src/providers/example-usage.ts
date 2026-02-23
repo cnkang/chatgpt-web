@@ -17,7 +17,7 @@ async function exampleUsage() {
   // Example OpenAI configuration
   const openAIConfig: AIConfig = {
     provider: 'openai',
-    defaultModel: 'gpt-4o-mini',
+    defaultModel: 'gpt-5.2',
     enableReasoning: false,
     openai: {
       apiKey: process.env.OPENAI_API_KEY || 'your-openai-api-key',
@@ -29,12 +29,12 @@ async function exampleUsage() {
   // Example Azure OpenAI configuration
   const azureConfig: AIConfig = {
     provider: 'azure',
-    defaultModel: 'gpt-4o',
+    defaultModel: 'gpt-5.2',
     enableReasoning: false,
     azure: {
       apiKey: process.env.AZURE_OPENAI_API_KEY || 'your-azure-api-key',
       endpoint: process.env.AZURE_OPENAI_ENDPOINT || 'https://your-resource.openai.azure.com',
-      deployment: process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o',
+      deployment: process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-5.2',
       apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-15-preview',
     },
   }
@@ -51,7 +51,7 @@ async function exampleUsage() {
         content: 'Hello! Can you help me understand AI providers?',
       },
     ],
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.2',
     temperature: 0.7,
     maxTokens: 150,
   }
