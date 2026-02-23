@@ -101,30 +101,7 @@ export const RequestPropsSchema = z.object({
 })
 
 export const ChatProcessRequestSchema = z.object({
-  prompt: z
-    .string()
-    .trim()
-    .min(1, 'Prompt cannot be empty')
-    .max(32000, 'Prompt too long')
-    .refine(val => {
-      // Basic XSS prevention - detect known dangerous fragments.
-      const normalized = val.toLowerCase()
-      const dangerousFragments = [
-        '<script',
-        '</script',
-        'javascript:',
-        '<iframe',
-        '</iframe',
-        '<object',
-        '</object',
-        '<embed',
-        '</embed',
-        'onerror=',
-        'onload=',
-        'onclick=',
-      ]
-      return !dangerousFragments.some(fragment => normalized.includes(fragment))
-    }, 'Invalid content detected'),
+  prompt: z.string().trim().min(1, 'Prompt cannot be empty').max(32000, 'Prompt too long'),
   options: ChatContextSchema,
   systemMessage: z.string().trim().max(8000, 'System message too long').optional(),
   temperature: z
@@ -250,7 +227,7 @@ export const AppConfigurationSchema = z.object({
 })
 
 export const ModelConfigSchema = z.object({
-  apiModel: z.enum(['ChatGPTAPI']).optional(),
+  apiModel: z.enum(['ChatGPTAPI', 'AzureOpenAI']).optional(),
   timeoutMs: z.number().int().min(1000).optional(),
   socksProxy: z.string().url().optional(),
   httpsProxy: z.string().url().optional(),
