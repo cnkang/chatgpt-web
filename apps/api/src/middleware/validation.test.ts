@@ -4,8 +4,8 @@
  */
 
 import type { NextFunction, Request, Response } from 'express'
-import type { ZodSchema } from 'zod'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ZodSchema } from 'zod'
 import { z } from 'zod'
 import {
   sanitizeRequest,
@@ -522,7 +522,8 @@ describe('validation middleware', () => {
   })
 
   describe('xss protection', () => {
-    const testCases = [
+    // Non-AI fields (e.g. "title") should be fully HTML-escaped
+    const htmlEscapeTestCases = [
       {
         name: 'script tags',
         input: '<script>alert("xss")</script>',
@@ -550,20 +551,63 @@ describe('validation middleware', () => {
       },
     ]
 
-    testCases.forEach(({ name, input, expected }) => {
-      it(`should sanitize ${name}`, () => {
+    htmlEscapeTestCases.forEach(({ name, input, expected }) => {
+      it(`should sanitize ${name} in non-AI fields`, () => {
         const schema = z.object({
-          content: z.string(),
+          title: z.string(),
         })
 
-        mockReq.body = { content: input }
+        mockReq.body = { title: input }
 
         const middleware = validateBody(schema)
         middleware(mockReq as Request, mockRes as Response, mockNext)
 
-        expect(mockReq.body.content).toBe(expected)
+        expect(mockReq.body.title).toBe(expected)
         expect(mockNext).toHaveBeenCalled()
       })
+    })
+
+    // AI content fields (prompt, content, text, systemMessage, thought)
+    // should only get null-byte stripping and NFKC normalization, not HTML escaping
+    it('should not HTML-escape AI content fields (prompt, content, text)', () => {
+      const schema = z.object({
+        prompt: z.string(),
+        content: z.string(),
+        text: z.string(),
+        systemMessage: z.string(),
+      })
+
+      const htmlInput = '<div class="code">Hello & "world"</div>'
+      mockReq.body = {
+        prompt: htmlInput,
+        content: htmlInput,
+        text: htmlInput,
+        systemMessage: htmlInput,
+      }
+
+      const middleware = validateBody(schema)
+      middleware(mockReq as Request, mockRes as Response, mockNext)
+
+      // AI fields preserve original characters
+      expect(mockReq.body.prompt).toBe(htmlInput)
+      expect(mockReq.body.content).toBe(htmlInput)
+      expect(mockReq.body.text).toBe(htmlInput)
+      expect(mockReq.body.systemMessage).toBe(htmlInput)
+      expect(mockNext).toHaveBeenCalled()
+    })
+
+    it('should strip null bytes from AI content fields', () => {
+      const schema = z.object({
+        prompt: z.string(),
+      })
+
+      mockReq.body = { prompt: 'hello\0world' }
+
+      const middleware = validateBody(schema)
+      middleware(mockReq as Request, mockRes as Response, mockNext)
+
+      expect(mockReq.body.prompt).toBe('helloworld')
+      expect(mockNext).toHaveBeenCalled()
     })
   })
 })

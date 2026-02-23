@@ -28,6 +28,13 @@ interface ValidationErrorResponse {
 }
 
 /**
+ * Keys whose values are AI content and must NOT be HTML-escaped.
+ * These are sent to the AI provider as-is; XSS prevention is the
+ * frontend renderer's responsibility (markdown-it, highlight.js, etc.).
+ */
+const AI_CONTENT_KEYS = new Set(['prompt', 'systemMessage', 'content', 'text', 'thought'])
+
+/**
  * Sanitizes string input to prevent XSS attacks
  * Uses deterministic escaping to prevent HTML/script injection.
  */
@@ -48,21 +55,32 @@ function sanitizeString(input: string): string {
 }
 
 /**
- * Recursively sanitizes an object's string properties
+ * Light sanitization for AI content fields: normalize unicode and strip null bytes
+ * but preserve the original characters so code snippets are not corrupted.
  */
-function sanitizeObject(obj: unknown): unknown {
+function sanitizeAIContent(input: string): string {
+  return input.normalize('NFKC').replaceAll('\0', '')
+}
+
+/**
+ * Recursively sanitizes an object's string properties.
+ * AI content keys are only lightly sanitized (no HTML escaping).
+ */
+function sanitizeObject(obj: unknown, parentKey?: string): unknown {
   if (typeof obj === 'string') {
-    return sanitizeString(obj)
+    return parentKey && AI_CONTENT_KEYS.has(parentKey)
+      ? sanitizeAIContent(obj)
+      : sanitizeString(obj)
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject)
+    return obj.map(item => sanitizeObject(item, parentKey))
   }
 
   if (obj && typeof obj === 'object') {
     const sanitizedEntries = Object.entries(obj)
       .filter(([key]) => !blockedObjectKeys.has(key))
-      .map(([key, value]) => [key, sanitizeObject(value)] as const)
+      .map(([key, value]) => [key, sanitizeObject(value, key)] as const)
 
     return Object.fromEntries(sanitizedEntries)
   }
