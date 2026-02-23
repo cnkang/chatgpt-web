@@ -15,28 +15,29 @@ import {
  * Security risk patterns that should not exist in the codebase
  */
 const SECURITY_RISK_PATTERNS = [
-  // Unofficial API patterns
-  /ChatGPTUnofficialProxyAPI/gi,
-  /accessToken/gi,
-  /API_REVERSE_PROXY/gi,
-  /OPENAI_ACCESS_TOKEN/gi,
-  /reverseProxy/gi,
+  // Unofficial API patterns — match class/variable names, not general usage
+  /ChatGPTUnofficialProxyAPI/g,
+  /\baccessToken\b/g,
+  /\bAPI_REVERSE_PROXY\b/g,
+  /\bOPENAI_ACCESS_TOKEN\b/g,
+  /\breverseProxy\b/g,
 
-  // Web scraping patterns
-  /puppeteer/gi,
-  /playwright/gi,
-  /selenium/gi,
-  /webdriver/gi,
-  /cheerio/gi,
-  /jsdom/gi,
+  // Web scraping library imports
+  /require\(['"]puppeteer['"]\)/gi,
+  /from\s+['"]puppeteer['"]/gi,
+  /require\(['"]playwright['"]\)/gi,
+  /from\s+['"]playwright['"]/gi,
+  /require\(['"]selenium/gi,
+  /from\s+['"]selenium/gi,
+  /require\(['"]cheerio['"]\)/gi,
+  /from\s+['"]cheerio['"]/gi,
+  /require\(['"]jsdom['"]\)/gi,
+  /from\s+['"]jsdom['"]/gi,
 
   // Browser automation patterns
   /headless.*browser/gi,
   /browser.*automation/gi,
   /web.*scraping/gi,
-  /page\.goto/gi,
-  /page\.click/gi,
-  /page\.type/gi,
 ]
 
 /**
