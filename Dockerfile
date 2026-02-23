@@ -8,7 +8,7 @@ ARG VITE_GLOB_API_URL=/api
 ARG VITE_GLOB_OPEN_LONG_REPLY=false
 ARG VITE_GLOB_APP_PWA=false
 
-RUN npm install pnpm -g
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN pnpm --filter @chatgpt-web/shared build && cd apps/web && pnpm build
 # Build backend (apps/api)
 FROM node:24-alpine AS backend
 
-RUN npm install pnpm -g
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
@@ -57,7 +57,7 @@ RUN pnpm --filter @chatgpt-web/shared build && cd apps/api && pnpm build
 # Production runtime
 FROM node:24-alpine
 
-RUN npm install pnpm -g
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
