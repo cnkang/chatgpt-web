@@ -212,19 +212,19 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
 
   /**
    * Validate OpenAI configuration
+   * Only checks API key format to avoid consuming quota at startup.
    */
   async validateConfiguration(): Promise<boolean> {
     try {
-      // Simple validation - check if we have a valid API key format
-      if (
-        !this.client.apiKey ||
-        (!shouldSkipApiDomainCheck() && !this.client.apiKey.startsWith('sk-'))
-      ) {
+      if (!this.client.apiKey) {
         return false
       }
 
-      // Make a simple API call to validate the configuration
-      await this.client.models.list()
+      // Only validate key format when not skipping domain check
+      if (!shouldSkipApiDomainCheck() && !this.client.apiKey.startsWith('sk-')) {
+        return false
+      }
+
       return true
     } catch (error) {
       if (!isTestEnv) {
@@ -282,7 +282,7 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
     return {
       maxTokens,
       supportsReasoning: isReasoningModel,
-      supportsStreaming: !isReasoningModel, // Reasoning models typically don't support streaming
+      supportsStreaming: true, // All models support streaming via the OpenAI SDK
     }
   }
 
@@ -376,7 +376,7 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
       steps.push({
         step: Number.parseInt(match[1], 10),
         thought,
-        confidence: 85, // Default confidence - would be provided by the model
+        confidence: 0.85, // Default confidence (0–1 range) - would be provided by the model
       })
     }
 
@@ -388,10 +388,10 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
    */
   private handleOpenAIError(error: unknown): Error {
     if (error instanceof OpenAI.APIError) {
-      const statusCode = error.status
+      const { status: statusCode, message: apiMessage } = error
       const code = error.code || 'OPENAI_API_ERROR'
 
-      let message = error.message
+      let message = apiMessage
       let errorType = ErrorType.EXTERNAL_API
 
       // Map common OpenAI errors to user-friendly messages and appropriate error types

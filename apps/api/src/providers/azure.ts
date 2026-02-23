@@ -14,6 +14,7 @@ import {
 import { logger } from '../utils/logger.js'
 import type { RetryConfig } from '../utils/retry.js'
 import { retryWithBackoff } from '../utils/retry.js'
+import { parseSSEStream } from '../utils/sse-parser.js'
 import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
 import type {
   AIProvider,
@@ -378,12 +379,6 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
         body: JSON.stringify(responsesRequest),
       })
 
-      logger.debug('Azure v1 Responses API response', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-      })
-
       if (!response.ok) {
         const errorText = await response.text()
         logger.error('Azure v1 Responses API error', {
@@ -396,150 +391,32 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       }
 
       if (!response.body) {
-        logger.error('Azure v1 Responses API: No response body')
         throw new Error('No response body for streaming')
       }
 
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
+      let chunkCount = 0
+      let responseId = ''
+      const currentModel = request.model
 
-      logger.debug('Azure v1 Responses API: Starting stream processing')
-
-      try {
-        let buffer = ''
-        let chunkCount = 0
-        let responseId = ''
-        const currentModel = request.model
-
-        while (true) {
-          const { done, value } = await reader.read()
-
-          if (done) {
-            logger.debug('Azure v1 Responses API: Stream completed', { chunkCount })
-            // Process any remaining data in buffer
-            if (buffer.trim()) {
-              const lines = buffer.split('\n')
-              for (const line of lines) {
-                const trimmedLine = line.trim()
-                if (trimmedLine.startsWith('data: ')) {
-                  const data = trimmedLine.slice(6).trim()
-                  if (data && data !== '[DONE]') {
-                    try {
-                      const payload = JSON.parse(data)
-                      const converted = this.convertAzureResponsesPayloadToChunk(
-                        payload,
-                        responseId,
-                        currentModel,
-                      )
-                      if (converted.chunk) {
-                        yield converted.chunk
-                        chunkCount++
-                      }
-                      responseId = converted.responseId
-                    } catch (error) {
-                      logger.warn('Failed to parse final chunk', { line: trimmedLine, error })
-                    }
-                  }
-                } else if (trimmedLine && !trimmedLine.startsWith('event:')) {
-                  // Handle events without "data:" prefix (some Azure implementations)
-                  try {
-                    const payload = JSON.parse(trimmedLine)
-                    const converted = this.convertAzureResponsesPayloadToChunk(
-                      payload,
-                      responseId,
-                      currentModel,
-                    )
-                    if (converted.chunk) {
-                      yield converted.chunk
-                      chunkCount++
-                    }
-                    responseId = converted.responseId
-                  } catch {
-                    // Not JSON, skip
-                  }
-                }
-              }
-            }
-            break
-          }
-
-          if (value) {
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split('\n')
-
-            // Keep the last incomplete line in buffer
-            buffer = lines.pop() || ''
-
-            // Process complete lines
-            for (const line of lines) {
-              const trimmedLine = line.trim()
-              if (!trimmedLine) continue
-
-              if (trimmedLine.startsWith('data: ')) {
-                const data = trimmedLine.slice(6).trim()
-                if (data === '[DONE]') {
-                  logger.debug('Azure v1 Responses API: Received [DONE]')
-                  break
-                }
-
-                try {
-                  const payload = JSON.parse(data)
-                  if (!this.isResponsesStreamChunk(payload)) {
-                    const event = payload as AzureResponsesStreamEvent
-                    logger.debug('Azure v1 event received', {
-                      type: event.type,
-                      delta: event.delta,
-                    })
-                  }
-
-                  const converted = this.convertAzureResponsesPayloadToChunk(
-                    payload,
-                    responseId,
-                    currentModel,
-                  )
-                  if (converted.chunk) {
-                    yield converted.chunk
-                    chunkCount++
-                  }
-
-                  responseId = converted.responseId
-                } catch (error) {
-                  logger.warn('Failed to parse stream chunk', { line: trimmedLine, error })
-                }
-              } else if (trimmedLine.startsWith('event:')) {
-              } else {
-                // Handle events without "data:" prefix
-                try {
-                  const payload = JSON.parse(trimmedLine)
-                  if (!this.isResponsesStreamChunk(payload)) {
-                    const event = payload as AzureResponsesStreamEvent
-                    logger.debug('Azure v1 event received (no prefix)', {
-                      type: event.type,
-                      delta: event.delta,
-                    })
-                  }
-
-                  const converted = this.convertAzureResponsesPayloadToChunk(
-                    payload,
-                    responseId,
-                    currentModel,
-                  )
-                  if (converted.chunk) {
-                    yield converted.chunk
-                    chunkCount++
-                  }
-
-                  responseId = converted.responseId
-                } catch {
-                  // Not JSON, skip
-                }
-              }
-            }
-          }
+      for await (const payload of parseSSEStream(response.body)) {
+        if (payload.type === 'done') {
+          logger.debug('Azure v1 Responses API: Received [DONE]', { chunkCount })
+          break
         }
-      } finally {
-        reader.releaseLock()
+
+        const converted = this.convertAzureResponsesPayloadToChunk(
+          payload.json,
+          responseId,
+          currentModel,
+        )
+        if (converted.chunk) {
+          yield converted.chunk
+          chunkCount++
+        }
+        responseId = converted.responseId
       }
+
+      logger.debug('Azure v1 Responses API: Stream completed', { chunkCount })
     } catch (error) {
       throw this.handleAzureError(error)
     }
@@ -686,10 +563,10 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
 
   /**
    * Validate Azure OpenAI configuration
+   * Only checks required config fields and endpoint format to avoid consuming quota at startup.
    */
   async validateConfiguration(): Promise<boolean> {
     try {
-      // Simple validation - just check if we can create the client and have required config
       if (!this.config.apiKey || !this.config.endpoint || !this.config.deployment) {
         return false
       }
@@ -698,13 +575,6 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       if (!isOfficialAzureOpenAIEndpoint(this.config.endpoint)) {
         return false
       }
-
-      // Make a simple test API call to validate the configuration
-      await this.client.chat.completions.create({
-        model: this.config.deployment,
-        messages: [{ role: 'user', content: 'test' }],
-        max_tokens: 10,
-      })
 
       return true
     } catch (error) {
@@ -806,7 +676,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     return parts.map((thought, index) => ({
       step: index + 1,
       thought: thought.trim(),
-      confidence: 85, // Default confidence
+      confidence: 0.85, // Default confidence (0–1 range)
     }))
   }
 
@@ -843,7 +713,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     return {
       maxTokens,
       supportsReasoning: isReasoningModel,
-      supportsStreaming: !isReasoningModel, // Reasoning models typically don't support streaming
+      supportsStreaming: true, // All models support streaming via the Azure OpenAI SDK
     }
   }
 
@@ -934,7 +804,7 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
       steps.push({
         step: Number.parseInt(match[1], 10),
         thought,
-        confidence: 85, // Default confidence - would be provided by the model
+        confidence: 0.85, // Default confidence (0–1 range) - would be provided by the model
       })
     }
 

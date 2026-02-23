@@ -143,7 +143,7 @@ describe('azure openai provider', () => {
       const capabilities = provider.getModelCapabilities('o3')
       expect(capabilities.maxTokens).toBe(128000)
       expect(capabilities.supportsReasoning).toBe(true)
-      expect(capabilities.supportsStreaming).toBe(false)
+      expect(capabilities.supportsStreaming).toBe(true)
     })
 
     it('should return correct capabilities for GPT-5.2 models', () => {
@@ -382,25 +382,20 @@ describe('azure openai provider', () => {
 
   describe('configuration validation', () => {
     it('should validate configuration successfully', async () => {
-      mockAzureOpenAI.chat.completions.create.mockResolvedValue({
-        choices: [{ message: { content: 'test' } }],
-      })
-
       const isValid = await provider.validateConfiguration()
       expect(isValid).toBe(true)
-
-      // Should make a test API call
-      expect(mockAzureOpenAI.chat.completions.create).toHaveBeenCalledWith({
-        model: 'gpt-4o-deployment',
-        messages: [{ role: 'user', content: 'test' }],
-        max_tokens: 10,
-      })
     })
 
     it('should handle configuration validation failure', async () => {
-      mockAzureOpenAI.chat.completions.create.mockRejectedValue(new Error('Invalid deployment'))
+      // Create provider with empty API key to trigger validation failure
+      const invalidProvider = new AzureOpenAIProvider({
+        apiKey: '',
+        endpoint: 'https://test-resource.openai.azure.com',
+        deployment: 'gpt-4o-deployment',
+        apiVersion: '2024-02-15-preview',
+      })
 
-      const isValid = await provider.validateConfiguration()
+      const isValid = await invalidProvider.validateConfiguration()
       expect(isValid).toBe(false)
     })
   })

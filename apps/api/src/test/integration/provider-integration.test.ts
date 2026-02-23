@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AzureOpenAIProvider } from '../../providers/azure.js'
 import type { ChatCompletionRequest } from '../../providers/base.js'
 import type { AIConfig } from '../../providers/config.js'
-import { AIProviderFactory, ProviderRegistry, registerProvider } from '../../providers/factory.js'
+import { AIProviderFactory, clearProviders, registerProvider } from '../../providers/factory.js'
 import { OpenAIProvider } from '../../providers/openai.js'
 
 const { MockOpenAI, MockAzureOpenAI } = vi.hoisted(() => {
@@ -79,7 +79,7 @@ describe('provider integration tests', () => {
 
   beforeEach(() => {
     // Clear registry and register providers fresh for each test
-    ProviderRegistry.clear()
+    clearProviders()
     registerProvider('openai', OpenAIProvider)
     registerProvider('azure', AzureOpenAIProvider)
     factory = AIProviderFactory.getInstance()
@@ -89,7 +89,7 @@ describe('provider integration tests', () => {
   })
 
   afterEach(() => {
-    ProviderRegistry.clear()
+    clearProviders()
   })
 
   describe('provider switching integration', () => {
@@ -177,7 +177,7 @@ describe('provider integration tests', () => {
       // Test reasoning model capabilities
       const o3Capabilities = provider.getModelCapabilities('o3')
       expect(o3Capabilities.supportsReasoning).toBe(true)
-      expect(o3Capabilities.supportsStreaming).toBe(false) // Reasoning models don't support streaming
+      expect(o3Capabilities.supportsStreaming).toBe(true) // Reasoning models support streaming
 
       const o4MiniCapabilities = provider.getModelCapabilities('o4-mini')
       expect(o4MiniCapabilities.supportsReasoning).toBe(true)
@@ -199,7 +199,7 @@ describe('provider integration tests', () => {
       // Test model capabilities
       const capabilities = provider.getModelCapabilities('o3')
       expect(capabilities.supportsReasoning).toBe(true)
-      expect(capabilities.supportsStreaming).toBe(false)
+      expect(capabilities.supportsStreaming).toBe(true)
       expect(capabilities.maxTokens).toBe(128000)
     })
   })
@@ -368,7 +368,7 @@ describe('provider integration tests', () => {
       // Test reasoning model capabilities
       const reasoningCapabilities = openAIProvider.getModelCapabilities('o3')
       expect(reasoningCapabilities.supportsReasoning).toBe(true)
-      expect(reasoningCapabilities.supportsStreaming).toBe(false)
+      expect(reasoningCapabilities.supportsStreaming).toBe(true)
       expect(reasoningCapabilities.maxTokens).toBe(128000)
     })
 

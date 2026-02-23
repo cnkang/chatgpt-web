@@ -154,7 +154,7 @@ describe('openai provider', () => {
       const capabilities = provider.getModelCapabilities('o3')
       expect(capabilities.maxTokens).toBe(128000)
       expect(capabilities.supportsReasoning).toBe(true)
-      expect(capabilities.supportsStreaming).toBe(false)
+      expect(capabilities.supportsStreaming).toBe(true)
     })
 
     it('should return correct capabilities for GPT-5.2 models', () => {
@@ -360,17 +360,18 @@ describe('openai provider', () => {
 
   describe('configuration validation', () => {
     it('should validate configuration successfully', async () => {
-      mockOpenAI.models.list.mockResolvedValue({ data: [] })
-
       const isValid = await provider.validateConfiguration()
       expect(isValid).toBe(true)
-      expect(mockOpenAI.models.list).toHaveBeenCalled()
     })
 
     it('should handle configuration validation failure', async () => {
-      mockOpenAI.models.list.mockRejectedValue(new Error('Invalid API key'))
+      // Create provider with empty API key to trigger validation failure
+      const invalidProvider = new OpenAIProvider({
+        apiKey: '',
+        baseUrl: 'https://api.openai.com/v1',
+      })
 
-      const isValid = await provider.validateConfiguration()
+      const isValid = await invalidProvider.validateConfiguration()
       expect(isValid).toBe(false)
     })
 
@@ -381,11 +382,8 @@ describe('openai provider', () => {
         baseUrl: 'https://third-party.example.com/v1',
       })
 
-      mockOpenAI.models.list.mockResolvedValue({ data: [] })
-
       const isValid = await provider.validateConfiguration()
       expect(isValid).toBe(true)
-      expect(mockOpenAI.models.list).toHaveBeenCalled()
     })
   })
 
