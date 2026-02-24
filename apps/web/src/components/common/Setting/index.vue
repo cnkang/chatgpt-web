@@ -7,32 +7,13 @@ import About from './About.vue'
 import Advanced from './Advanced.vue'
 import General from './General.vue'
 
-interface Props {
-  visible: boolean
-}
-
-// Use reactive props destructuring (Vue 3.5+ feature)
-const { visible } = defineProps<Props>()
-
-// Use defineEmits with modern syntax and defineModel for v-model
-const emit = defineEmits<{
-  'update:visible': [visible: boolean]
-}>()
+const show = defineModel<boolean>('visible', { required: true })
 
 const authStore = useAuthStore()
 
-const isChatGPTAPI = computed<boolean>(() => !!authStore.isChatGPTAPI)
+const isChatGPTAPI = computed(() => !!authStore.isChatGPTAPI)
 
 const active = ref('General')
-
-const show = computed({
-  get() {
-    return visible
-  },
-  set(visible: boolean) {
-    emit('update:visible', visible)
-  },
-})
 </script>
 
 <template>

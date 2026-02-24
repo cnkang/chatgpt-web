@@ -1,24 +1,20 @@
 <script setup lang="ts">
-import { fetchChatAPIProcess } from '@/api'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 import { useChatStore } from '@/store'
-import type { Chat, ConversationRequest, ConversationResponse } from '@chatgpt-web/shared'
+import type { Chat } from '@chatgpt-web/shared'
 import { toPng } from 'html-to-image'
 import { NButton, NInput, useDialog, useMessage } from 'naive-ui'
-import type { Ref } from 'vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import type { InputInst } from 'naive-ui'
+import { computed, onMounted, onUnmounted, useTemplateRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { Message } from './components'
 import HeaderComponent from './components/Header/index.vue'
 import { useChat } from './hooks/useChat'
+import { useChatConversationFlow } from './hooks/useChatConversationFlow'
 import { useScroll } from './hooks/useScroll'
 import { useUsingContext } from './hooks/useUsingContext'
-
-let controller = new AbortController()
-
-const openLongReply = import.meta.env.VITE_GLOB_OPEN_LONG_REPLY === 'true'
 
 const route = useRoute()
 const dialog = useDialog()
@@ -30,9 +26,7 @@ const { isMobile } = useBasicLayout()
 const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
-
-// scrollRef is bound via template ref; expose to satisfy vue-tsc noUnusedLocals
-defineExpose({ scrollRef })
+void scrollRef
 
 const { uuid } = route.params as { uuid: string }
 
@@ -41,244 +35,21 @@ const conversationList = computed(() =>
   dataSources.value.filter((item: Chat) => !item.inversion && !!item.conversationOptions),
 )
 
-const prompt = ref<string>('')
-const loading = ref<boolean>(false)
-const inputRef = ref<Ref | null>(null)
-
-// 添加PromptStore
-
-// 未知原因刷新页面，loading 状态不会重置，手动重置
-dataSources.value.forEach((item: Chat, index: number) => {
-  if (item.loading) updateChatSome(+uuid, index, { loading: false })
-})
-
-function isAbortError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  return (
-    error.name === 'AbortError' ||
-    error.message === 'canceled' ||
-    error.message.toLowerCase().includes('aborted')
-  )
-}
-
-function handleSubmit() {
-  onConversation()
-}
-
-async function onConversation() {
-  let message = prompt.value
-
-  if (loading.value) return
-
-  if (!message || message.trim() === '') return
-
-  controller = new AbortController()
-
-  addChat(+uuid, {
-    dateTime: new Date().toLocaleString(),
-    text: message,
-    inversion: true,
-    error: false,
-    conversationOptions: null,
-    requestOptions: { prompt: message, options: null },
+const inputRef = useTemplateRef<InputInst>('inputRef')
+const { prompt, loading, handleSubmit, onRegenerate, handleEnter, handleStop, cleanup } =
+  useChatConversationFlow({
+    uuid: +uuid,
+    isMobile,
+    usingContext,
+    dataSources,
+    conversationList,
+    addChat,
+    updateChat,
+    updateChatSome,
+    getChatByUuidAndIndex,
+    scrollToBottom,
+    scrollToBottomIfAtBottom,
   })
-  scrollToBottom()
-
-  loading.value = true
-  prompt.value = ''
-
-  let options: ConversationRequest = {}
-  const lastContext = conversationList.value[conversationList.value.length - 1]?.conversationOptions
-
-  if (lastContext && usingContext.value) options = { ...lastContext }
-
-  addChat(+uuid, {
-    dateTime: new Date().toLocaleString(),
-    text: t('chat.thinking'),
-    loading: true,
-    inversion: false,
-    error: false,
-    conversationOptions: null,
-    requestOptions: { prompt: message, options: { ...options } },
-  })
-  scrollToBottom()
-
-  try {
-    let lastText = ''
-    const fetchChatAPIOnce = async () => {
-      await fetchChatAPIProcess<ConversationResponse>({
-        prompt: message,
-        options,
-        signal: controller.signal,
-        onDownloadProgress: progressEvent => {
-          const { responseText } = progressEvent
-          if (!responseText) return
-
-          // Always process the final line
-          const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-          let chunk = responseText
-          if (lastIndex !== -1) chunk = responseText.substring(lastIndex)
-          try {
-            const data = JSON.parse(chunk)
-            updateChat(+uuid, dataSources.value.length - 1, {
-              dateTime: new Date().toLocaleString(),
-              text: lastText + (data.text ?? ''),
-              inversion: false,
-              error: false,
-              loading: true,
-              conversationOptions: {
-                conversationId: data.conversationId,
-                parentMessageId: data.id,
-              },
-              requestOptions: { prompt: message, options: { ...options } },
-            })
-
-            if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
-              options.parentMessageId = data.id
-              lastText = data.text
-              message = ''
-              return fetchChatAPIOnce()
-            }
-
-            scrollToBottomIfAtBottom()
-          } catch {
-            //
-          }
-        },
-      })
-      updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
-    }
-
-    await fetchChatAPIOnce()
-  } catch (error: unknown) {
-    const errorMessage = (error as Error)?.message ?? t('common.wrong')
-
-    if (isAbortError(error)) {
-      updateChatSome(+uuid, dataSources.value.length - 1, {
-        loading: false,
-      })
-      scrollToBottomIfAtBottom()
-      return
-    }
-
-    const currentChat = getChatByUuidAndIndex(+uuid, dataSources.value.length - 1)
-
-    if (currentChat?.text && currentChat.text !== '') {
-      updateChatSome(+uuid, dataSources.value.length - 1, {
-        text: `${currentChat.text}\n[${errorMessage}]`,
-        error: false,
-        loading: false,
-      })
-      return
-    }
-
-    updateChat(+uuid, dataSources.value.length - 1, {
-      dateTime: new Date().toLocaleString(),
-      text: errorMessage,
-      inversion: false,
-      error: true,
-      loading: false,
-      conversationOptions: null,
-      requestOptions: { prompt: message, options: { ...options } },
-    })
-    scrollToBottomIfAtBottom()
-  } finally {
-    loading.value = false
-  }
-}
-
-async function onRegenerate(index: number) {
-  if (loading.value) return
-
-  controller = new AbortController()
-
-  const { requestOptions } = dataSources.value[index]
-
-  let message = requestOptions?.prompt ?? ''
-
-  let options: ConversationRequest = {}
-
-  if (requestOptions.options) options = { ...requestOptions.options }
-
-  loading.value = true
-
-  updateChat(+uuid, index, {
-    dateTime: new Date().toLocaleString(),
-    text: '',
-    inversion: false,
-    error: false,
-    loading: true,
-    conversationOptions: null,
-    requestOptions: { prompt: message, options: { ...options } },
-  })
-
-  try {
-    let lastText = ''
-    const fetchChatAPIOnce = async () => {
-      await fetchChatAPIProcess<ConversationResponse>({
-        prompt: message,
-        options,
-        signal: controller.signal,
-        onDownloadProgress: progressEvent => {
-          const { responseText } = progressEvent
-          if (!responseText) return
-
-          // Always process the final line
-          const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-          let chunk = responseText
-          if (lastIndex !== -1) chunk = responseText.substring(lastIndex)
-          try {
-            const data = JSON.parse(chunk)
-            updateChat(+uuid, index, {
-              dateTime: new Date().toLocaleString(),
-              text: lastText + (data.text ?? ''),
-              inversion: false,
-              error: false,
-              loading: true,
-              conversationOptions: {
-                conversationId: data.conversationId,
-                parentMessageId: data.id,
-              },
-              requestOptions: { prompt: message, options: { ...options } },
-            })
-
-            if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
-              options.parentMessageId = data.id
-              lastText = data.text
-              message = ''
-              return fetchChatAPIOnce()
-            }
-          } catch {
-            //
-          }
-        },
-      })
-      updateChatSome(+uuid, index, { loading: false })
-    }
-    await fetchChatAPIOnce()
-  } catch (error: unknown) {
-    if (isAbortError(error)) {
-      updateChatSome(+uuid, index, {
-        loading: false,
-      })
-      return
-    }
-
-    const errorMessage = (error as Error)?.message ?? t('common.wrong')
-
-    updateChat(+uuid, index, {
-      dateTime: new Date().toLocaleString(),
-      text: errorMessage,
-      inversion: false,
-      error: true,
-      loading: false,
-      conversationOptions: null,
-      requestOptions: { prompt: message, options: { ...options } },
-    })
-  } finally {
-    loading.value = false
-  }
-}
 
 function handleExport() {
   if (loading.value) return
@@ -341,54 +112,32 @@ function handleClear() {
   })
 }
 
-function handleEnter(event: KeyboardEvent) {
-  if (!isMobile.value) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault()
-      handleSubmit()
-    }
-  } else {
-    if (event.key === 'Enter' && event.ctrlKey) {
-      event.preventDefault()
-      handleSubmit()
-    }
-  }
-}
-
-function handleStop() {
-  if (loading.value) {
-    controller.abort()
-    loading.value = false
-  }
+function getMessageKey(item: Chat, index: number) {
+  return item.id ?? `${item.dateTime}:${item.requestOptions?.prompt ?? ''}:${index}`
 }
 
 // 可优化部分
 // 搜索选项计算，这里使用value作为索引项，所以当出现重复value时渲染异常(多项同时出现选中效果)
 
-const placeholder = computed(() => {
-  if (isMobile.value) return t('chat.placeholderMobile')
-  return t('chat.placeholder')
-})
+const placeholder = computed(() =>
+  isMobile.value ? t('chat.placeholderMobile') : t('chat.placeholder'),
+)
 
-const buttonDisabled = computed(() => {
-  return loading.value || !prompt.value || prompt.value.trim() === ''
-})
+const buttonDisabled = computed(() => loading.value || prompt.value.trim() === '')
 
-const footerClass = computed(() => {
-  let classes = ['p-4']
-  if (isMobile.value) {
-    classes = ['sticky', 'left-0', 'bottom-0', 'right-0', 'p-2', 'pr-3', 'overflow-hidden']
-  }
-  return classes
-})
+const footerClass = computed(() =>
+  isMobile.value
+    ? ['sticky', 'left-0', 'bottom-0', 'right-0', 'p-2', 'pr-3', 'overflow-hidden']
+    : ['p-4'],
+)
 
 onMounted(() => {
   scrollToBottom()
-  if (inputRef.value && !isMobile.value) inputRef.value?.focus()
+  if (!isMobile.value) inputRef.value?.focus()
 })
 
 onUnmounted(() => {
-  if (loading.value) controller.abort()
+  cleanup()
 })
 </script>
 
@@ -417,7 +166,7 @@ onUnmounted(() => {
               <div>
                 <Message
                   v-for="(item, index) of dataSources"
-                  :key="index"
+                  :key="getMessageKey(item, index)"
                   :date-time="item.dateTime"
                   :text="item.text"
                   :inversion="item.inversion"
@@ -474,7 +223,7 @@ onUnmounted(() => {
             type="textarea"
             :placeholder="placeholder"
             :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }"
-            @keypress="handleEnter"
+            @keydown="handleEnter"
           />
           <NButton type="primary" :disabled="buttonDisabled" @click="handleSubmit">
             <template #icon>

@@ -6,14 +6,13 @@ interface Props {
   icon?: string
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
 const { icon } = defineProps<Props>()
 
 const attrs = useAttrs()
 
-const bindAttrs = computed<{ class: string; style: string }>(() => ({
-  class: (attrs.class as string) || '',
-  style: (attrs.style as string) || '',
+const bindAttrs = computed(() => ({
+  class: typeof attrs.class === 'string' ? attrs.class : '',
+  style: typeof attrs.style === 'string' ? attrs.style : '',
 }))
 </script>
 

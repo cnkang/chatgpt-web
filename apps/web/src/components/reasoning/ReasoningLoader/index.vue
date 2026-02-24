@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SvgIcon } from '@/components/common'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 
 interface Props {
   isVisible?: boolean
@@ -8,7 +8,6 @@ interface Props {
   currentStep?: string
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
 const {
   isVisible = false,
   estimatedTime = 30,
@@ -16,7 +15,7 @@ const {
 } = defineProps<Props>()
 
 const elapsedTime = ref(0)
-const intervalId = ref<number | null>(null)
+let intervalId: number | null = null
 
 const progress = computed(() => {
   if (estimatedTime <= 0) return 0
@@ -60,41 +59,35 @@ const displayStep = computed(() => {
 })
 
 function startTimer() {
-  if (intervalId.value) return
+  if (intervalId) return
 
-  intervalId.value = window.setInterval(() => {
+  intervalId = window.setInterval(() => {
     elapsedTime.value += 1
   }, 1000)
 }
 
 function stopTimer() {
-  if (intervalId.value) {
-    clearInterval(intervalId.value)
-    intervalId.value = null
-  }
+  if (!intervalId) return
+  clearInterval(intervalId)
+  intervalId = null
 }
 
-function resetTimer() {
-  elapsedTime.value = 0
-  stopTimer()
-}
+watch(
+  () => isVisible,
+  visible => {
+    if (visible) {
+      elapsedTime.value = 0
+      startTimer()
+      return
+    }
 
-// Watch for visibility changes
-onMounted(() => {
-  if (isVisible) {
-    startTimer()
-  }
-})
+    stopTimer()
+  },
+  { immediate: true },
+)
 
 onUnmounted(() => {
   stopTimer()
-})
-
-// Expose methods for parent component control
-defineExpose({
-  startTimer,
-  stopTimer,
-  resetTimer,
 })
 </script>
 
@@ -170,7 +163,7 @@ defineExpose({
           <div class="flex space-x-1">
             <div
               v-for="(step, index) in reasoningSteps"
-              :key="index"
+              :key="step"
               class="w-2 h-2 rounded-full transition-colors duration-300"
               :class="{
                 'bg-blue-500 dark:bg-blue-400': index <= currentStepIndex,

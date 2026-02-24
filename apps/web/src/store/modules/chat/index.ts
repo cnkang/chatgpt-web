@@ -2,7 +2,70 @@ import { t } from '@/locales'
 import { router } from '@/router'
 import type { Chat, ChatState, History } from '@chatgpt-web/shared'
 import { defineStore } from 'pinia'
-import { defaultState, getLocalState, setLocalState } from './helper'
+import { createChatMessageId, defaultState, getLocalState, setLocalState } from './helper'
+
+const CHAT_STATE_PERSIST_DELAY_MS = 120
+let persistTimer: number | null = null
+let pendingPersistState: ChatState | null = null
+
+function flushPendingPersist() {
+  if (persistTimer) {
+    window.clearTimeout(persistTimer)
+    persistTimer = null
+  }
+
+  if (!pendingPersistState) return
+  setLocalState(pendingPersistState)
+  pendingPersistState = null
+}
+
+function schedulePersist(state: ChatState) {
+  pendingPersistState = state
+
+  if (persistTimer) return
+
+  persistTimer = window.setTimeout(() => {
+    flushPendingPersist()
+  }, CHAT_STATE_PERSIST_DELAY_MS)
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', flushPendingPersist)
+}
+
+function ensureChatId(chat: Chat, current?: Chat): Chat {
+  if (chat.id) return chat
+  return { ...chat, id: current?.id ?? createChatMessageId() }
+}
+
+function mergeChatWithId(current: Chat, patch: Partial<Chat>): Chat {
+  const next = { ...current, ...patch }
+  if (next.id) return next
+  return { ...next, id: createChatMessageId() }
+}
+
+type ChatGroup = ChatState['chat'][number]
+
+function findChatGroupIndexByUuid(groups: ChatGroup[], uuid: number) {
+  return groups.findIndex(group => group.uuid === uuid)
+}
+
+function findExplicitChatGroupIndex(groups: ChatGroup[], uuid: number) {
+  if (!uuid || uuid === 0) return groups.length ? 0 : -1
+  return findChatGroupIndexByUuid(groups, uuid)
+}
+
+function findGetterChatGroupIndex(state: ChatState, uuid?: number) {
+  if (uuid) return findChatGroupIndexByUuid(state.chat, uuid)
+  if (!state.active) return -1
+  return findChatGroupIndexByUuid(state.chat, state.active)
+}
+
+function getChatGroupByExplicitUuid(state: ChatState, uuid: number): ChatGroup | null {
+  const index = findExplicitChatGroupIndex(state.chat, uuid)
+  if (index === -1) return null
+  return state.chat[index]
+}
 
 export const useChatStore = defineStore('chat-store', {
   state: (): ChatState => getLocalState(),
@@ -16,16 +79,9 @@ export const useChatStore = defineStore('chat-store', {
 
     getChatByUuid(state: ChatState) {
       return (uuid?: number) => {
-        if (uuid) {
-          return (
-            state.chat.find((item: { uuid: number; data: Chat[] }) => item.uuid === uuid)?.data ??
-            []
-          )
-        }
-        return (
-          state.chat.find((item: { uuid: number; data: Chat[] }) => item.uuid === state.active)
-            ?.data ?? []
-        )
+        const index = findGetterChatGroupIndex(state, uuid)
+        if (index === -1) return []
+        return state.chat[index].data
       }
     },
   },
@@ -76,115 +132,66 @@ export const useChatStore = defineStore('chat-store', {
     },
 
     getChatByUuidAndIndex(uuid: number, index: number) {
-      if (!uuid || uuid === 0) {
-        if (this.chat.length) return this.chat[0].data[index]
-        return null
-      }
-      const chatIndex = this.chat.findIndex(
-        (item: { uuid: number; data: Chat[] }) => item.uuid === uuid,
-      )
-      if (chatIndex !== -1) return this.chat[chatIndex].data[index]
+      const group = getChatGroupByExplicitUuid(this.$state, uuid)
+      if (group) return group.data[index]
       return null
     },
 
     addChatByUuid(uuid: number, chat: Chat) {
+      const chatWithId = ensureChatId(chat)
       if (!uuid || uuid === 0) {
         if (this.history.length === 0) {
           const newUuid = Date.now()
-          this.history.push({ uuid: newUuid, title: chat.text, isEdit: false })
-          this.chat.push({ uuid: newUuid, data: [chat] })
+          this.history.push({ uuid: newUuid, title: chatWithId.text, isEdit: false })
+          this.chat.push({ uuid: newUuid, data: [chatWithId] })
           this.active = newUuid
           this.recordState()
         } else {
-          this.chat[0].data.push(chat)
-          if (this.history[0].title === t('chat.newChatTitle')) this.history[0].title = chat.text
+          this.chat[0].data.push(chatWithId)
+          if (this.history[0].title === t('chat.newChatTitle'))
+            this.history[0].title = chatWithId.text
           this.recordState()
         }
         return
       }
 
-      const index = this.chat.findIndex(
-        (item: { uuid: number; data: Chat[] }) => item.uuid === uuid,
-      )
+      const index = findExplicitChatGroupIndex(this.chat, uuid)
       if (index !== -1) {
-        this.chat[index].data.push(chat)
+        this.chat[index].data.push(chatWithId)
         if (this.history[index].title === t('chat.newChatTitle'))
-          this.history[index].title = chat.text
+          this.history[index].title = chatWithId.text
         this.recordState()
       }
     },
 
     updateChatByUuid(uuid: number, index: number, chat: Chat) {
-      if (!uuid || uuid === 0) {
-        if (this.chat.length) {
-          this.chat[0].data[index] = chat
-          this.recordState()
-        }
-        return
-      }
-
-      const chatIndex = this.chat.findIndex(
-        (item: { uuid: number; data: Chat[] }) => item.uuid === uuid,
-      )
-      if (chatIndex !== -1) {
-        this.chat[chatIndex].data[index] = chat
+      const group = getChatGroupByExplicitUuid(this.$state, uuid)
+      if (group) {
+        group.data[index] = ensureChatId(chat, group.data[index])
         this.recordState()
       }
     },
 
     updateChatSomeByUuid(uuid: number, index: number, chat: Partial<Chat>) {
-      if (!uuid || uuid === 0) {
-        if (this.chat.length) {
-          this.chat[0].data[index] = { ...this.chat[0].data[index], ...chat }
-          this.recordState()
-        }
-        return
-      }
-
-      const chatIndex = this.chat.findIndex(
-        (item: { uuid: number; data: Chat[] }) => item.uuid === uuid,
-      )
-      if (chatIndex !== -1) {
-        this.chat[chatIndex].data[index] = {
-          ...this.chat[chatIndex].data[index],
-          ...chat,
-        }
+      const group = getChatGroupByExplicitUuid(this.$state, uuid)
+      if (group) {
+        group.data[index] = mergeChatWithId(group.data[index], chat)
         this.recordState()
       }
     },
 
     deleteChatByUuid(uuid: number, index: number) {
-      if (!uuid || uuid === 0) {
-        if (this.chat.length) {
-          this.chat[0].data.splice(index, 1)
-          this.recordState()
-        }
-        return
-      }
-
-      const chatIndex = this.chat.findIndex(
-        (item: { uuid: number; data: Chat[] }) => item.uuid === uuid,
-      )
-      if (chatIndex !== -1) {
-        this.chat[chatIndex].data.splice(index, 1)
+      const group = getChatGroupByExplicitUuid(this.$state, uuid)
+      if (group) {
+        group.data.splice(index, 1)
         this.recordState()
       }
     },
 
     clearChatByUuid(uuid: number) {
-      if (!uuid || uuid === 0) {
-        if (this.chat.length) {
-          this.chat[0].data = []
-          this.recordState()
-        }
-        return
-      }
-
-      const index = this.chat.findIndex(
-        (item: { uuid: number; data: Chat[] }) => item.uuid === uuid,
-      )
-      if (index !== -1) {
-        this.chat[index].data = []
+      const group = getChatGroupByExplicitUuid(this.$state, uuid)
+      if (group) {
+        group.data = []
         this.recordState()
       }
     },
@@ -195,12 +202,18 @@ export const useChatStore = defineStore('chat-store', {
     },
 
     async reloadRoute(uuid?: number) {
-      this.recordState()
+      this.recordState(true)
       await router.push({ name: 'Chat', params: { uuid } })
     },
 
-    recordState() {
-      setLocalState(this.$state)
+    recordState(immediate = false) {
+      if (immediate) {
+        pendingPersistState = this.$state
+        flushPendingPersist()
+        return
+      }
+
+      schedulePersist(this.$state)
     },
   },
 })

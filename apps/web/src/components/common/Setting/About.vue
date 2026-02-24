@@ -19,7 +19,7 @@ const loading = ref(false)
 
 const config = ref<ConfigState>()
 
-const isChatGPTAPI = computed<boolean>(() => !!authStore.isChatGPTAPI)
+const isChatGPTAPI = computed(() => !!authStore.isChatGPTAPI)
 
 async function fetchConfig() {
   try {
@@ -31,9 +31,7 @@ async function fetchConfig() {
   }
 }
 
-onMounted(() => {
-  fetchConfig()
-})
+onMounted(fetchConfig)
 </script>
 
 <template>

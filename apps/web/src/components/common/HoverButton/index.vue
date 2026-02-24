@@ -9,10 +9,8 @@ interface Props {
   placement?: PopoverPlacement
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
 const { tooltip = '', placement = 'bottom' } = defineProps<Props>()
 
-// Use defineEmits with modern syntax
 const emit = defineEmits<{
   click: []
 }>()

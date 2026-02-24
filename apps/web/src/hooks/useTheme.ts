@@ -27,7 +27,7 @@ export function useTheme() {
   })
 
   watch(
-    () => isDark.value,
+    isDark,
     dark => {
       if (dark) document.documentElement.classList.add('dark')
       else document.documentElement.classList.remove('dark')

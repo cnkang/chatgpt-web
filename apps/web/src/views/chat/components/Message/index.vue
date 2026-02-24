@@ -5,7 +5,7 @@ import { useIconRender } from '@/hooks/useIconRender'
 import { t } from '@/locales'
 import { copyToClip } from '@/utils/copy'
 import { NDropdown, useMessage } from 'naive-ui'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import AvatarComponent from './Avatar.vue'
 import TextComponent from './Text.vue'
 
@@ -17,10 +17,8 @@ interface Props {
   loading?: boolean
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
 const { dateTime, text, inversion, error, loading } = defineProps<Props>()
 
-// Use defineEmits with modern syntax
 const emit = defineEmits<{
   regenerate: []
   delete: []
@@ -32,9 +30,9 @@ const { iconRender } = useIconRender()
 
 const message = useMessage()
 
-const asRawText = ref(inversion)
+const asRawText = ref(Boolean(inversion))
 
-const messageRef = ref<HTMLElement>()
+const messageRef = useTemplateRef<HTMLElement>('messageRef')
 
 const options = computed(() => {
   const common = [

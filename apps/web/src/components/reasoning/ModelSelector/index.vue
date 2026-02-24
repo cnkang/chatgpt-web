@@ -15,18 +15,12 @@ interface ModelOption {
 }
 
 interface Props {
-  modelValue: string
   disabled?: boolean
   showReasoningInfo?: boolean
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
-const { modelValue, disabled = false, showReasoningInfo = true } = defineProps<Props>()
-
-// Use defineEmits with modern syntax
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-}>()
+const { disabled = false, showReasoningInfo = true } = defineProps<Props>()
+const modelValue = defineModel<string>({ required: true })
 
 const modelOptions: ModelOption[] = [
   {
@@ -67,7 +61,7 @@ const modelOptions: ModelOption[] = [
   },
 ]
 
-const selectedModel = computed(() => modelOptions.find(model => model.value === modelValue))
+const selectedModel = computed(() => modelOptions.find(model => model.value === modelValue.value))
 
 const reasoningModels = computed(() => modelOptions.filter(model => model.supportsReasoning))
 
@@ -107,8 +101,8 @@ const selectOptions = computed(() => {
   return options
 })
 
-function handleModelChange(value: string) {
-  emit('update:modelValue', value)
+function handleModelChange(value: string | null) {
+  if (value) modelValue.value = value
 }
 
 function getSpeedIcon(speed: string): string {

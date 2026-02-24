@@ -14,3 +14,9 @@ declare namespace Chat {
   interface ConversationRequest extends SharedConversationRequest {}
   interface ConversationResponse extends SharedConversationResponse {}
 }
+
+declare module '@chatgpt-web/shared' {
+  interface Chat {
+    id?: string
+  }
+}

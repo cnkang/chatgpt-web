@@ -37,6 +37,7 @@ function handleDelete(index: number, event?: MouseEvent | TouchEvent) {
 const handleDeleteDebounce = debounce(handleDelete, 600)
 
 function handleEnter({ uuid }: History, isEdit: boolean, event: KeyboardEvent) {
+  if (event.isComposing) return
   event?.stopPropagation()
   if (event.key === 'Enter') chatStore.updateHistory(uuid, { isEdit })
 }
@@ -56,7 +57,7 @@ function isActive(uuid: number) {
         </div>
       </template>
       <template v-else>
-        <div v-for="(item, index) of dataSources" :key="index">
+        <div v-for="(item, index) of dataSources" :key="item.uuid">
           <a
             class="relative flex items-center gap-3 px-3 py-3 break-all border rounded-md cursor-pointer hover:bg-neutral-100 group dark:border-neutral-800 dark:hover:bg-[#24272e]"
             :class="
@@ -79,7 +80,7 @@ function isActive(uuid: number) {
                 v-if="item.isEdit"
                 v-model:value="item.title"
                 size="tiny"
-                @keypress="handleEnter(item, false, $event)"
+                @keydown="handleEnter(item, false, $event)"
               />
               <span v-else>{{ item.title }}</span>
             </div>

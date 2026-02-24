@@ -56,6 +56,7 @@ export interface ConversationResponse {
 
 // Frontend-specific chat types
 export interface Chat {
+  id?: string
   dateTime: string
   text: string
   inversion?: boolean

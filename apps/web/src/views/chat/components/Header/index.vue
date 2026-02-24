@@ -7,10 +7,8 @@ interface Props {
   usingContext: boolean
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature) - but don't destructure unused props
 defineProps<Props>()
 
-// Use defineEmits with modern syntax
 const emit = defineEmits<{
   export: []
   handleClear: []

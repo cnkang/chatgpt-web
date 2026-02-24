@@ -9,7 +9,6 @@ interface Props {
   image?: boolean
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
 const { image } = defineProps<Props>()
 
 const userStore = useUserStore()

@@ -15,10 +15,8 @@ interface Props {
   isLoading?: boolean
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
 const { steps, isVisible = true, isLoading = false } = defineProps<Props>()
 
-// Use defineEmits with modern syntax
 const emit = defineEmits<{
   toggleVisibility: []
 }>()
@@ -31,9 +29,7 @@ const averageConfidence = computed(() => {
   return Math.round(total / steps.length)
 })
 
-const totalDuration = computed(() => {
-  return steps.reduce((sum, step) => sum + (step.duration || 0), 0)
-})
+const totalDuration = computed(() => steps.reduce((sum, step) => sum + (step.duration || 0), 0))
 
 function getConfidenceColor(confidence: number): string {
   if (confidence >= 80) return 'text-green-600 dark:text-green-400'

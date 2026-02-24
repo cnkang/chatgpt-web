@@ -41,6 +41,8 @@ async function handleVerify() {
 }
 
 function handlePress(event: KeyboardEvent) {
+  if (event.isComposing) return
+
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
     handleVerify()
@@ -59,7 +61,7 @@ function handlePress(event: KeyboardEvent) {
           </p>
           <Icon403 class="w-[200px] m-auto" />
         </header>
-        <NInput v-model:value="token" type="password" placeholder="" @keypress="handlePress" />
+        <NInput v-model:value="token" type="password" placeholder="" @keydown="handlePress" />
         <NButton block type="primary" :disabled="disabled" :loading="loading" @click="handleVerify">
           {{ $t('common.verify') }}
         </NButton>

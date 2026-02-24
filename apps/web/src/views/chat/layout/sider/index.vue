@@ -45,15 +45,15 @@ function handleClearAll() {
   })
 }
 
-const getMobileClass = computed<CSSProperties>(() => {
-  if (isMobile.value) {
-    return {
-      position: 'fixed',
-      zIndex: 50,
-    }
-  }
-  return {}
-})
+const getMobileClass = computed(
+  (): CSSProperties =>
+    isMobile.value
+      ? {
+          position: 'fixed',
+          zIndex: 50,
+        }
+      : {},
+)
 
 const mobileSafeArea = computed(() => {
   if (isMobile.value) {

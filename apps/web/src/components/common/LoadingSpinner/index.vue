@@ -4,7 +4,6 @@ interface Props {
   text?: string
 }
 
-// Use reactive props destructuring (Vue 3.5+ feature)
 const { size = 'medium', text = 'Loading...' } = defineProps<Props>()
 
 const sizeClasses = {
