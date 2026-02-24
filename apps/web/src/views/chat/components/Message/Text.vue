@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useBasicLayout } from '@/hooks/useBasicLayout'
+import MarkdownRender from 'markstream-vue'
 import { computed } from 'vue'
 
 interface Props {
@@ -30,7 +31,14 @@ const wrapClass = computed(() => {
 <template>
   <div class="text-black" :class="wrapClass">
     <div class="leading-relaxed break-words">
-      <div class="whitespace-pre-wrap" v-text="text" />
+      <div v-if="asRawText" class="whitespace-pre-wrap" v-text="text" />
+      <MarkdownRender
+        v-else
+        class="markdown-body"
+        :class="{ 'markdown-body-generate': loading }"
+        :content="text || ''"
+        :final="!loading"
+      />
     </div>
   </div>
 </template>
