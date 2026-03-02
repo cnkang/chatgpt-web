@@ -33,7 +33,7 @@
     "@vueuse/core": "^14.2.1",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.33",
-    "markstream-vue": "0.0.6",
+    "markstream-vue": "0.0.7",
     "mermaid": "^11.12.3",
     "naive-ui": "^2.43.2",
     "pinia": "^3.0.4",
