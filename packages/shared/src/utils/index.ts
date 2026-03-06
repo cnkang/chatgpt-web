@@ -96,7 +96,7 @@ export function isValidDate(date: Date): boolean {
 // ============================================================================
 
 const RANDOM_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
-const UINT32_MAX_PLUS_ONE = 0x1_0000_0000
+const UINT32_MAX_PLUS_ONE = 4_294_967_296
 
 function getRandomFraction(): number {
   const randomBuffer = new Uint32Array(1)

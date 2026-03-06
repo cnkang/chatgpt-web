@@ -67,7 +67,7 @@ export const defaultCircuitConfig: CircuitBreakerConfig = {
   expectedErrors: [ErrorType.NETWORK, ErrorType.TIMEOUT, ErrorType.EXTERNAL_API],
 }
 
-const UINT32_MAX_PLUS_ONE = 0x1_0000_0000
+const UINT32_MAX_PLUS_ONE = 4_294_967_296
 
 function getRandomFraction(): number {
   const randomBuffer = new Uint32Array(1)
