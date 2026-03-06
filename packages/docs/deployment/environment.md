@@ -22,7 +22,7 @@ chatgpt-web/
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 
 NODE_ENV=production
 PORT=3002
@@ -41,7 +41,7 @@ CORS_CREDENTIALS=true
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 OPENAI_API_BASE_URL=https://api.openai.com
 SKIP_API_DOMAIN_CHECK=false
 OPENAI_API_DISABLE_DEBUG=true
@@ -116,8 +116,8 @@ SOCKS_PROXY_PASSWORD=password
 These variables are read by the provider configuration layer and are safe to set, but not all of them affect the current Express middleware directly:
 
 ```bash
-DEFAULT_MODEL=gpt-5.1
-OPENAI_API_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
+OPENAI_API_MODEL=gpt-5.4
 
 ENABLE_RATE_LIMIT=true
 RATE_LIMIT_WINDOW_MS=3600000
@@ -150,7 +150,7 @@ services:
     environment:
       AI_PROVIDER: openai
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.1}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.4}
       SESSION_SECRET: ${SESSION_SECRET}
       NODE_ENV: production
 ```

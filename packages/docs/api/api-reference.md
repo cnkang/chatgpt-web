@@ -263,7 +263,7 @@ AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_official_api_key_here
 OPENAI_API_BASE_URL=https://api.openai.com
 SKIP_API_DOMAIN_CHECK=false
-DEFAULT_MODEL=gpt-5.2
+DEFAULT_MODEL=gpt-5.4
 ```
 
 If you use an OpenAI-compatible third-party endpoint, set:
@@ -277,7 +277,7 @@ SKIP_API_DOMAIN_CHECK=true
 
 **Supported Models:**
 
-- `gpt-5.2`, `gpt-5.1`, `gpt-5` - Latest GPT-5.x models with enhanced capabilities
+- `gpt-5.4`, `gpt-5.2`, `gpt-5.1`, `gpt-5` - Latest GPT-5.x models with enhanced capabilities
 - `gpt-4o`, `gpt-4o-mini` - Latest GPT-4o models
 - `o3`, `o3-mini`, `o4-mini` - Reasoning models
 

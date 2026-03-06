@@ -684,6 +684,7 @@ export const CONTENT_TYPES = {
 ```typescript
 // src/constants/models.ts
 export const OPENAI_MODELS = {
+  GPT_5_4: 'gpt-5.4',
   GPT_5_2: 'gpt-5.2',
   GPT_5_1: 'gpt-5.1',
   GPT_5: 'gpt-5',
@@ -695,6 +696,7 @@ export const OPENAI_MODELS = {
 } as const
 
 export const AZURE_MODELS = {
+  GPT_5_4: 'gpt-5.4',
   GPT_5_2: 'gpt-5.2',
   GPT_5_1: 'gpt-5.1',
   GPT_5: 'gpt-5',

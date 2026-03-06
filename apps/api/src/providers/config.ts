@@ -129,7 +129,7 @@ export class ConfigurationManager {
       if (provider === 'azure' && azureDeployment) {
         defaultModel = azureDeployment
       } else {
-        defaultModel = 'gpt-5.2'
+        defaultModel = 'gpt-5.4'
       }
     }
 

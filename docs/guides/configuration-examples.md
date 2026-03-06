@@ -14,7 +14,7 @@ The maintained configuration examples now live in:
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 SESSION_SECRET=replace-with-a-long-random-string
 ```
 

@@ -22,7 +22,7 @@ Key files:
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 OPENAI_API_BASE_URL=https://api.openai.com
 SKIP_API_DOMAIN_CHECK=false
 OPENAI_ORGANIZATION=org-your-org-id

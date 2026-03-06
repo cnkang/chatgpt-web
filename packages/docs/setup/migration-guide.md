@@ -25,7 +25,7 @@ OPENAI_API_KEY=sk-your-api-key
 SESSION_SECRET=replace-with-a-long-random-string
 
 # Optional but recommended
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 OPENAI_API_BASE_URL=https://api.openai.com
 ```
 

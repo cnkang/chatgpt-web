@@ -36,9 +36,9 @@ spec:
             - name: SKIP_API_DOMAIN_CHECK
               value: 'false'
             - name: DEFAULT_MODEL
-              value: gpt-5.2
+              value: gpt-5.4
             - name: OPENAI_API_MODEL
-              value: gpt-5.2
+              value: gpt-5.4
             - name: AUTH_SECRET_KEY
               valueFrom:
                 secretKeyRef:

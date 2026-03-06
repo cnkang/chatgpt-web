@@ -23,7 +23,7 @@ cp apps/api/.env.example apps/api/.env
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 ```
 
 ### Minimal Azure OpenAI Setup
@@ -45,8 +45,8 @@ These variables are read directly by the backend code.
 
 ```bash
 AI_PROVIDER=openai
-DEFAULT_MODEL=gpt-5.1
-OPENAI_API_MODEL=gpt-5.1   # Compatibility alias (also used by legacy paths)
+DEFAULT_MODEL=gpt-5.4
+OPENAI_API_MODEL=gpt-5.4   # Compatibility alias (also used by legacy paths)
 ```
 
 Notes:
@@ -171,7 +171,7 @@ services:
     environment:
       AI_PROVIDER: openai
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.1}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-gpt-5.4}
       SESSION_SECRET: ${SESSION_SECRET}
       NODE_ENV: production
 ```

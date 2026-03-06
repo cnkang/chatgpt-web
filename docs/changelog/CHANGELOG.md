@@ -1,3 +1,74 @@
+## v3.0.3
+
+`2026-03-06`
+
+### 🎯 Model and Reasoning Updates
+
+#### Expanded Model Coverage
+
+- **Default Model Update**: Updated runtime and deployment defaults from `gpt-5.2` to `gpt-5.4`
+- **New Reasoning Models**: Added support for `o3`, `o3-mini`, and `o4-mini` across provider integrations
+- **Provider Compatibility**: Improved model capability detection for both OpenAI and Azure OpenAI
+- **Streaming Reasoning**: Enhanced streaming support for reasoning models, including Azure Responses API handling
+
+### 💬 Chat Experience Improvements
+
+#### Richer Conversation Rendering
+
+- **Markdown Message Rendering**: Assistant responses now render with `markstream-vue` for richer Markdown output
+- **Conversation Flow Refactor**: Reworked chat submission, regeneration, and long-reply continuation flow
+- **History Migration**: Added chat storage migration and schema validation for safer upgrades from previous local state
+- **Stable Message IDs**: Preserve message identifiers across restores to reduce broken conversation state after reloads
+
+### 🔒 Security and Reliability
+
+#### Runtime Hardening
+
+- **Timing-Safe Authentication**: Replaced direct secret comparisons with timing-safe checks
+- **Safer Startup Behavior**: Provider initialization now retries on first request instead of terminating the process on transient startup failures
+- **Configuration Validation**: Tightened environment validation, default model handling, and CORS origin parsing
+- **Session Protection**: Added limiter coverage to session endpoints and continued cleanup of security-related edge cases
+
+### 🚢 Deployment and Operations
+
+#### Safer Defaults for Production
+
+- **Docker Modernization**: Switched container builds to Corepack-managed pnpm and run the final image as a non-root user
+- **Kubernetes Secrets**: Reworked sample manifests to load credentials from `Secret` references instead of inline values
+- **Cluster Hardening**: Disabled service account token auto-mount and added ephemeral storage requests in Kubernetes examples
+- **Script Cleanup**: Hardened startup and deployment scripts with safer error handling and clearer failure output
+
+### 🧪 Testing and Tooling
+
+- **Frontend Test Coverage**: Added unit tests for chat store helpers and conversation flow handling
+- **Workflow Permissions**: Scoped GitHub Actions permissions more tightly at the job level
+- **Code Quality Cleanup**: Resolved remaining Sonar issues and tightened type-safety and lint-related checks
+
+### 📦 Dependency Updates
+
+- **openai**: 6.16.0 → 6.25.0
+- **express-rate-limit**: 8.2.1 → 8.3.0
+- **markstream-vue**: 0.0.6 → 0.0.7
+- **dompurify**: overridden to 3.3.2
+- **rollup**: upgraded to 4.59.0
+- **turbo**: 2.8.10 → 2.8.13
+
+### 📋 Migration Notes
+
+For users upgrading from v3.0.2:
+
+1. **Updated Defaults**: Deployment examples and container defaults now use `gpt-5.4`; set `DEFAULT_MODEL` explicitly if you need a different default
+2. **Reasoning Model UI**: Frontend model selection now highlights `o3`, `o3-mini`, and `o4-mini` instead of the older `o1` presets
+3. **Auth Header Naming**: `AUTH_HEADER_NAME` is now the preferred variable for custom auth headers, while `API_KEY_HEADER` remains supported for compatibility
+4. **Kubernetes Deployments**: Move inline credentials into Secrets before applying the updated manifests
+
+### 🎉 Benefits
+
+- **Better Model Support**: Broader GPT-5.x and reasoning-model coverage out of the box with latest gpt-5.4 default
+- **Improved Chat UX**: Richer response rendering and more reliable conversation state handling
+- **Stronger Production Posture**: Safer authentication, startup behavior, and deployment defaults
+- **Higher Release Quality**: More frontend tests and cleaner CI permission boundaries
+
 ## v3.0.2
 
 `2026-02-20`

@@ -96,7 +96,7 @@ ENV SKIP_API_DOMAIN_CHECK=false
 ENV OPENAI_ORGANIZATION=
 
 # Default Model Configuration
-ENV DEFAULT_MODEL=gpt-5.2
+ENV DEFAULT_MODEL=gpt-5.4
 ENV OPENAI_API_MODEL=
 
 # Azure OpenAI Configuration

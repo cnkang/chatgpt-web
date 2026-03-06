@@ -122,7 +122,7 @@ Get session information including authentication status and current model.
   "message": "",
   "data": {
     "auth": true,
-    "model": "gpt-5.2"
+    "model": "gpt-5.4"
   }
 }
 ```
@@ -285,12 +285,12 @@ Configure the application to use OpenAI's official API:
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_official_api_key_here
 OPENAI_API_BASE_URL=https://api.openai.com
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 ```
 
 **Supported Models:**
 
-- `gpt-5.2`, `gpt-5.1`, `gpt-5` - Latest GPT-5.x models with enhanced capabilities
+- `gpt-5.4`, `gpt-5.2`, `gpt-5.1`, `gpt-5` - Latest GPT-5.x models with enhanced capabilities
 - `gpt-4o`, `gpt-4o-mini` - GPT-4o models
 - `o3`, `o3-mini`, `o4-mini` - Reasoning models
 - `model-router` - Azure model router for automatic optimal model selection
@@ -304,7 +304,7 @@ Configure the application to use Azure OpenAI Service:
 AI_PROVIDER=azure
 AZURE_OPENAI_API_KEY=your_azure_api_key
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
-AZURE_OPENAI_DEPLOYMENT=gpt-5.2-deployment
+AZURE_OPENAI_DEPLOYMENT=gpt-5.4-deployment
 AZURE_OPENAI_API_VERSION=2024-02-15-preview
 
 # Enable v1 Responses API (recommended)

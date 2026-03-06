@@ -60,7 +60,7 @@ cp apps/api/.env.example apps/api/.env
 ```bash
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your-official-api-key
-DEFAULT_MODEL=gpt-5.1
+DEFAULT_MODEL=gpt-5.4
 ```
 
 可选（OpenAI 兼容第三方端点）：
