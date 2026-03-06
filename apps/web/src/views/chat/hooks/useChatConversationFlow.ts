@@ -46,7 +46,7 @@ function parseConversationProgress(responseText?: string): ConversationResponse 
   if (responseText === undefined || responseText === '') return null
 
   const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-  const chunk = lastIndex !== -1 ? responseText.substring(lastIndex) : responseText
+  const chunk = lastIndex === -1 ? responseText : responseText.substring(lastIndex)
 
   try {
     return JSON.parse(chunk) as ConversationResponse

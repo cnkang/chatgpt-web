@@ -431,10 +431,12 @@ describe('openai provider', () => {
 
       expect(reasoning).toBeDefined()
       expect(reasoning).toHaveLength(2)
-      expect(reasoning![0].step).toBe(1)
-      expect(reasoning![0].thought).toContain('First I need to understand')
-      expect(reasoning![1].step).toBe(2)
-      expect(reasoning![1].thought).toContain('Then I will solve')
+      if (!reasoning) throw new Error('Expected reasoning steps to be present')
+
+      expect(reasoning[0].step).toBe(1)
+      expect(reasoning[0].thought).toContain('First I need to understand')
+      expect(reasoning[1].step).toBe(2)
+      expect(reasoning[1].thought).toContain('Then I will solve')
     })
 
     it('should return undefined for content without reasoning steps', async () => {

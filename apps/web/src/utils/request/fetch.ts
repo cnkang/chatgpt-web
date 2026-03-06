@@ -29,6 +29,102 @@ export interface Response<T = unknown> {
   status: string
 }
 
+function parseErrorPayload(rawText: string, statusText: string): unknown {
+  if (!rawText) {
+    return {
+      data: null,
+      message: statusText,
+      status: 'Error',
+    }
+  }
+
+  try {
+    return JSON.parse(rawText)
+  } catch {
+    return {
+      data: null,
+      message: rawText,
+      status: 'Error',
+    }
+  }
+}
+
+function getErrorMessage(errorPayload: unknown, response: globalThis.Response): string {
+  if (typeof errorPayload === 'object' && errorPayload !== null && 'message' in errorPayload) {
+    return String((errorPayload as Record<string, unknown>).message)
+  }
+
+  return `HTTP ${response.status}: ${response.statusText}`
+}
+
+async function handleErrorResponse<T>(response: globalThis.Response): Promise<Response<T>> {
+  const rawText = await response.text()
+  const errorPayload = parseErrorPayload(rawText, response.statusText)
+
+  if (response.status === 401 || response.status === 403) {
+    return errorPayload as Response<T>
+  }
+
+  throw new Error(getErrorMessage(errorPayload, response))
+}
+
+function emitProgress(
+  onProgress: (event: FetchProgressEvent) => void,
+  loaded: number,
+  total: number | undefined,
+  responseText: string,
+) {
+  onProgress({
+    loaded,
+    total,
+    lengthComputable: total !== undefined,
+    responseText,
+  })
+}
+
+function parseStreamingResponseText<T>(responseText: string): Response<T> {
+  try {
+    return JSON.parse(responseText)
+  } catch {
+    return {
+      data: responseText as T,
+      message: null,
+      status: 'Success',
+    }
+  }
+}
+
+async function readStreamingResponse<T>(
+  response: globalThis.Response,
+  onProgress: (event: FetchProgressEvent) => void,
+): Promise<Response<T>> {
+  const contentLength = response.headers.get('content-length')
+  const total = contentLength ? Number.parseInt(contentLength, 10) : undefined
+  let loaded = 0
+  let responseText = ''
+
+  const reader = response.body?.getReader()
+  if (!reader) return response.json()
+
+  const decoder = new TextDecoder()
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value, { stream: true })
+      responseText += chunk
+      loaded += value.length
+      emitProgress(onProgress, loaded, total, responseText)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  return parseStreamingResponseText<T>(responseText)
+}
+
 /**
  * Create a fetch request with streaming support for chat responses
  */
@@ -39,83 +135,10 @@ async function fetchWithStreaming<T>(
 ): Promise<Response<T>> {
   const response = await fetch(url, options)
 
-  if (!response.ok) {
-    const rawText = await response.text()
-    let errorPayload: unknown = null
-
-    if (rawText) {
-      try {
-        errorPayload = JSON.parse(rawText)
-      } catch {
-        // Fallback to plain text payload
-      }
-    }
-
-    if (!errorPayload) {
-      errorPayload = {
-        data: null,
-        message: rawText || response.statusText,
-        status: 'Error',
-      }
-    }
-
-    if (response.status === 401 || response.status === 403) {
-      return errorPayload as Response<T>
-    }
-
-    const message =
-      typeof errorPayload === 'object' &&
-      errorPayload !== null &&
-      'message' in (errorPayload as Record<string, unknown>)
-        ? String((errorPayload as Record<string, unknown>).message)
-        : `HTTP ${response.status}: ${response.statusText}`
-
-    throw new Error(message)
-  }
+  if (!response.ok) return handleErrorResponse<T>(response)
 
   // Handle streaming responses (like chat completions)
-  if (onProgress && response.body) {
-    const contentLength = response.headers.get('content-length')
-    const total = contentLength ? Number.parseInt(contentLength, 10) : undefined
-    let loaded = 0
-    let responseText = ''
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        responseText += chunk
-        loaded += value.length
-
-        // Call progress callback with accumulated response text
-        onProgress({
-          loaded,
-          total,
-          lengthComputable: total !== undefined,
-          responseText,
-        })
-      }
-
-      // Try to parse the final response as JSON
-      try {
-        return JSON.parse(responseText)
-      } catch {
-        // If not valid JSON, return as text response
-        return {
-          data: responseText,
-          message: null,
-          status: 'Success',
-        } as Response<T>
-      }
-    } finally {
-      reader.releaseLock()
-    }
-  }
+  if (onProgress && response.body) return readStreamingResponse<T>(response, onProgress)
 
   // Standard response handling without progress
   return response.json()

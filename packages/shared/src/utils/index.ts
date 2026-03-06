@@ -100,11 +100,7 @@ export function generateId(): string {
 }
 
 export function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, c => {
-    const r = Math.trunc(Math.random() * 16)
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
+  return globalThis.crypto.randomUUID()
 }
 
 export function truncateString(str: string, maxLength: number): string {

@@ -3,9 +3,11 @@
 # ChatGPT Web - Docker 启动脚本 (Azure OpenAI)
 # 使用本地构建的镜像启动容器
 
-echo "=========================================="
+SEPARATOR="=========================================="
+
+echo "$SEPARATOR"
 echo "ChatGPT Web - Azure OpenAI 配置"
-echo "=========================================="
+echo "$SEPARATOR"
 echo ""
 
 # 检查必要的环境变量
@@ -57,9 +59,9 @@ if docker run -d \
   -e NODE_ENV=production \
   --restart unless-stopped \
   chatgpt-web:local; then
-    echo "=========================================="
+    echo "$SEPARATOR"
     echo "✅ 容器启动成功！"
-    echo "=========================================="
+    echo "$SEPARATOR"
     echo ""
     echo "访问地址: http://localhost:3002"
     echo "容器名称: chatgpt-web-azure"
@@ -75,7 +77,7 @@ if docker run -d \
     echo "  停止容器: docker stop chatgpt-web-azure"
     echo "  启动容器: docker start chatgpt-web-azure"
     echo "  删除容器: docker rm -f chatgpt-web-azure"
-    echo "=========================================="
+    echo "$SEPARATOR"
     echo ""
     echo "正在查看容器日志 (Ctrl+C 退出)..."
     sleep 2

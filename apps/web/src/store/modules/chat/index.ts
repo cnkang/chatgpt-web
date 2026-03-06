@@ -29,7 +29,7 @@ function schedulePersist(state: ChatState) {
   }, CHAT_STATE_PERSIST_DELAY_MS)
 }
 
-if (typeof globalThis.window !== 'undefined') {
+if (globalThis.window !== undefined) {
   globalThis.window.addEventListener('pagehide', flushPendingPersist)
 }
 

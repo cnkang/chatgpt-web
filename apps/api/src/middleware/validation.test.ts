@@ -175,8 +175,10 @@ describe('validation middleware', () => {
         configurable: true,
         writable: true,
       })
-      payload['prototype'] = 'prototype-attempt'
-      payload['constructor'] = 'constructor-attempt'
+      Object.assign(payload, {
+        prototype: 'prototype-attempt',
+        constructor: 'constructor-attempt',
+      })
 
       mockReq.body = { payload }
 

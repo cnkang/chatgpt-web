@@ -68,7 +68,7 @@ export function propertyTest<T>(
   metadata: PropertyTestMetadata,
   testName: string,
   arbitrary: fc.Arbitrary<T>,
-  predicate: (value: T) => boolean | void,
+  predicate: (value: T) => boolean | undefined,
   config: fc.Parameters<[T]> = DEFAULT_PROPERTY_CONFIG as fc.Parameters<[T]>,
 ): void {
   const tag = createPropertyTestTag(metadata)
@@ -99,7 +99,7 @@ export function asyncPropertyTest<T>(
   metadata: PropertyTestMetadata,
   testName: string,
   arbitrary: fc.Arbitrary<T>,
-  predicate: (value: T) => Promise<boolean | void>,
+  predicate: (value: T) => Promise<boolean | undefined>,
   config: fc.Parameters<[T]> = DEFAULT_PROPERTY_CONFIG as fc.Parameters<[T]>,
 ): void {
   const tag = createPropertyTestTag(metadata)
@@ -335,7 +335,7 @@ export function createPropertyTest<T>(
   propertyNumber: number,
   testName: string,
   arbitrary: fc.Arbitrary<T>,
-  predicate: (value: T) => boolean | void,
+  predicate: (value: T) => boolean | undefined,
   config?: fc.Parameters<[T]>,
 ): void {
   const metadata = getPropertyMetadata(propertyNumber)
@@ -349,7 +349,7 @@ export function createAsyncPropertyTest<T>(
   propertyNumber: number,
   testName: string,
   arbitrary: fc.Arbitrary<T>,
-  predicate: (value: T) => Promise<boolean | void>,
+  predicate: (value: T) => Promise<boolean | undefined>,
   config?: fc.Parameters<[T]>,
 ): void {
   const metadata = getPropertyMetadata(propertyNumber)

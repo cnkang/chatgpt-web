@@ -3,17 +3,13 @@
  * Provides comprehensive input validation and sanitization
  */
 
-import {
-  type AuthHeaderSchema,
-  type ChatContextSchema,
-  type ChatProcessRequestSchema,
-  type ConfigRequestSchema,
-  type PaginationSchema,
-  type TokenVerificationSchema,
-  numberSchema,
-  optionalNumberSchema,
-  optionalStringSchema,
-  stringSchema,
+import type {
+  AuthHeaderSchema,
+  ChatContextSchema,
+  ChatProcessRequestSchema,
+  ConfigRequestSchema,
+  PaginationSchema,
+  TokenVerificationSchema,
 } from '@chatgpt-web/shared'
 import type { z } from 'zod'
 
@@ -26,10 +22,11 @@ export {
   IdSchema as idSchema,
   PaginationSchema as paginationSchema,
   TokenVerificationSchema as tokenVerificationSchema,
+  numberSchema,
+  optionalNumberSchema,
+  optionalStringSchema,
+  stringSchema,
 } from '@chatgpt-web/shared'
-
-// Re-export base schemas
-export { numberSchema, optionalNumberSchema, optionalStringSchema, stringSchema }
 
 // Export type definitions for TypeScript
 export type ChatProcessRequest = z.infer<typeof ChatProcessRequestSchema>

@@ -86,22 +86,33 @@ function normalizeMessage(value: unknown): Record<string, unknown> | null {
   const text = normalizeText(value)
   const dateTime = normalizeDateTime(value)
   const requestOptions = normalizeRequestOptions(value, text)
-
-  const conversationOptions = normalizeConversationOptions(value.conversationOptions)
-
-  return {
+  const normalizedRequestOptions: Record<string, unknown> = {
+    prompt: requestOptions.prompt,
+  }
+  const normalizedMessage: Record<string, unknown> = {
     ...(typeof value.id === 'string' && value.id ? { id: value.id } : {}),
     dateTime,
     text,
     ...(typeof value.inversion === 'boolean' ? { inversion: value.inversion } : {}),
     ...(typeof value.error === 'boolean' ? { error: value.error } : {}),
     ...(typeof value.loading === 'boolean' ? { loading: value.loading } : {}),
-    ...(conversationOptions !== undefined ? { conversationOptions } : {}),
-    requestOptions: {
-      prompt: requestOptions.prompt,
-      ...(requestOptions.options !== undefined ? { options: requestOptions.options } : {}),
-    },
+    requestOptions: normalizedRequestOptions,
   }
+
+  const conversationOptions = normalizeConversationOptions(value.conversationOptions)
+  if (conversationOptions === undefined) {
+    if (requestOptions.options !== undefined) {
+      normalizedRequestOptions.options = requestOptions.options
+    }
+    return normalizedMessage
+  }
+
+  normalizedMessage.conversationOptions = conversationOptions
+  if (requestOptions.options !== undefined) {
+    normalizedRequestOptions.options = requestOptions.options
+  }
+
+  return normalizedMessage
 }
 
 function normalizeHistoryItem(value: unknown): Record<string, unknown> | null {

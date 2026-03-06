@@ -145,6 +145,7 @@ const MIGRATION_MESSAGES = {
 /**
  * Configuration validator for detecting deprecated variables and validating official API configuration
  */
+// biome-ignore lint/complexity/noStaticOnlyClass: Static utility methods keep configuration callsites stable.
 export class ConfigurationValidator {
   /**
    * List of deprecated environment variables that are no longer supported
@@ -208,9 +209,14 @@ export class ConfigurationValidator {
    */
   static getValidatedConfig(): ValidatedConfig {
     ConfigurationValidator.validateEnvironment()
+    const apiKey = process.env.OPENAI_API_KEY
+
+    if (!apiKey) {
+      throw new Error(ConfigurationValidator.buildMissingConfigErrorMessage())
+    }
 
     return {
-      apiKey: process.env.OPENAI_API_KEY!,
+      apiKey,
       baseUrl: process.env.OPENAI_API_BASE_URL,
       model: process.env.OPENAI_API_MODEL || 'gpt-5.2',
       timeout: Number(process.env.TIMEOUT_MS) || 100000,
@@ -419,11 +425,7 @@ Please set your API key and restart the application.
     // Check AI provider and provide appropriate migration steps
     const aiProvider = process.env.AI_PROVIDER || 'openai'
 
-    if (aiProvider !== 'azure') {
-      if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
-        steps.push('Set OPENAI_API_KEY with your official OpenAI API key')
-      }
-    } else {
+    if (aiProvider === 'azure') {
       if (!isNotEmptyString(process.env.AZURE_OPENAI_API_KEY)) {
         steps.push('Set AZURE_OPENAI_API_KEY with your Azure OpenAI API key')
       }
@@ -433,6 +435,11 @@ Please set your API key and restart the application.
       if (!isNotEmptyString(process.env.AZURE_OPENAI_DEPLOYMENT)) {
         steps.push('Set AZURE_OPENAI_DEPLOYMENT with your Azure OpenAI deployment name')
       }
+    } else if (
+      !isNotEmptyString(process.env.OPENAI_API_KEY) ||
+      !process.env.OPENAI_API_KEY.trim()
+    ) {
+      steps.push('Set OPENAI_API_KEY with your official OpenAI API key')
     }
 
     steps.push('Restart the application')
