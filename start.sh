@@ -7,13 +7,13 @@ echo "Starting ChatGPT Web in Development Mode..."
 
 # Check if pnpm is installed
 if ! command -v pnpm &> /dev/null; then
-    echo "Error: pnpm is not installed. Please install pnpm first."
-    echo "Run: npm install -g pnpm"
+    echo "Error: pnpm is not installed. Please install pnpm first." >&2
+    echo "Run: npm install -g pnpm" >&2
     exit 1
 fi
 
 # Check if dependencies are installed
-if [ ! -d "node_modules" ]; then
+if [[ ! -d "node_modules" ]]; then
     echo "Installing dependencies..."
     pnpm install
 fi

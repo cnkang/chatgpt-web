@@ -10,8 +10,10 @@ echo "Docker 部署测试"
 echo "=========================================="
 echo ""
 
+SEPARATOR="=========================================="
+
 # 检查环境变量
-if [ -z "$AZURE_OPENAI_API_KEY" ] || [ -z "$AZURE_OPENAI_ENDPOINT" ] || [ -z "$AZURE_OPENAI_DEPLOYMENT" ]; then
+if [[ -z "$AZURE_OPENAI_API_KEY" || -z "$AZURE_OPENAI_ENDPOINT" || -z "$AZURE_OPENAI_DEPLOYMENT" ]]; then
     echo "❌ 错误: 请先设置 Azure OpenAI 环境变量"
     echo ""
     echo "示例:"
@@ -60,7 +62,7 @@ for i in {1..30}; do
         echo "✅ 服务就绪"
         break
     fi
-    if [ $i -eq 30 ]; then
+    if [[ $i -eq 30 ]]; then
         echo "❌ 服务启动超时"
         docker logs chatgpt-web-test
         exit 1
@@ -69,21 +71,21 @@ for i in {1..30}; do
 done
 
 echo ""
-echo "=========================================="
+echo "$SEPARATOR"
 echo "容器信息"
-echo "=========================================="
+echo "$SEPARATOR"
 docker ps | grep chatgpt-web-test
 echo ""
 
-echo "=========================================="
+echo "$SEPARATOR"
 echo "容器日志 (最近 50 行)"
-echo "=========================================="
+echo "$SEPARATOR"
 docker logs --tail 50 chatgpt-web-test
 echo ""
 
-echo "=========================================="
+echo "$SEPARATOR"
 echo "测试完成"
-echo "=========================================="
+echo "$SEPARATOR"
 echo ""
 echo "容器正在运行: chatgpt-web-test"
 echo "访问地址: http://localhost:3002"

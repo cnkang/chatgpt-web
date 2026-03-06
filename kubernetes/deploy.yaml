@@ -16,6 +16,7 @@ spec:
       labels:
         app: chatgpt-web
     spec:
+      automountServiceAccountToken: false
       containers:
         - image: your-registry/chatgpt-web:<git-sha>
           name: chatgpt-web
@@ -65,6 +66,7 @@ spec:
             requests:
               cpu: 300m
               memory: 300Mi
+              ephemeral-storage: 1Gi
 ---
 apiVersion: v1
 kind: Service

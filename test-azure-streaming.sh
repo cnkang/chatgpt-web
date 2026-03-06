@@ -21,7 +21,7 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
 fi
 
 # Load environment variables from .env if it exists
-if [ -f .env ]; then
+if [[ -f .env ]]; then
     echo "📄 Loading environment variables from .env..."
     export $(cat .env | grep -v '^#' | xargs)
 else
@@ -35,7 +35,7 @@ else
 fi
 
 # Validate required environment variables
-if [ -z "$AZURE_OPENAI_API_KEY" ] || [ -z "$AZURE_OPENAI_ENDPOINT" ] || [ -z "$AZURE_OPENAI_DEPLOYMENT" ]; then
+if [[ -z "$AZURE_OPENAI_API_KEY" || -z "$AZURE_OPENAI_ENDPOINT" || -z "$AZURE_OPENAI_DEPLOYMENT" ]]; then
     echo "❌ Missing required environment variables!"
     echo ""
     echo "Please set the following in your .env file:"
@@ -46,7 +46,7 @@ if [ -z "$AZURE_OPENAI_API_KEY" ] || [ -z "$AZURE_OPENAI_ENDPOINT" ] || [ -z "$A
 fi
 
 # Generate session secret if not provided
-if [ -z "$SESSION_SECRET" ]; then
+if [[ -z "$SESSION_SECRET" ]]; then
     SESSION_SECRET=$(openssl rand -base64 32)
     echo "🔑 Generated SESSION_SECRET"
 fi

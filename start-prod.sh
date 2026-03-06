@@ -7,8 +7,8 @@ echo "Starting ChatGPT Web in Production Mode..."
 
 # Check if pnpm is installed
 if ! command -v pnpm &> /dev/null; then
-    echo "Error: pnpm is not installed. Please install pnpm first."
-    echo "Run: npm install -g pnpm"
+    echo "Error: pnpm is not installed. Please install pnpm first." >&2
+    echo "Run: npm install -g pnpm" >&2
     exit 1
 fi
 
@@ -16,18 +16,15 @@ fi
 export NODE_ENV=production
 
 # Install dependencies if needed
-if [ ! -d "node_modules" ]; then
+if [[ ! -d "node_modules" ]]; then
     echo "Installing dependencies..."
     pnpm install --frozen-lockfile
 fi
 
 # Build all packages
 echo "Building all packages..."
-pnpm build
-
-# Check if build was successful
-if [ $? -ne 0 ]; then
-    echo "Error: Build failed. Please check the logs above."
+if ! pnpm build; then
+    echo "Error: Build failed. Please check the logs above." >&2
     exit 1
 fi
 

@@ -9,26 +9,26 @@ echo "=========================================="
 echo ""
 
 # 检查必要的环境变量
-if [ -z "$AZURE_OPENAI_API_KEY" ]; then
+if [[ -z "$AZURE_OPENAI_API_KEY" ]]; then
     echo "错误: 请设置 AZURE_OPENAI_API_KEY 环境变量"
     echo "示例: export AZURE_OPENAI_API_KEY='your-api-key'"
     exit 1
 fi
 
-if [ -z "$AZURE_OPENAI_ENDPOINT" ]; then
+if [[ -z "$AZURE_OPENAI_ENDPOINT" ]]; then
     echo "错误: 请设置 AZURE_OPENAI_ENDPOINT 环境变量"
     echo "示例: export AZURE_OPENAI_ENDPOINT='https://your-resource.openai.azure.com'"
     exit 1
 fi
 
-if [ -z "$AZURE_OPENAI_DEPLOYMENT" ]; then
+if [[ -z "$AZURE_OPENAI_DEPLOYMENT" ]]; then
     echo "错误: 请设置 AZURE_OPENAI_DEPLOYMENT 环境变量"
     echo "示例: export AZURE_OPENAI_DEPLOYMENT='gpt-4o'"
     exit 1
 fi
 
 # 停止并删除旧容器（如果存在）
-if [ "$(docker ps -aq -f name=chatgpt-web-azure)" ]; then
+if [[ -n "$(docker ps -aq -f name=chatgpt-web-azure)" ]]; then
     echo "停止并删除旧容器..."
     docker stop chatgpt-web-azure 2>/dev/null
     docker rm chatgpt-web-azure 2>/dev/null
@@ -38,7 +38,7 @@ echo "启动 ChatGPT Web 容器..."
 echo ""
 
 # 启动容器
-docker run -d \
+if docker run -d \
   --name chatgpt-web-azure \
   -p 3002:3002 \
   -e AI_PROVIDER=azure \
@@ -56,9 +56,7 @@ docker run -d \
   -e LOG_LEVEL="${LOG_LEVEL:-info}" \
   -e NODE_ENV=production \
   --restart unless-stopped \
-  chatgpt-web:local
-
-if [ $? -eq 0 ]; then
+  chatgpt-web:local; then
     echo "=========================================="
     echo "✅ 容器启动成功！"
     echo "=========================================="
