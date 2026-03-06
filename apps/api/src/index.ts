@@ -40,6 +40,8 @@ try {
 
 const parsedPort = Number.parseInt(process.env.PORT || '3002', 10)
 const PORT = Number.isNaN(parsedPort) ? 3002 : parsedPort
+const GLOBAL_JSON_BODY_LIMIT = '1mb'
+const GLOBAL_FORM_BODY_LIMIT = '32kb'
 
 type ChatModule = typeof import('./chatgpt/provider-adapter.js')
 
@@ -298,8 +300,10 @@ async function startServer() {
   const app = express()
   const router = express.Router()
 
+  app.disable('x-powered-by')
   app.use(express.static('public'))
-  app.use(express.json())
+  app.use(express.json({ limit: GLOBAL_JSON_BODY_LIMIT }))
+  app.use(express.urlencoded({ extended: false, limit: GLOBAL_FORM_BODY_LIMIT, parameterLimit: 100 }))
 
   // Request logging middleware
   app.use(requestLogger())

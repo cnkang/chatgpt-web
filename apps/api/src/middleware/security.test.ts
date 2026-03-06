@@ -282,15 +282,18 @@ describe('security middleware', () => {
       expect(mockNext).toHaveBeenCalled()
     })
 
-    it('should handle wildcard origins', () => {
+    it('should ignore wildcard origins to avoid permissive CORS policies', () => {
       process.env.ALLOWED_ORIGINS = '*'
       mockReq.get = vi.fn().mockReturnValue('https://any-origin.com')
 
       const middleware = createCorsMiddleware()
       middleware(mockReq, mockRes, mockNext)
 
-      expect(mockRes.header).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
-      expect(mockRes.header).not.toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
+      expect(mockRes.header).not.toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
+      expect(mockRes.header).not.toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://any-origin.com',
+      )
       expect(mockNext).toHaveBeenCalled()
     })
 

@@ -30,6 +30,7 @@ export enum ErrorType {
   AUTHENTICATION = 'AUTHENTICATION_ERROR',
   AUTHORIZATION = 'AUTHORIZATION_ERROR',
   NOT_FOUND = 'NOT_FOUND_ERROR',
+  PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE_ERROR',
   RATE_LIMIT = 'RATE_LIMIT_ERROR',
   EXTERNAL_API = 'EXTERNAL_API_ERROR',
   NETWORK = 'NETWORK_ERROR',
@@ -67,17 +68,58 @@ export class AppError extends Error {
 /**
  * Creates standardized error responses
  */
+function normalizeError(error: Error | AppError): Error | AppError {
+  if (error instanceof AppError) {
+    return error
+  }
+
+  const expressError = error as Error & { status?: number; statusCode?: number; type?: string }
+  const statusCode = expressError.statusCode ?? expressError.status
+
+  if (expressError.type === 'entity.too.large' || statusCode === 413) {
+    return new AppError('Request entity too large', ErrorType.PAYLOAD_TOO_LARGE, 413, true)
+  }
+
+  if (expressError.type === 'entity.parse.failed' || statusCode === 400) {
+    return createValidationError('Invalid JSON payload')
+  }
+
+  return error
+}
+
+function getPublicErrorMessage(error: Error | AppError, statusCode: number): string {
+  if (statusCode < 500) {
+    return error.message
+  }
+
+  if (error instanceof AppError) {
+    switch (error.type) {
+      case ErrorType.TIMEOUT:
+        return 'Request timeout'
+      case ErrorType.EXTERNAL_API:
+      case ErrorType.NETWORK:
+        return 'Upstream service request failed'
+      default:
+        break
+    }
+  }
+
+  return 'Internal server error'
+}
+
 export function createErrorResponse(error: Error | AppError, requestId?: string): ErrorResponse {
-  const isAppError = error instanceof AppError
+  const normalizedError = normalizeError(error)
+  const isAppError = normalizedError instanceof AppError
+  const statusCode = isAppError ? normalizedError.statusCode : 500
 
   return {
-    status: isAppError && error.statusCode < 500 ? 'Fail' : 'Error',
-    message: error.message,
+    status: isAppError && statusCode < 500 ? 'Fail' : 'Error',
+    message: getPublicErrorMessage(normalizedError, statusCode),
     data: null,
     error: {
-      code: isAppError ? error.type : ErrorType.INTERNAL,
-      type: error.constructor.name,
-      details: isAppError ? error.details : undefined,
+      code: isAppError ? normalizedError.type : ErrorType.INTERNAL,
+      type: normalizedError.constructor.name,
+      details: isAppError && statusCode < 500 ? normalizedError.details : undefined,
       timestamp: new Date().toISOString(),
       requestId,
     },
@@ -93,19 +135,21 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ) {
+  const normalizedError = normalizeError(error)
+
   // Generate request ID for tracking
   const requestId = (req.headers['x-request-id'] as string) || randomUUID()
 
-  const isAppError = error instanceof AppError
-  const statusCode = isAppError ? error.statusCode : 500
+  const isAppError = normalizedError instanceof AppError
+  const statusCode = isAppError ? normalizedError.statusCode : 500
 
   // Log error (excluding sensitive information)
   const logData = {
     requestId,
     error: {
-      message: error.message,
-      type: isAppError ? error.type : ErrorType.INTERNAL,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: normalizedError.message,
+      type: isAppError ? normalizedError.type : ErrorType.INTERNAL,
+      stack: process.env.NODE_ENV === 'development' ? normalizedError.stack : undefined,
     },
     request: {
       method: req.method,
@@ -123,7 +167,7 @@ export function errorHandler(
   }
 
   // Send error response
-  const errorResponse = createErrorResponse(error, requestId)
+  const errorResponse = createErrorResponse(normalizedError, requestId)
   res.status(statusCode).json(errorResponse)
 }
 
@@ -159,6 +203,10 @@ export function createNotFoundError(message: string = 'Resource not found') {
 
 export function createRateLimitError(message: string = 'Rate limit exceeded') {
   return new AppError(message, ErrorType.RATE_LIMIT, 429, true)
+}
+
+export function createPayloadTooLargeError(message: string = 'Request entity too large') {
+  return new AppError(message, ErrorType.PAYLOAD_TOO_LARGE, 413, true)
 }
 
 export function createExternalApiError(message: string, details?: unknown) {

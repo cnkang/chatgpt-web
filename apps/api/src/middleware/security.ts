@@ -7,6 +7,7 @@ import type { NextFunction, Request, Response } from 'express'
 import type { SessionOptions } from 'express-session'
 import session from 'express-session'
 import helmet from 'helmet'
+import { randomBytes } from 'node:crypto'
 import { createClient } from 'redis'
 
 /**
@@ -36,6 +37,10 @@ interface SecurityConfig {
   }
 }
 
+const DEFAULT_SESSION_SECRET_PLACEHOLDER = '__session_secret_missing__'
+const LEGACY_DEFAULT_SESSION_SECRET = 'default-session-secret-change-in-production'
+const developmentSessionSecret = randomBytes(32).toString('hex')
+
 /**
  * Resolves the session secret, enforcing a secure value in production.
  * Security: SESSION_SECRET must be explicitly set in production to prevent
@@ -45,14 +50,19 @@ function resolveSessionSecret(): string {
   const secret = process.env.SESSION_SECRET
   const isProduction = process.env.NODE_ENV === 'production'
 
-  if (isProduction && (!secret || secret === 'default-session-secret-change-in-production')) {
+  if (
+    isProduction &&
+    (!secret ||
+      secret === DEFAULT_SESSION_SECRET_PLACEHOLDER ||
+      secret === LEGACY_DEFAULT_SESSION_SECRET)
+  ) {
     throw new Error(
       'SESSION_SECRET must be set to a secure random value in production. ' +
         "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
     )
   }
 
-  return secret || 'default-session-secret-change-in-production'
+  return secret || developmentSessionSecret
 }
 
 /**
@@ -297,31 +307,12 @@ export function createCorsMiddleware() {
     .filter(Boolean)
   let allowedOrigins: string[]
   if (configuredOrigins && configuredOrigins.length > 0) {
-    allowedOrigins = configuredOrigins
+    allowedOrigins = configuredOrigins.filter(origin => origin !== '*')
   } else if (isProduction) {
     allowedOrigins = [] // No default origins in production - must be explicitly configured
   } else {
     allowedOrigins = ['http://localhost:1002', 'http://127.0.0.1:1002']
   }
-
-  // Security: Block wildcard CORS in production to prevent broad cross-origin access
-  if (isProduction && allowedOrigins.includes('*')) {
-    console.error(
-      '✗ Security: Wildcard CORS origin (*) is not allowed in production. ' +
-        'Set ALLOWED_ORIGINS to specific trusted origins.',
-    )
-    // Filter out wildcard, falling back to no allowed origins
-    const filtered = allowedOrigins.filter(o => o !== '*')
-    if (filtered.length === 0) {
-      console.error(
-        '  No valid origins remain after removing wildcard. CORS will reject all cross-origin requests.',
-      )
-    }
-    allowedOrigins.length = 0
-    allowedOrigins.push(...filtered)
-  }
-
-  const allowAnyOrigin = allowedOrigins.includes('*')
 
   return (req: Request, res: Response, next: NextFunction) => {
     const origin = req.get('Origin')?.trim()
@@ -330,12 +321,9 @@ export function createCorsMiddleware() {
       !isNullOrigin && origin
         ? allowedOrigins.find(allowedOrigin => allowedOrigin === origin)
         : undefined
-    const isOriginAllowed = allowAnyOrigin || Boolean(matchedAllowedOrigin)
+    const isOriginAllowed = Boolean(matchedAllowedOrigin)
 
-    // Never combine wildcard origins with credentialed requests.
-    if (allowAnyOrigin) {
-      res.header('Access-Control-Allow-Origin', '*')
-    } else if (matchedAllowedOrigin) {
+    if (matchedAllowedOrigin) {
       res.header('Access-Control-Allow-Origin', matchedAllowedOrigin)
       res.header('Access-Control-Allow-Credentials', 'true')
       res.header('Vary', 'Origin')
@@ -347,7 +335,7 @@ export function createCorsMiddleware() {
 
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
-      if (!allowAnyOrigin && (isNullOrigin || (origin && !isOriginAllowed))) {
+      if (isNullOrigin || (origin && !isOriginAllowed)) {
         return res.status(403).end()
       }
       return res.status(200).end()
@@ -403,7 +391,8 @@ export function validateSecurityEnvironment(): { isValid: boolean; warnings: str
   // Check session secret
   if (
     !process.env.SESSION_SECRET ||
-    process.env.SESSION_SECRET === 'default-session-secret-change-in-production'
+    process.env.SESSION_SECRET === DEFAULT_SESSION_SECRET_PLACEHOLDER ||
+    process.env.SESSION_SECRET === LEGACY_DEFAULT_SESSION_SECRET
   ) {
     warnings.push('SESSION_SECRET should be set to a secure random value in production')
     if (process.env.NODE_ENV === 'production') {

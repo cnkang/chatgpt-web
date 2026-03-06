@@ -110,7 +110,7 @@ describe('error handler', () => {
       const response = createErrorResponse(error, requestId)
 
       expect(response.status).toBe('Error')
-      expect(response.message).toBe('Regular error')
+      expect(response.message).toBe('Internal server error')
       expect(response.data).toBeNull()
       expect(response.error?.code).toBe(ErrorType.INTERNAL)
       expect(response.error?.type).toBe('Error')
@@ -161,9 +161,49 @@ describe('error handler', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'Error',
-          message: 'Regular error',
+          message: 'Internal server error',
           error: expect.objectContaining({
             code: ErrorType.INTERNAL,
+          }),
+        }),
+      )
+    })
+
+    it('should map body parser payload errors to 413 responses', () => {
+      const error = Object.assign(new Error('request entity too large'), {
+        type: 'entity.too.large',
+        status: 413,
+      })
+
+      errorHandler(error, mockReq, mockRes, mockNext)
+
+      expect(mockRes.status).toHaveBeenCalledWith(413)
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'Fail',
+          message: 'Request entity too large',
+          error: expect.objectContaining({
+            code: ErrorType.PAYLOAD_TOO_LARGE,
+          }),
+        }),
+      )
+    })
+
+    it('should hide upstream error details from 5xx responses', () => {
+      const error = createExternalApiError('OpenAI API Error: upstream stack trace', {
+        provider: 'openai',
+      })
+
+      errorHandler(error, mockReq, mockRes, mockNext)
+
+      expect(mockRes.status).toHaveBeenCalledWith(502)
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'Error',
+          message: 'Upstream service request failed',
+          error: expect.objectContaining({
+            code: ErrorType.EXTERNAL_API,
+            details: undefined,
           }),
         }),
       )
