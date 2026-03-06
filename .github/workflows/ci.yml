@@ -9,12 +9,11 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - name: Setup Node.js and PNPM
@@ -30,6 +29,8 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - name: Setup Node.js and PNPM

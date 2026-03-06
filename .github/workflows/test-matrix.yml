@@ -27,14 +27,13 @@ on:
 env:
   NODE_VERSION: '24.x'
 
-permissions:
-  contents: read
-  actions: write
-
 jobs:
   # Determine test matrix based on inputs
   setup-matrix:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     outputs:
       packages: ${{ steps.matrix.outputs.packages }}
       test-types: ${{ steps.matrix.outputs.test-types }}
@@ -84,6 +83,9 @@ jobs:
   # Unit tests for each package
   unit-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     needs: setup-matrix
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'unit')
     strategy:
@@ -112,6 +114,9 @@ jobs:
   # Integration tests
   integration-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     needs: setup-matrix
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'integration')
     strategy:
@@ -158,6 +163,9 @@ jobs:
   # End-to-end tests
   e2e-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     needs: setup-matrix
     if: |
       contains(fromJson(needs.setup-matrix.outputs.test-types), 'e2e') &&
@@ -219,6 +227,9 @@ jobs:
   # Performance tests
   performance-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     needs: setup-matrix
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'performance')
     steps:
@@ -252,6 +263,9 @@ jobs:
   # Security tests
   security-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     needs: setup-matrix
     if: contains(fromJson(needs.setup-matrix.outputs.test-types), 'security')
     steps:
@@ -316,6 +330,9 @@ jobs:
   # Test summary and reporting
   test-summary:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     needs: [unit-tests, integration-tests, e2e-tests, performance-tests, security-tests]
     if: always()
     steps:

@@ -20,13 +20,12 @@ on:
 env:
   NODE_VERSION: '24.x'
 
-permissions:
-  contents: read
-
 jobs:
   # Analyze cache usage and efficiency
   cache-analysis:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event.inputs.action == 'analyze' || github.event.inputs.action == 'cleanup'
     steps:
       - uses: actions/checkout@v6
@@ -74,6 +73,8 @@ jobs:
   # Warm up caches for faster CI runs
   warm-cache:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event.inputs.action == 'warm-cache'
     strategy:
       matrix:
@@ -111,6 +112,8 @@ jobs:
   # Clean up old and unused caches
   cache-cleanup:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event.inputs.action == 'cleanup' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v6
@@ -159,6 +162,8 @@ jobs:
   # Purge all caches (emergency action)
   purge-all-caches:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event.inputs.action == 'purge-all'
     steps:
       - uses: actions/checkout@v6
@@ -183,6 +188,8 @@ jobs:
   # Cache optimization recommendations
   cache-optimization:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [cache-analysis]
     if: always() && (github.event.inputs.action == 'analyze' || github.event_name == 'schedule')
     steps:

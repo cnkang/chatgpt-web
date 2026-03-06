@@ -9,11 +9,6 @@ on:
   check_suite:
     types: [completed]
 
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-
 concurrency:
   group: dependabot-auto-merge-${{ github.event.pull_request.number || github.event.check_suite.id || github.run_id }}
   cancel-in-progress: true
@@ -22,6 +17,10 @@ jobs:
   auto-approve:
     if: github.event_name == 'pull_request_target' && github.event.pull_request.draft == false && contains(github.event.pull_request.user.login, 'dependabot')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -201,6 +200,10 @@ jobs:
   merge-safe-updates:
     if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
