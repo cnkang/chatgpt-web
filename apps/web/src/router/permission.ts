@@ -13,5 +13,7 @@ export function setupPageGuard(router: Router) {
         if (to.path !== '/500') return { name: '500' }
       }
     }
+
+    return true
   })
 }

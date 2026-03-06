@@ -166,7 +166,7 @@ export class ConfigurationManager {
         rateLimitMaxRequests: Number.parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
         enableCSP: process.env.ENABLE_CSP !== 'false',
         enableHSTS: process.env.ENABLE_HSTS !== 'false',
-        apiKeyHeader: process.env.API_KEY_HEADER || 'authorization',
+        apiKeyHeader: process.env.AUTH_HEADER_NAME || process.env.API_KEY_HEADER || 'authorization',
       },
       development: {
         debug: process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true',

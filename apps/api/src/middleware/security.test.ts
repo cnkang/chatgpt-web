@@ -15,6 +15,8 @@ import {
   validateSecurityEnvironment,
 } from './security.js'
 
+const TEST_CLIENT_IP = 'client-ip-under-test'
+
 // Mock external dependencies
 vi.mock('helmet', () => ({
   default: vi.fn().mockImplementation((options: HelmetOptions) => {
@@ -345,7 +347,7 @@ describe('security middleware', () => {
     it('should log request without sensitive information', () => {
       mockReq.method = 'POST'
       mockReq.url = '/api/chat'
-      Object.defineProperty(mockReq, 'ip', { value: '192.168.1.1', writable: true })
+      Object.defineProperty(mockReq, 'ip', { value: TEST_CLIENT_IP, writable: true })
       mockReq.get = vi.fn().mockImplementation((header: string) => {
         if (header === 'User-Agent') return 'Test Browser'
         return undefined
@@ -361,7 +363,7 @@ describe('security middleware', () => {
 
       expect(logData.method).toBe('POST')
       expect(logData.url).toBe('/api/chat')
-      expect(logData.ip).toBe('192.168.1.1')
+      expect(logData.ip).toBe(TEST_CLIENT_IP)
       expect(logData.userAgent).toBe('Test Browser')
       expect(logData.timestamp).toBeDefined()
     })

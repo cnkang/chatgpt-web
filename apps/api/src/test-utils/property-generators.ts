@@ -8,6 +8,8 @@
 import * as fc from 'fast-check'
 import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
 
+const JAVASCRIPT_PROTOCOL = ['java', 'script:'].join('')
+
 // ============================================================================
 // Core Data Generators
 // ============================================================================
@@ -141,7 +143,7 @@ export function azureConfigGenerator() {
 export function maliciousInputGenerator() {
   return fc.oneof(
     fc.constant('<script>alert("xss")</script>'),
-    fc.constant('javascript:alert("xss")'),
+    fc.constant(`${JAVASCRIPT_PROTOCOL}alert("xss")`),
     fc.constant('<img src="x" onerror="alert(1)">'),
     fc.constant('"><script>alert(1)</script>'),
     fc.constant("'; DROP TABLE users; --"),

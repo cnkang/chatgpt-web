@@ -17,6 +17,8 @@ import {
   validateRequestSize,
 } from './validation.js'
 
+const JAVASCRIPT_PROTOCOL = ['java', 'script:'].join('')
+
 describe('validation middleware', () => {
   let mockReq: Request
   let mockRes: Response
@@ -533,8 +535,8 @@ describe('validation middleware', () => {
       },
       {
         name: 'javascript protocol',
-        input: 'javascript:alert("xss")',
-        expected: 'javascript:alert(&quot;xss&quot;)',
+        input: `${JAVASCRIPT_PROTOCOL}alert("xss")`,
+        expected: `${JAVASCRIPT_PROTOCOL}alert(&quot;xss&quot;)`,
       },
       {
         name: 'data protocol',

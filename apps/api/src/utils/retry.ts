@@ -67,6 +67,14 @@ export const defaultCircuitConfig: CircuitBreakerConfig = {
   expectedErrors: [ErrorType.NETWORK, ErrorType.TIMEOUT, ErrorType.EXTERNAL_API],
 }
 
+const UINT32_MAX_PLUS_ONE = 0x1_0000_0000
+
+function getRandomFraction(): number {
+  const randomBuffer = new Uint32Array(1)
+  globalThis.crypto.getRandomValues(randomBuffer)
+  return randomBuffer[0] / UINT32_MAX_PLUS_ONE
+}
+
 /**
  * Circuit breaker implementation
  */
@@ -230,7 +238,7 @@ function calculateDelay(attempt: number, config: RetryConfig): number {
   if (config.jitter) {
     // Add random jitter (±25%)
     const jitterRange = cappedDelay * 0.25
-    const jitter = (Math.random() - 0.5) * 2 * jitterRange
+    const jitter = (getRandomFraction() - 0.5) * 2 * jitterRange
     return Math.max(0, cappedDelay + jitter)
   }
 

@@ -45,6 +45,8 @@ export function createLocalStorage(options?: { expire?: number | null }) {
       removeStorageItem(key)
       return null
     }
+
+    return null
   }
 
   return { set, get, remove: removeStorageItem, clear: clearStorage }

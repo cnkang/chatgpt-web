@@ -127,7 +127,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
 
       // Replace request body with validated and sanitized data
       req.body = result.data
-      next()
+      return next()
     } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
@@ -171,7 +171,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
 
       // Replace query with validated and sanitized data
       req.query = result.data as Request['query']
-      next()
+      return next()
     } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
@@ -215,7 +215,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
 
       // Replace params with validated and sanitized data
       req.params = result.data as Record<string, string>
-      next()
+      return next()
     } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
@@ -260,7 +260,7 @@ export function validateHeaders<T>(schema: ZodSchema<T>) {
         return res.status(400).json(response)
       }
 
-      next()
+      return next()
     } catch {
       const response: ValidationErrorResponse = {
         status: 'Fail',
@@ -326,7 +326,7 @@ export function sanitizeRequest(req: Request, res: Response, next: NextFunction)
       }
     }
 
-    next()
+    return next()
   } catch (error) {
     if (!isTestEnv) {
       console.error('Sanitization error:', error)
@@ -358,7 +358,7 @@ export function validateContentType(allowedTypes: string[]) {
       return res.status(415).json(response)
     }
 
-    next()
+    return next()
   }
 }
 
@@ -379,6 +379,6 @@ export function validateRequestSize(maxSizeBytes: number) {
       return res.status(413).json(response)
     }
 
-    next()
+    return next()
   }
 }

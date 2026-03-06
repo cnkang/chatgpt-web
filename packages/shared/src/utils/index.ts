@@ -95,8 +95,21 @@ export function isValidDate(date: Date): boolean {
 // String Utilities
 // ============================================================================
 
+const RANDOM_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
+const UINT32_MAX_PLUS_ONE = 0x1_0000_0000
+
+function getRandomFraction(): number {
+  const randomBuffer = new Uint32Array(1)
+  globalThis.crypto.getRandomValues(randomBuffer)
+  return randomBuffer[0] / UINT32_MAX_PLUS_ONE
+}
+
 export function generateId(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36)
+  const randomPart = Array.from(
+    { length: 10 },
+    () => RANDOM_ALPHABET[Math.floor(getRandomFraction() * RANDOM_ALPHABET.length)],
+  ).join('')
+  return `${randomPart}${Date.now().toString(36)}`
 }
 
 export function generateUUID(): string {
@@ -297,7 +310,7 @@ export function chunk<T>(array: T[], size: number): T[][] {
 export function shuffle<T>(array: T[]): T[] {
   const shuffled = [...array]
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(getRandomFraction() * (i + 1))
     ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
   }
   return shuffled

@@ -353,7 +353,7 @@ export function createCorsMiddleware() {
       return res.status(200).end()
     }
 
-    next()
+    return next()
   }
 }
 

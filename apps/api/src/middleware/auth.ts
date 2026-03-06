@@ -25,7 +25,7 @@ async function auth(req: Request, res: Response, next: NextFunction) {
       if (!authorization || !safeEqual(token, authSecretKey.trim())) {
         throw new Error('Error: No access rights')
       }
-      next()
+      return next()
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Please authenticate.'
       return res.status(401).send({
@@ -35,7 +35,7 @@ async function auth(req: Request, res: Response, next: NextFunction) {
       })
     }
   } else {
-    next()
+    return next()
   }
 }
 
