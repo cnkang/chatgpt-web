@@ -6,7 +6,7 @@ interface StorageData<T = unknown> {
 type StorageKind = 'local' | 'session'
 
 function resolveStorage(kind: StorageKind): Storage {
-  if (kind === 'session' && typeof globalThis.sessionStorage !== 'undefined') {
+  if (kind === 'session' && globalThis.sessionStorage !== undefined) {
     return globalThis.sessionStorage
   }
 
@@ -21,7 +21,10 @@ function clearStorage(kind: StorageKind) {
   resolveStorage(kind).clear()
 }
 
-export function createLocalStorage(kind: StorageKind = 'local', options?: { expire?: number | null }) {
+export function createLocalStorage(
+  kind: StorageKind = 'local',
+  options?: { expire?: number | null },
+) {
   const DEFAULT_CACHE_TIME = 60 * 60 * 24 * 7
 
   const { expire } = { expire: DEFAULT_CACHE_TIME, ...options }

@@ -19,7 +19,8 @@ spec:
       automountServiceAccountToken: false
       volumes:
         - name: tmp
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 512Mi
       containers:
         - image: your-registry/chatgpt-web:<git-sha>
           name: chatgpt-web
@@ -96,6 +97,7 @@ spec:
             limits:
               cpu: 500m
               memory: 500Mi
+              ephemeral-storage: 1Gi
             requests:
               cpu: 300m
               memory: 300Mi
