@@ -7,7 +7,7 @@ export function copyToClip(text: string) {
       document.body.appendChild(input)
       input.select()
       if (document.execCommand('copy')) document.execCommand('copy')
-      document.body.removeChild(input)
+      input.remove()
       resolve(text)
     } catch (error) {
       reject(error)

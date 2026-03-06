@@ -50,7 +50,7 @@ function sanitizeString(input: string): string {
   return input
     .normalize('NFKC')
     .replaceAll('\0', '')
-    .replace(/[&<>"']/g, match => entities[match] || match)
+    .replaceAll(/[&<>"']/g, match => entities[match] ?? match)
     .trim()
 }
 

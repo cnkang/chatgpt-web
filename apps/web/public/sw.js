@@ -1,4 +1,4 @@
-/* global self, caches, Response */
+/* global caches, Response */
 
 const CACHE_NAME = 'chatgpt-web-v1'
 const APP_SHELL = [
@@ -11,32 +11,32 @@ const APP_SHELL = [
   '/pwa-512x512.png',
 ]
 
-self.addEventListener('install', event => {
+globalThis.addEventListener('install', event => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
       .then(cache => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting()),
+      .then(() => globalThis.skipWaiting()),
   )
 })
 
-self.addEventListener('activate', event => {
+globalThis.addEventListener('activate', event => {
   event.waitUntil(
     caches
       .keys()
       .then(keys =>
         Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))),
       )
-      .then(() => self.clients.claim()),
+      .then(() => globalThis.clients.claim()),
   )
 })
 
-self.addEventListener('fetch', event => {
+globalThis.addEventListener('fetch', event => {
   const { request } = event
   if (request.method !== 'GET') return
 
   const url = new URL(request.url)
-  if (url.origin !== self.location.origin) return
+  if (url.origin !== globalThis.location.origin) return
 
   if (request.mode === 'navigate') {
     event.respondWith(

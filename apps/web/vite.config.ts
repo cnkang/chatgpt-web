@@ -23,6 +23,33 @@ function setupPlugins(): PluginOption[] {
   ]
 }
 
+type ChunkMatcher = { name: string; match: (id: string) => boolean }
+
+const vendorChunkMatchers: ChunkMatcher[] = [
+  {
+    name: 'vue',
+    match: id => id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n'),
+  },
+  { name: 'vue-router', match: id => id.includes('vue-router') },
+  { name: 'pinia', match: id => id.includes('pinia') },
+  { name: 'vue-i18n', match: id => id.includes('vue-i18n') },
+  { name: 'vueuse', match: id => id.includes('@vueuse') },
+  { name: 'naive-ui', match: id => id.includes('naive-ui') },
+  { name: 'katex', match: id => id.includes('katex') },
+  { name: 'icons', match: id => id.includes('@iconify') },
+  { name: 'html-to-image', match: id => id.includes('html-to-image') },
+]
+
+function resolveManualChunk(id: string): string | undefined {
+  if (!id.includes('node_modules')) return undefined
+
+  for (const matcher of vendorChunkMatchers) {
+    if (matcher.match(id)) return matcher.name
+  }
+
+  return 'vendor'
+}
+
 export default defineConfig(env => {
   const repoRoot = path.resolve(__dirname, '../..')
   const rootEnv = loadEnv(env.mode, repoRoot)
@@ -88,52 +115,7 @@ export default defineConfig(env => {
       rollupOptions: {
         output: {
           // Simplified code splitting strategy, avoiding circular dependencies
-          manualChunks: id => {
-            if (id.includes('node_modules')) {
-              // Vue ecosystem
-              if (id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n')) {
-                return 'vue'
-              }
-              if (id.includes('vue-router')) {
-                return 'vue-router'
-              }
-              if (id.includes('pinia')) {
-                return 'pinia'
-              }
-              if (id.includes('vue-i18n')) {
-                return 'vue-i18n'
-              }
-              if (id.includes('@vueuse')) {
-                return 'vueuse'
-              }
-
-              // UI libraries - unified handling to avoid circular dependencies
-              if (id.includes('naive-ui')) {
-                return 'naive-ui'
-              }
-
-              // Markdown and chart libraries - grouped by main functionality
-              if (id.includes('katex')) {
-                return 'katex'
-              }
-              // Utility libraries
-              if (id.includes('@iconify')) {
-                return 'icons'
-              }
-              if (id.includes('html-to-image')) {
-                return 'html-to-image'
-              }
-
-              // Other third-party libraries
-              return 'vendor'
-            }
-
-            // Application code - simplified grouping to avoid circular dependencies
-            if (id.includes('/src/')) {
-              // Let Vite handle application code automatically for better optimization
-              return undefined
-            }
-          },
+          manualChunks: id => resolveManualChunk(id),
           // Optimize file names for better caching
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',

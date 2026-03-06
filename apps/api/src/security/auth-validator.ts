@@ -103,8 +103,10 @@ export function validateSecureConfiguration(): ConfigValidationResult {
     }
 
     // Recommend secure storage
-    recommendations.push('Store API keys securely and never commit them to version control')
-    recommendations.push('Use environment variables or secure secret management systems')
+    recommendations.push(
+      'Store API keys securely and never commit them to version control',
+      'Use environment variables or secure secret management systems',
+    )
   }
 
   // Validate timeout settings
@@ -170,6 +172,8 @@ export function getAuthenticationMigrationGuidance(): MigrationGuidance {
     }
   }
 
+  const deprecatedLines = foundDeprecated.map(v => `# ${v}=...`).join('\n')
+
   return {
     needsMigration: true,
     steps: [
@@ -177,7 +181,7 @@ export function getAuthenticationMigrationGuidance(): MigrationGuidance {
         step: 1,
         action: 'Remove deprecated variables',
         description: `Remove the following environment variables: ${foundDeprecated.join(', ')}`,
-        command: `# Remove these from your .env file:\n${foundDeprecated.map(v => `# ${v}=...`).join('\n')}`,
+        command: `# Remove these from your .env file:\n${deprecatedLines}`,
       },
       {
         step: 2,

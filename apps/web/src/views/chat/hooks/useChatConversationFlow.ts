@@ -29,6 +29,32 @@ interface StreamReplyState {
 
 const openLongReply = import.meta.env.VITE_GLOB_OPEN_LONG_REPLY === 'true'
 
+function nowString() {
+  return new Date().toLocaleString()
+}
+
+function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return (
+    error.name === 'AbortError' ||
+    error.message === 'canceled' ||
+    error.message.toLowerCase().includes('aborted')
+  )
+}
+
+function parseConversationProgress(responseText?: string): ConversationResponse | null {
+  if (responseText === undefined || responseText === '') return null
+
+  const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
+  const chunk = lastIndex !== -1 ? responseText.substring(lastIndex) : responseText
+
+  try {
+    return JSON.parse(chunk) as ConversationResponse
+  } catch {
+    return null
+  }
+}
+
 export function useChatConversationFlow(options: UseChatConversationFlowOptions) {
   const {
     uuid,
@@ -53,32 +79,6 @@ export function useChatConversationFlow(options: UseChatConversationFlowOptions)
   dataSources.value.forEach((item, index) => {
     if (item.loading) updateChatSome(uuid, index, { loading: false })
   })
-
-  function nowString() {
-    return new Date().toLocaleString()
-  }
-
-  function isAbortError(error: unknown): boolean {
-    if (!(error instanceof Error)) return false
-    return (
-      error.name === 'AbortError' ||
-      error.message === 'canceled' ||
-      error.message.toLowerCase().includes('aborted')
-    )
-  }
-
-  function parseConversationProgress(responseText?: string): ConversationResponse | null {
-    if (!responseText) return null
-
-    const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-    const chunk = lastIndex !== -1 ? responseText.substring(lastIndex) : responseText
-
-    try {
-      return JSON.parse(chunk) as ConversationResponse
-    } catch {
-      return null
-    }
-  }
 
   async function streamAssistantReply(
     index: number,
@@ -154,11 +154,10 @@ export function useChatConversationFlow(options: UseChatConversationFlowOptions)
 
     prompt.value = ''
 
-    let requestOptions: ConversationRequest = {}
     const lastContext =
       conversationList.value[conversationList.value.length - 1]?.conversationOptions
-    if (lastContext) requestOptions = { ...lastContext }
-    if (!(lastContext && usingContext.value)) requestOptions = {}
+    let requestOptions: ConversationRequest =
+      lastContext && usingContext.value ? { ...lastContext } : {}
 
     addChat(uuid, {
       dateTime: nowString(),

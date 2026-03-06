@@ -15,7 +15,7 @@ const {
 } = defineProps<Props>()
 
 const elapsedTime = ref(0)
-let intervalId: number | null = null
+let intervalId: ReturnType<typeof globalThis.setInterval> | null = null
 
 const progress = computed(() => {
   if (estimatedTime <= 0) return 0
@@ -61,7 +61,7 @@ const displayStep = computed(() => {
 function startTimer() {
   if (intervalId) return
 
-  intervalId = window.setInterval(() => {
+  intervalId = globalThis.setInterval(() => {
     elapsedTime.value += 1
   }, 1000)
 }

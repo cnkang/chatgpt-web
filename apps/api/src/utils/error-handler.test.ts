@@ -25,8 +25,8 @@ import {
 } from './error-handler.js'
 
 describe('error handler', () => {
-  let mockReq: Partial<Request>
-  let mockRes: Partial<Response>
+  let mockReq: Request
+  let mockRes: Response
   let mockNext: NextFunction
   let consoleSpy: { error: ReturnType<typeof vi.spyOn>; warn: ReturnType<typeof vi.spyOn> }
 
@@ -39,12 +39,12 @@ describe('error handler', () => {
       ip: '127.0.0.1',
       headers: {},
       get: vi.fn(),
-    }
+    } as unknown as Request
 
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
-    }
+    } as unknown as Response
 
     mockNext = vi.fn()
 
@@ -138,7 +138,7 @@ describe('error handler', () => {
     it('should handle AppError correctly', () => {
       const error = new AppError('Validation failed', ErrorType.VALIDATION, 400)
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext)
+      errorHandler(error, mockReq, mockRes, mockNext)
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -155,7 +155,7 @@ describe('error handler', () => {
     it('should handle regular Error correctly', () => {
       const error = new Error('Regular error')
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext)
+      errorHandler(error, mockReq, mockRes, mockNext)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -172,7 +172,7 @@ describe('error handler', () => {
     it('should log server errors', () => {
       const error = new AppError('Server error', ErrorType.INTERNAL, 500)
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext)
+      errorHandler(error, mockReq, mockRes, mockNext)
 
       expect(consoleSpy.error).toHaveBeenCalledWith('Server Error:', expect.any(String))
     })
@@ -180,7 +180,7 @@ describe('error handler', () => {
     it('should log client errors as warnings', () => {
       const error = new AppError('Client error', ErrorType.VALIDATION, 400)
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext)
+      errorHandler(error, mockReq, mockRes, mockNext)
 
       expect(consoleSpy.warn).toHaveBeenCalledWith('Client Error:', expect.any(String))
     })
@@ -188,7 +188,7 @@ describe('error handler', () => {
     it('should generate request ID if not provided', () => {
       const error = new Error('Test error')
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext)
+      errorHandler(error, mockReq, mockRes, mockNext)
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -205,7 +205,7 @@ describe('error handler', () => {
       const error = new Error('Test error')
       mockReq.headers = { 'x-request-id': 'custom-request-id' }
 
-      errorHandler(error, mockReq as Request, mockRes as Response, mockNext)
+      errorHandler(error, mockReq, mockRes, mockNext)
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -222,7 +222,7 @@ describe('error handler', () => {
       const asyncFn = vi.fn().mockResolvedValue('success')
       const wrappedFn = asyncHandler(asyncFn)
 
-      wrappedFn(mockReq as Request, mockRes as Response, mockNext)
+      wrappedFn(mockReq, mockRes, mockNext)
 
       // Wait for the microtask to complete
       await vi.waitFor(() => {
@@ -236,9 +236,10 @@ describe('error handler', () => {
       const asyncFn = vi.fn().mockRejectedValue(error)
       const wrappedFn = asyncHandler(asyncFn)
 
-      await wrappedFn(mockReq as Request, mockRes as Response, mockNext)
-
-      expect(mockNext).toHaveBeenCalledWith(error)
+      wrappedFn(mockReq, mockRes, mockNext)
+      await vi.waitFor(() => {
+        expect(mockNext).toHaveBeenCalledWith(error)
+      })
     })
   })
 
@@ -341,7 +342,7 @@ describe('error handler', () => {
       mockReq.method = 'POST'
       Object.defineProperty(mockReq, 'path', { value: '/api/nonexistent', writable: true })
 
-      notFoundHandler(mockReq as Request, mockRes as Response, mockNext)
+      notFoundHandler(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -427,7 +428,7 @@ describe('error handler', () => {
     it('should handle unhandled rejections', () => {
       setupGracefulShutdown(mockServer)
 
-      const reason = 'Rejection reason'
+      const reason = new Error('Rejection reason')
       const promise = Promise.reject(reason)
       void promise.catch(() => {})
 

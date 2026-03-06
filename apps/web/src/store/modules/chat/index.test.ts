@@ -58,6 +58,14 @@ function createFakeWindow() {
   }
 }
 
+async function setupStore() {
+  const fakeWindow = createFakeWindow()
+  vi.stubGlobal('window', fakeWindow)
+  setActivePinia(createPinia())
+  const { useChatStore } = await import('./index')
+  return { store: useChatStore(), fakeWindow }
+}
+
 describe('chat store persistence throttling', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -73,14 +81,6 @@ describe('chat store persistence throttling', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
   })
-
-  async function setupStore() {
-    const fakeWindow = createFakeWindow()
-    vi.stubGlobal('window', fakeWindow)
-    setActivePinia(createPinia())
-    const { useChatStore } = await import('./index')
-    return { store: useChatStore(), fakeWindow }
-  }
 
   it('coalesces delayed recordState writes and flushes the latest state', async () => {
     const { store } = await setupStore()

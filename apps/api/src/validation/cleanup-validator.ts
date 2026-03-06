@@ -136,7 +136,7 @@ const DEFAULT_EXCLUDE_PATTERNS = [
  * Comprehensive cleanup validator for verifying removal of unofficial API code
  */
 export class CleanupValidator {
-  private config: CleanupValidationConfig
+  private readonly config: CleanupValidationConfig
 
   constructor(config?: Partial<CleanupValidationConfig>) {
     this.config = {
@@ -349,7 +349,7 @@ export class CleanupValidator {
     return this.config.excludePatterns.some(pattern => {
       // Simple pattern matching - could be enhanced with glob patterns
       if (pattern.includes('*')) {
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'))
+        const regex = new RegExp(pattern.replaceAll('*', '.*'))
         return regex.test(relativePath)
       }
       return relativePath.includes(pattern)
@@ -364,7 +364,17 @@ export class CleanupValidator {
   static generateReport(result: CleanupValidationResult): string {
     const { summary, violations } = result
 
-    let report = `
+    let report = CleanupValidator.buildSummarySection(summary, result.isClean)
+
+    if (violations.length > 0) {
+      report += CleanupValidator.buildViolationsSection(violations)
+    }
+
+    return report
+  }
+
+  private static buildSummarySection(summary: CleanupSummary, isClean: boolean): string {
+    return `
 Cleanup Validation Report
 ========================
 
@@ -376,43 +386,49 @@ Summary:
 - Errors: ${summary.errorCount}
 - Warnings: ${summary.warningCount}
 
-Status: ${result.isClean ? '✅ CLEAN' : '❌ VIOLATIONS FOUND'}
+Status: ${isClean ? '✅ CLEAN' : '❌ VIOLATIONS FOUND'}
 `
+  }
 
-    if (violations.length > 0) {
-      report += '\n\nViolations Found:\n'
-      report += '=================\n'
+  private static buildViolationsSection(violations: CleanupViolation[]): string {
+    let section = '\n\nViolations Found:\n=================\n'
+    const violationsByType = CleanupValidator.groupViolationsByType(violations)
 
-      // Group violations by type
-      const violationsByType = violations.reduce(
-        (acc, violation) => {
-          if (!acc[violation.type]) {
-            acc[violation.type] = []
-          }
-          acc[violation.type].push(violation)
-          return acc
-        },
-        {} as Record<ViolationType, CleanupViolation[]>,
-      )
-
-      for (const [type, typeViolations] of Object.entries(violationsByType)) {
-        report += `\n${type.toUpperCase().replace(/_/g, ' ')}:\n`
-
-        for (const violation of typeViolations) {
-          const severity = violation.severity === 'error' ? '❌' : '⚠️'
-          report += `  ${severity} ${violation.file}`
-          if (violation.line) {
-            report += `:${violation.line}`
-          }
-          report += `\n     Pattern: ${violation.pattern}\n`
-          if (violation.content) {
-            report += `     Content: ${violation.content}\n`
-          }
-          report += '\n'
-        }
+    for (const [type, typeViolations] of Object.entries(violationsByType)) {
+      section += `\n${type.toUpperCase().replaceAll('_', ' ')}:\n`
+      for (const violation of typeViolations) {
+        section += CleanupValidator.formatViolation(violation)
       }
     }
 
-    return report
+    return section
+  }
+
+  private static groupViolationsByType(
+    violations: CleanupViolation[],
+  ): Record<ViolationType, CleanupViolation[]> {
+    return violations.reduce(
+      (acc, violation) => {
+        if (!acc[violation.type]) {
+          acc[violation.type] = []
+        }
+        acc[violation.type].push(violation)
+        return acc
+      },
+      {} as Record<ViolationType, CleanupViolation[]>,
+    )
+  }
+
+  private static formatViolation(violation: CleanupViolation): string {
+    const severity = violation.severity === 'error' ? '❌' : '⚠️'
+    const lineSuffix = violation.line ? `:${violation.line}` : ''
+    const contentLine = violation.content ? `     Content: ${violation.content}\n` : ''
+
+    return (
+      `  ${severity} ${violation.file}${lineSuffix}\n` +
+      `     Pattern: ${violation.pattern}\n` +
+      contentLine +
+      '\n'
+    )
   }
 }

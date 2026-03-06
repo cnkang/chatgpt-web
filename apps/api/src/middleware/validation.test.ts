@@ -18,8 +18,8 @@ import {
 } from './validation.js'
 
 describe('validation middleware', () => {
-  let mockReq: Partial<Request>
-  let mockRes: Partial<Response>
+  let mockReq: Request
+  let mockRes: Response
   let mockNext: NextFunction
 
   beforeEach(() => {
@@ -31,12 +31,12 @@ describe('validation middleware', () => {
       params: {},
       headers: {},
       get: vi.fn(),
-    }
+    } as unknown as Request
 
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
-    }
+    } as unknown as Response
 
     mockNext = vi.fn()
   })
@@ -60,7 +60,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateBody(testSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
       expect(mockRes.status).not.toHaveBeenCalled()
@@ -74,7 +74,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateBody(testSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).not.toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(400)
@@ -108,7 +108,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateBody(testSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockReq.body.name).toBe('John&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;Doe')
       expect(mockNext).toHaveBeenCalled()
@@ -134,7 +134,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateBody(nestedSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockReq.body.user.name).toBe('John&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
       expect(mockReq.body.user.profile.bio).toBe(
@@ -153,7 +153,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateBody(arraySchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockReq.body.items[0]).toBe(
         'Item 1&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
@@ -185,7 +185,7 @@ describe('validation middleware', () => {
       })
 
       const middleware = validateBody(schema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       const sanitizedPayload = mockReq.body.payload as Record<string, unknown>
       expect(sanitizedPayload.safe).toBe(
@@ -206,7 +206,7 @@ describe('validation middleware', () => {
       } as unknown as ZodSchema<unknown>
 
       const middleware = validateBody(faultySchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -233,7 +233,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateQuery(querySchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
       expect(mockReq.query.page).toBe(1) // Transformed to number
@@ -247,7 +247,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateQuery(querySchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).not.toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(400)
@@ -267,7 +267,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateQuery(querySchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockReq.query.search).toBe(
         'test&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;query',
@@ -289,7 +289,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateParams(paramsSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -301,7 +301,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateParams(paramsSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).not.toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(400)
@@ -320,7 +320,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateParams(paramsSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockReq.params.slug).toBe(
         'test&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;slug',
@@ -344,7 +344,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateHeaders(headersSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -356,7 +356,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateHeaders(headersSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).not.toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(400)
@@ -375,7 +375,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateHeaders(headersSchema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -393,7 +393,7 @@ describe('validation middleware', () => {
         id: 'param<script>alert("xss")</script>value',
       }
 
-      sanitizeRequest(mockReq as Request, mockRes as Response, mockNext)
+      sanitizeRequest(mockReq, mockRes, mockNext)
 
       expect(mockReq.body.message).toBe(
         'Hello&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;World',
@@ -408,11 +408,11 @@ describe('validation middleware', () => {
     })
 
     it('should handle missing request parts', () => {
-      mockReq.body = undefined
-      mockReq.query = undefined
-      mockReq.params = undefined
+      mockReq.body = undefined as unknown as Request['body']
+      mockReq.query = undefined as unknown as Request['query']
+      mockReq.params = undefined as unknown as Request['params']
 
-      sanitizeRequest(mockReq as Request, mockRes as Response, mockNext)
+      sanitizeRequest(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -427,7 +427,7 @@ describe('validation middleware', () => {
       })
       mockReq.body = errorBody
 
-      sanitizeRequest(mockReq as Request, mockRes as Response, mockNext)
+      sanitizeRequest(mockReq, mockRes, mockNext)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith(
@@ -444,7 +444,7 @@ describe('validation middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('application/json; charset=utf-8')
 
       const middleware = validateContentType(['application/json'])
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -453,7 +453,7 @@ describe('validation middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('text/plain')
 
       const middleware = validateContentType(['application/json'])
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).not.toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(415)
@@ -469,7 +469,7 @@ describe('validation middleware', () => {
       mockReq.get = vi.fn().mockReturnValue(undefined)
 
       const middleware = validateContentType(['application/json'])
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).not.toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(415)
@@ -479,7 +479,7 @@ describe('validation middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('multipart/form-data')
 
       const middleware = validateContentType(['application/json', 'multipart/form-data'])
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -490,7 +490,7 @@ describe('validation middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('1000') // 1KB
 
       const middleware = validateRequestSize(5000) // 5KB limit
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -499,7 +499,7 @@ describe('validation middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('10000') // 10KB
 
       const middleware = validateRequestSize(5000) // 5KB limit
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).not.toHaveBeenCalled()
       expect(mockRes.status).toHaveBeenCalledWith(413)
@@ -515,7 +515,7 @@ describe('validation middleware', () => {
       mockReq.get = vi.fn().mockReturnValue(undefined)
 
       const middleware = validateRequestSize(5000)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockNext).toHaveBeenCalled()
     })
@@ -560,7 +560,7 @@ describe('validation middleware', () => {
         mockReq.body = { title: input }
 
         const middleware = validateBody(schema)
-        middleware(mockReq as Request, mockRes as Response, mockNext)
+        middleware(mockReq, mockRes, mockNext)
 
         expect(mockReq.body.title).toBe(expected)
         expect(mockNext).toHaveBeenCalled()
@@ -586,7 +586,7 @@ describe('validation middleware', () => {
       }
 
       const middleware = validateBody(schema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       // AI fields preserve original characters
       expect(mockReq.body.prompt).toBe(htmlInput)
@@ -604,7 +604,7 @@ describe('validation middleware', () => {
       mockReq.body = { prompt: 'hello\0world' }
 
       const middleware = validateBody(schema)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockReq.body.prompt).toBe('helloworld')
       expect(mockNext).toHaveBeenCalled()

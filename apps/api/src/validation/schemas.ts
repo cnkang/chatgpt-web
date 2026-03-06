@@ -4,13 +4,12 @@
  */
 
 import {
-  AuthHeaderSchema,
-  ChatContextSchema,
-  ChatProcessRequestSchema,
-  ConfigRequestSchema,
-  IdSchema,
-  PaginationSchema,
-  TokenVerificationSchema,
+  type AuthHeaderSchema,
+  type ChatContextSchema,
+  type ChatProcessRequestSchema,
+  type ConfigRequestSchema,
+  type PaginationSchema,
+  type TokenVerificationSchema,
   numberSchema,
   optionalNumberSchema,
   optionalStringSchema,
@@ -19,13 +18,15 @@ import {
 import type { z } from 'zod'
 
 // Re-export schemas for backward compatibility
-export const chatProcessRequestSchema = ChatProcessRequestSchema
-export const tokenVerificationSchema = TokenVerificationSchema
-export const configRequestSchema = ConfigRequestSchema
-export const chatContextSchema = ChatContextSchema
-export const authHeaderSchema = AuthHeaderSchema
-export const paginationSchema = PaginationSchema
-export const idSchema = IdSchema
+export {
+  AuthHeaderSchema as authHeaderSchema,
+  ChatContextSchema as chatContextSchema,
+  ChatProcessRequestSchema as chatProcessRequestSchema,
+  ConfigRequestSchema as configRequestSchema,
+  IdSchema as idSchema,
+  PaginationSchema as paginationSchema,
+  TokenVerificationSchema as tokenVerificationSchema,
+} from '@chatgpt-web/shared'
 
 // Re-export base schemas
 export { numberSchema, optionalNumberSchema, optionalStringSchema, stringSchema }

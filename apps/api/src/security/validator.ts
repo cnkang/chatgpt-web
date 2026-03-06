@@ -175,7 +175,8 @@ export function validateCodeSecurity(content: string, filePath: string): Securit
   const risks: SecurityRisk[] = []
 
   SECURITY_RISK_PATTERNS.forEach(pattern => {
-    const matches = content.match(pattern)
+    pattern.lastIndex = 0
+    const matches = pattern.exec(content)
     if (matches) {
       risks.push({
         type: 'SECURITY_RISK_PATTERN',

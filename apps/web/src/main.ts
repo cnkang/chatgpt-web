@@ -9,27 +9,24 @@ function registerNativePwa() {
   const isEnabled = import.meta.env.PROD && import.meta.env.VITE_GLOB_APP_PWA === 'true'
   if (!isEnabled || !('serviceWorker' in navigator)) return
 
-  window.addEventListener('load', () => {
+  globalThis.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(error => {
       console.error('[PWA] service worker registration failed', error)
     })
   })
 }
 
-async function bootstrap() {
-  const app = createApp(App)
-  setupAssets()
+const app = createApp(App)
+setupAssets()
 
-  setupScrollbarStyle()
+setupScrollbarStyle()
 
-  setupStore(app)
+setupStore(app)
 
-  setupI18n(app)
+setupI18n(app)
 
-  await setupRouter(app)
+await setupRouter(app)
 
-  app.mount('#app')
-}
+app.mount('#app')
 
 registerNativePwa()
-bootstrap()

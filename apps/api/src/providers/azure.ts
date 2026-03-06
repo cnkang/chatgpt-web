@@ -163,9 +163,9 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     'o4-mini',
   ]
 
-  private client: AzureOpenAI
-  private config: AzureOpenAIConfig
-  private retryConfig: RetryConfig
+  private readonly client: AzureOpenAI
+  private readonly config: AzureOpenAIConfig
+  private readonly retryConfig: RetryConfig
 
   constructor(config: AzureOpenAIConfig) {
     super()
@@ -589,17 +589,13 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
    * Get usage information from Azure OpenAI
    */
   async getUsageInfo(): Promise<UsageInfo> {
-    try {
-      // Azure OpenAI doesn't provide usage info in the same way as OpenAI
-      // This would typically require Azure billing/monitoring APIs
-      // For now, return default values
-      return {
-        totalTokens: 0,
-        promptTokens: 0,
-        completionTokens: 0,
-      }
-    } catch (error) {
-      throw this.handleAzureError(error)
+    // Azure OpenAI doesn't provide usage info in the same way as OpenAI
+    // This would typically require Azure billing/monitoring APIs
+    // For now, return default values
+    return {
+      totalTokens: 0,
+      promptTokens: 0,
+      completionTokens: 0,
     }
   }
 
@@ -694,20 +690,8 @@ export class AzureOpenAIProvider extends BaseAIProvider implements AIProvider {
     // Model-specific token limits
     let maxTokens = 128000 // default for modern models
 
-    if (model.includes('gpt-5')) {
-      // GPT-5.x models - latest generation with enhanced capabilities
-      if (model.includes('gpt-5.2')) {
-        maxTokens = 262144 // GPT-5.2: 256k context window
-      } else {
-        maxTokens = 128000 // Other GPT-5.x models
-      }
-    } else if (model === 'model-router' || model.includes('router')) {
-      // Model router - conservative estimate since backend chooses model
-      maxTokens = 128000
-    } else if (model.includes('gpt-4o')) {
-      maxTokens = model.includes('mini') ? 128000 : 128000
-    } else if (isReasoningModel) {
-      maxTokens = 128000
+    if (model.includes('gpt-5.2')) {
+      maxTokens = 262144 // GPT-5.2: 256k context window
     }
 
     return {

@@ -121,6 +121,89 @@ async function fetchWithStreaming<T>(
   return response.json()
 }
 
+function buildRequestOptions(
+  method: string,
+  headers: Record<string, string>,
+  signal?: AbortSignal,
+): RequestInit {
+  return {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    signal,
+  }
+}
+
+function attachAuthHeader(requestOptions: RequestInit) {
+  const authStore = useAuthStore()
+  if (!authStore.token) return
+
+  requestOptions.headers = {
+    ...requestOptions.headers,
+    Authorization: `Bearer ${authStore.token}`,
+  }
+}
+
+function applyRequestBody(requestOptions: RequestInit, method: string, data?: unknown) {
+  if (method === 'GET' || !data) return
+
+  if (data instanceof FormData) {
+    requestOptions.body = data
+    delete (requestOptions.headers as Record<string, string>)['Content-Type']
+    return
+  }
+
+  requestOptions.body = JSON.stringify(data)
+}
+
+function buildApiUrl(url: string): string {
+  const baseURL = import.meta.env.VITE_GLOB_API_URL || ''
+  return url.startsWith('http') ? url : `${baseURL}${url}`
+}
+
+function appendQueryParams(url: string, data?: unknown): string {
+  if (!data) return url
+
+  const params = new URLSearchParams()
+  Object.entries(data as Record<string, string>).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      params.append(key, String(value))
+    }
+  })
+
+  const queryString = params.toString()
+  if (!queryString) return url
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}${queryString}`
+}
+
+function createSuccessHandler<T>() {
+  return (res: Response<T>) => {
+    const authStore = useAuthStore()
+
+    if (res.status === 'Success' || typeof res.data === 'string') return res
+
+    if (res.status === 'Unauthorized') {
+      authStore.removeToken()
+      globalThis.location.reload()
+    }
+
+    const requestError = new Error(res.message ?? 'Request failed') as Error & {
+      response: Response<T>
+    }
+    requestError.response = res
+    throw requestError
+  }
+}
+
+function createFailHandler() {
+  return (error: Error) => {
+    throw new Error(error?.message ?? 'Error')
+  }
+}
+
 /**
  * Main HTTP function using native fetch
  */
@@ -134,78 +217,17 @@ function http<T = unknown>({
   beforeRequest,
   afterRequest,
 }: FetchOption): Promise<Response<T>> {
-  const successHandler = (res: Response<T>) => {
-    const authStore = useAuthStore()
-
-    if (res.status === 'Success' || typeof res.data === 'string') return res
-
-    if (res.status === 'Unauthorized') {
-      authStore.removeToken()
-      window.location.reload()
-    }
-
-    return Promise.reject(res)
-  }
-
-  const failHandler = (error: Error) => {
-    afterRequest?.()
-    throw new Error(error?.message || 'Error')
-  }
-
   beforeRequest?.()
+  const requestOptions = buildRequestOptions(method, headers, signal)
+  attachAuthHeader(requestOptions)
+  applyRequestBody(requestOptions, method, data)
 
-  // Prepare request options
-  const requestOptions: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    signal,
-  }
+  const fullUrl = buildApiUrl(url)
+  const finalUrl = method === 'GET' ? appendQueryParams(fullUrl, data) : fullUrl
+  const successHandler = createSuccessHandler<T>()
+  const failHandler = createFailHandler()
 
-  // Add authentication header if token exists
-  const authStore = useAuthStore()
-  if (authStore.token) {
-    requestOptions.headers = {
-      ...requestOptions.headers,
-      Authorization: `Bearer ${authStore.token}`,
-    }
-  }
-
-  // Build full URL
-  const baseURL = import.meta.env.VITE_GLOB_API_URL || ''
-  const fullUrl = url.startsWith('http') ? url : `${baseURL}${url}`
-
-  // Handle request body for non-GET methods
-  if (method !== 'GET' && data) {
-    if (data instanceof FormData) {
-      requestOptions.body = data
-      // Remove Content-Type header for FormData (browser will set it with boundary)
-      delete (requestOptions.headers as Record<string, string>)['Content-Type']
-    } else {
-      requestOptions.body = JSON.stringify(data)
-    }
-  }
-
-  // Handle GET parameters
-  if (method === 'GET' && data) {
-    const params = new URLSearchParams()
-    Object.entries(data as Record<string, string>).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value))
-      }
-    })
-    const queryString = params.toString()
-    const separator = fullUrl.includes('?') ? '&' : '?'
-    const urlWithParams = queryString ? `${fullUrl}${separator}${queryString}` : fullUrl
-
-    return fetchWithStreaming<T>(urlWithParams, requestOptions, onDownloadProgress)
-      .then(successHandler, failHandler)
-      .finally(() => afterRequest?.())
-  }
-
-  return fetchWithStreaming<T>(fullUrl, requestOptions, onDownloadProgress)
+  return fetchWithStreaming<T>(finalUrl, requestOptions, onDownloadProgress)
     .then(successHandler, failHandler)
     .finally(() => afterRequest?.())
 }

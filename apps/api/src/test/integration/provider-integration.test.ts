@@ -227,7 +227,7 @@ describe('provider integration tests', () => {
       const invalidTempRequest: ChatCompletionRequest = {
         messages: [{ role: 'user', content: 'test' }],
         model: 'gpt-4o',
-        temperature: 3.0, // Invalid: > 2.0
+        temperature: 3, // Invalid: > 2
       }
 
       await expect(provider.createChatCompletion(invalidTempRequest)).rejects.toThrow(

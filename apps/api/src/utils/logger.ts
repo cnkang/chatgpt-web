@@ -130,22 +130,22 @@ function maskSensitiveString(str: string): string {
   let masked = str
 
   // OpenAI API keys: sk-... or sk-proj-... (variable length)
-  masked = masked.replace(/\bsk-[a-zA-Z0-9_-]{20,}/g, match => `${match.slice(0, 5)}****`)
+  masked = masked.replaceAll(/\bsk-[a-zA-Z0-9_-]{20,}/g, match => `${match.slice(0, 5)}****`)
 
   // Azure API keys: 32-char hex strings (only when they look standalone)
-  masked = masked.replace(/\b[0-9a-f]{32}\b/gi, match => `${match.slice(0, 4)}****`)
+  masked = masked.replaceAll(/\b[0-9a-f]{32}\b/gi, match => `${match.slice(0, 4)}****`)
 
   // Bearer tokens
-  masked = masked.replace(/Bearer\s+[\w\-.]+/gi, 'Bearer ****')
+  masked = masked.replaceAll(/Bearer\s+[\w\-.]+/gi, 'Bearer ****')
 
   // Generic long alphanumeric tokens (40+ chars, likely API keys)
-  masked = masked.replace(/\b[A-Za-z0-9_-]{40,}\b/g, match => `${match.slice(0, 4)}****`)
+  masked = masked.replaceAll(/\b[A-Za-z0-9_-]{40,}\b/g, match => `${match.slice(0, 4)}****`)
 
   // Credit card numbers
-  masked = masked.replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '**** **** **** ****')
+  masked = masked.replaceAll(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '**** **** **** ****')
 
   // Partially mask emails
-  masked = masked.replace(
+  masked = masked.replaceAll(
     /\b([\w.%+-]+)@([A-Z0-9.-]+\.[A-Z|]{2,})\b/gi,
     (_match, username, domain) => {
       const maskedUsername = username.length > 2 ? `${username.substring(0, 2)}****` : '****'
@@ -161,7 +161,7 @@ function maskSensitiveString(str: string): string {
  */
 export class Logger {
   private static instance: Logger
-  private logLevel: LogLevel
+  private readonly logLevel: LogLevel
 
   private constructor() {
     this.logLevel = this.getLogLevelFromEnv()
@@ -272,7 +272,7 @@ export class Logger {
       responseBody?: unknown
     },
   ): void {
-    const { requestBody, responseBody, ...logContext } = context || {}
+    const { requestBody, responseBody, ...logContext } = context ?? {}
 
     this.info(
       'API Call',

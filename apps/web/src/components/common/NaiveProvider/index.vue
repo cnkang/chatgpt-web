@@ -12,10 +12,10 @@ import {
 import { defineComponent, h } from 'vue'
 
 function registerNaiveTools() {
-  window.$loadingBar = useLoadingBar()
-  window.$dialog = useDialog()
-  window.$message = useMessage()
-  window.$notification = useNotification()
+  globalThis.window.$loadingBar = useLoadingBar()
+  globalThis.window.$dialog = useDialog()
+  globalThis.window.$message = useMessage()
+  globalThis.window.$notification = useNotification()
 }
 
 const NaiveProviderContent = defineComponent({

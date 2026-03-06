@@ -22,6 +22,25 @@ interface ReasoningStepInput {
   duration?: number
 }
 
+function getEstimatedTimeForModel(modelName: string): number {
+  if (modelName.includes('o3') && !modelName.includes('mini')) return 45
+  if (modelName.includes('o4-mini')) return 20
+  if (modelName.includes('o3-mini')) return 25
+  return 30
+}
+
+function parseReasoningFromResponse(response: unknown): ReasoningStep[] {
+  const steps = (response as { reasoning_steps?: ReasoningStepInput[] })?.reasoning_steps
+  if (!Array.isArray(steps)) return []
+
+  return steps.map((step, index) => ({
+    step: index + 1,
+    thought: step.content || step.thought || '',
+    confidence: step.confidence || 75,
+    duration: step.duration || undefined,
+  }))
+}
+
 export function useReasoning() {
   const state = ref<ReasoningState>({
     isReasoning: false,
@@ -86,30 +105,6 @@ export function useReasoning() {
 
   function toggleReasoningStepsVisibility() {
     showReasoningSteps.value = !showReasoningSteps.value
-  }
-
-  function getEstimatedTimeForModel(modelName: string): number {
-    // Return estimated reasoning time based on model
-    if (modelName.includes('o3') && !modelName.includes('mini')) return 45
-    if (modelName.includes('o4-mini')) return 20
-    if (modelName.includes('o3-mini')) return 25
-    return 30
-  }
-
-  // Parse reasoning steps from API response
-  function parseReasoningFromResponse(response: unknown): ReasoningStep[] {
-    // This would parse the actual API response format
-    // For now, return empty array as the format depends on the API
-    const steps = (response as { reasoning_steps?: ReasoningStepInput[] })?.reasoning_steps
-    if (Array.isArray(steps)) {
-      return steps.map((step, index) => ({
-        step: index + 1,
-        thought: step.content || step.thought || '',
-        confidence: step.confidence || 75,
-        duration: step.duration || undefined,
-      }))
-    }
-    return []
   }
 
   // Simulate reasoning steps for demo purposes

@@ -33,38 +33,59 @@ function normalizeConversationOptions(value: unknown): Record<string, string> | 
   const parentMessageId =
     typeof value.parentMessageId === 'string' ? value.parentMessageId : undefined
 
-  if (!conversationId && !parentMessageId) return {}
+  if (conversationId || parentMessageId) {
+    return {
+      ...(conversationId ? { conversationId } : {}),
+      ...(parentMessageId ? { parentMessageId } : {}),
+    }
+  }
+
+  return {}
+}
+
+function normalizeText(value: Record<string, unknown>): string {
+  if (typeof value.text === 'string') return value.text
+  if (typeof value.text === 'number' || typeof value.text === 'boolean') {
+    return String(value.text)
+  }
+  return ''
+}
+
+function normalizeDateTime(value: Record<string, unknown>): string {
+  if (typeof value.dateTime === 'string' && value.dateTime.trim() !== '') return value.dateTime
+  return new Date().toLocaleString()
+}
+
+function resolvePrompt(value: Record<string, unknown>, text: string): string {
+  if (typeof value.prompt === 'string') return value.prompt
+  return text
+}
+
+function normalizeRequestOptions(value: Record<string, unknown>, text: string) {
+  if (!isRecord(value.requestOptions)) {
+    return {
+      prompt: resolvePrompt(value, text),
+      options: normalizeConversationOptions(value.options),
+    }
+  }
+
+  const prompt =
+    typeof value.requestOptions.prompt === 'string'
+      ? value.requestOptions.prompt
+      : resolvePrompt(value, text)
 
   return {
-    ...(conversationId ? { conversationId } : {}),
-    ...(parentMessageId ? { parentMessageId } : {}),
+    prompt,
+    options: normalizeConversationOptions(value.requestOptions.options),
   }
 }
 
 function normalizeMessage(value: unknown): Record<string, unknown> | null {
   if (!isRecord(value)) return null
 
-  const text = typeof value.text === 'string' ? value.text : String(value.text ?? '')
-  const dateTime =
-    typeof value.dateTime === 'string' && value.dateTime.trim() !== ''
-      ? value.dateTime
-      : new Date().toLocaleString()
-
-  let prompt = ''
-  let requestOptionsOptions: Record<string, string> | null | undefined
-
-  if (isRecord(value.requestOptions)) {
-    prompt =
-      typeof value.requestOptions.prompt === 'string'
-        ? value.requestOptions.prompt
-        : typeof value.prompt === 'string'
-          ? value.prompt
-          : text
-    requestOptionsOptions = normalizeConversationOptions(value.requestOptions.options)
-  } else {
-    prompt = typeof value.prompt === 'string' ? value.prompt : text
-    requestOptionsOptions = normalizeConversationOptions(value.options)
-  }
+  const text = normalizeText(value)
+  const dateTime = normalizeDateTime(value)
+  const requestOptions = normalizeRequestOptions(value, text)
 
   const conversationOptions = normalizeConversationOptions(value.conversationOptions)
 
@@ -77,8 +98,8 @@ function normalizeMessage(value: unknown): Record<string, unknown> | null {
     ...(typeof value.loading === 'boolean' ? { loading: value.loading } : {}),
     ...(conversationOptions !== undefined ? { conversationOptions } : {}),
     requestOptions: {
-      prompt,
-      ...(requestOptionsOptions !== undefined ? { options: requestOptionsOptions } : {}),
+      prompt: requestOptions.prompt,
+      ...(requestOptions.options !== undefined ? { options: requestOptions.options } : {}),
     },
   }
 }
@@ -227,7 +248,7 @@ export function defaultState(): ChatState {
 }
 
 export function getLocalState(): ChatState {
-  const raw = ss.get(LOCAL_NAME) as unknown
+  const raw = ss.get(LOCAL_NAME)
   if (!raw) return defaultState()
 
   const parsed = parseStoredChatState(raw)

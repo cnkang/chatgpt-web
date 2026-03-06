@@ -161,38 +161,41 @@ export class ConfigurationValidator {
    * @throws {Error} If deprecated configuration is detected or required configuration is missing
    */
   static validateEnvironment(): void {
-    const deprecatedVars = this.getDeprecatedVariables()
+    const deprecatedVars = ConfigurationValidator.getDeprecatedVariables()
 
     if (deprecatedVars.length > 0) {
-      const errorMessage = this.buildDeprecationErrorMessage(deprecatedVars)
+      const errorMessage = ConfigurationValidator.buildDeprecationErrorMessage(deprecatedVars)
       throw new Error(errorMessage)
     }
 
     // Check AI provider and validate appropriate environment variables
     const aiProvider = process.env.AI_PROVIDER || 'openai'
 
-    if (aiProvider === 'azure') {
+    if (aiProvider !== 'azure') {
+      // Validate OpenAI configuration
+      if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
+        const errorMessage = ConfigurationValidator.buildMissingConfigErrorMessage()
+        throw new Error(errorMessage)
+      }
+      return
+    }
+
+    {
       // Validate Azure OpenAI configuration
       const azureApiKey = process.env.AZURE_OPENAI_API_KEY
       const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT
       const azureDeployment = process.env.AZURE_OPENAI_DEPLOYMENT
 
       if (!isNotEmptyString(azureApiKey)) {
-        const errorMessage = this.buildMissingConfigErrorMessage()
+        const errorMessage = ConfigurationValidator.buildMissingConfigErrorMessage()
         throw new Error(errorMessage)
       }
       if (!isNotEmptyString(azureEndpoint)) {
-        const errorMessage = this.buildMissingConfigErrorMessage()
+        const errorMessage = ConfigurationValidator.buildMissingConfigErrorMessage()
         throw new Error(errorMessage)
       }
       if (!isNotEmptyString(azureDeployment)) {
-        const errorMessage = this.buildMissingConfigErrorMessage()
-        throw new Error(errorMessage)
-      }
-    } else {
-      // Validate OpenAI configuration
-      if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
-        const errorMessage = this.buildMissingConfigErrorMessage()
+        const errorMessage = ConfigurationValidator.buildMissingConfigErrorMessage()
         throw new Error(errorMessage)
       }
     }
@@ -204,7 +207,7 @@ export class ConfigurationValidator {
    * @throws {Error} If validation fails
    */
   static getValidatedConfig(): ValidatedConfig {
-    this.validateEnvironment()
+    ConfigurationValidator.validateEnvironment()
 
     return {
       apiKey: process.env.OPENAI_API_KEY!,
@@ -220,7 +223,7 @@ export class ConfigurationValidator {
    * @returns {string[]} Array of deprecated variables found in environment
    */
   static getDeprecatedVariables(): string[] {
-    return this.DEPRECATED_VARIABLES.filter(
+    return ConfigurationValidator.DEPRECATED_VARIABLES.filter(
       varName => process.env[varName] !== undefined && process.env[varName] !== '',
     )
   }
@@ -230,12 +233,12 @@ export class ConfigurationValidator {
    * @returns {MigrationInfo} Migration information object
    */
   static getMigrationInfo(): MigrationInfo {
-    const deprecatedVars = this.getDeprecatedVariables()
+    const deprecatedVars = ConfigurationValidator.getDeprecatedVariables()
 
     return {
       hasDeprecatedConfig: deprecatedVars.length > 0,
       deprecatedVars,
-      migrationSteps: this.buildMigrationSteps(deprecatedVars),
+      migrationSteps: ConfigurationValidator.buildMigrationSteps(deprecatedVars),
     }
   }
 
@@ -247,7 +250,7 @@ export class ConfigurationValidator {
     const errors: string[] = []
     const warnings: string[] = []
 
-    const deprecatedVars = this.getDeprecatedVariables()
+    const deprecatedVars = ConfigurationValidator.getDeprecatedVariables()
 
     if (deprecatedVars.length > 0) {
       errors.push(`Deprecated configuration detected: ${deprecatedVars.join(', ')}`)
@@ -257,37 +260,9 @@ export class ConfigurationValidator {
     const aiProvider = process.env.AI_PROVIDER || 'openai'
 
     if (aiProvider === 'azure') {
-      // Validate Azure OpenAI configuration
-      if (!isNotEmptyString(process.env.AZURE_OPENAI_API_KEY)) {
-        errors.push('Missing required configuration: AZURE_OPENAI_API_KEY')
-      }
-      if (!isNotEmptyString(process.env.AZURE_OPENAI_ENDPOINT)) {
-        errors.push('Missing required configuration: AZURE_OPENAI_ENDPOINT')
-      }
-      if (!isNotEmptyString(process.env.AZURE_OPENAI_DEPLOYMENT)) {
-        errors.push('Missing required configuration: AZURE_OPENAI_DEPLOYMENT')
-      }
-
-      // Check for potential Azure configuration issues
-      if (
-        process.env.AZURE_OPENAI_ENDPOINT &&
-        !process.env.AZURE_OPENAI_ENDPOINT.startsWith('https://')
-      ) {
-        warnings.push('AZURE_OPENAI_ENDPOINT should use HTTPS protocol')
-      }
+      ConfigurationValidator.validateAzureSafely(errors, warnings)
     } else {
-      // Validate OpenAI configuration
-      if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
-        errors.push('Missing required configuration: OPENAI_API_KEY')
-      }
-
-      // Check for potential OpenAI configuration issues
-      if (
-        process.env.OPENAI_API_BASE_URL &&
-        !process.env.OPENAI_API_BASE_URL.startsWith('https://')
-      ) {
-        warnings.push('OPENAI_API_BASE_URL should use HTTPS protocol')
-      }
+      ConfigurationValidator.validateOpenAISafely(errors, warnings)
     }
 
     return {
@@ -444,7 +419,11 @@ Please set your API key and restart the application.
     // Check AI provider and provide appropriate migration steps
     const aiProvider = process.env.AI_PROVIDER || 'openai'
 
-    if (aiProvider === 'azure') {
+    if (aiProvider !== 'azure') {
+      if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
+        steps.push('Set OPENAI_API_KEY with your official OpenAI API key')
+      }
+    } else {
       if (!isNotEmptyString(process.env.AZURE_OPENAI_API_KEY)) {
         steps.push('Set AZURE_OPENAI_API_KEY with your Azure OpenAI API key')
       }
@@ -454,14 +433,42 @@ Please set your API key and restart the application.
       if (!isNotEmptyString(process.env.AZURE_OPENAI_DEPLOYMENT)) {
         steps.push('Set AZURE_OPENAI_DEPLOYMENT with your Azure OpenAI deployment name')
       }
-    } else {
-      if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
-        steps.push('Set OPENAI_API_KEY with your official OpenAI API key')
-      }
     }
 
     steps.push('Restart the application')
 
     return steps
+  }
+
+  private static validateAzureSafely(errors: string[], warnings: string[]): void {
+    if (!isNotEmptyString(process.env.AZURE_OPENAI_API_KEY)) {
+      errors.push('Missing required configuration: AZURE_OPENAI_API_KEY')
+    }
+    if (!isNotEmptyString(process.env.AZURE_OPENAI_ENDPOINT)) {
+      errors.push('Missing required configuration: AZURE_OPENAI_ENDPOINT')
+    }
+    if (!isNotEmptyString(process.env.AZURE_OPENAI_DEPLOYMENT)) {
+      errors.push('Missing required configuration: AZURE_OPENAI_DEPLOYMENT')
+    }
+
+    if (
+      process.env.AZURE_OPENAI_ENDPOINT &&
+      !process.env.AZURE_OPENAI_ENDPOINT.startsWith('https://')
+    ) {
+      warnings.push('AZURE_OPENAI_ENDPOINT should use HTTPS protocol')
+    }
+  }
+
+  private static validateOpenAISafely(errors: string[], warnings: string[]): void {
+    if (!isNotEmptyString(process.env.OPENAI_API_KEY) || !process.env.OPENAI_API_KEY.trim()) {
+      errors.push('Missing required configuration: OPENAI_API_KEY')
+    }
+
+    if (
+      process.env.OPENAI_API_BASE_URL &&
+      !process.env.OPENAI_API_BASE_URL.startsWith('https://')
+    ) {
+      warnings.push('OPENAI_API_BASE_URL should use HTTPS protocol')
+    }
   }
 }

@@ -142,7 +142,7 @@ function formatCost(multiplier: number): string {
   <div class="model-selector space-y-3">
     <!-- Model Selection -->
     <div class="space-y-2">
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">AI Model</label>
+      <p class="block text-sm font-medium text-gray-700 dark:text-gray-300">AI Model</p>
       <NSelect
         :value="modelValue"
         :options="selectOptions"

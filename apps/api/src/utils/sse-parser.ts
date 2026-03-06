@@ -57,27 +57,41 @@ function* processLines(lines: string[]): Generator<SSEPayload> {
     if (!trimmed || trimmed.startsWith('event:')) continue
 
     if (trimmed.startsWith('data: ')) {
-      const data = trimmed.slice(6).trim()
-
-      if (data === '[DONE]') {
+      const parsedData = parseDataLine(trimmed)
+      if (parsedData === 'done') {
         yield { type: 'done' }
-        return // Stop processing after [DONE]
+        return
       }
-
-      if (data) {
-        try {
-          yield { type: 'data', json: JSON.parse(data) }
-        } catch (error) {
-          logger.warn('SSE: failed to parse data line', { line: trimmed, error })
-        }
+      if (parsedData) {
+        yield parsedData
       }
-    } else {
-      // Some Azure implementations send raw JSON without "data:" prefix
-      try {
-        yield { type: 'data', json: JSON.parse(trimmed) }
-      } catch {
-        // Not JSON — skip silently
-      }
+      continue
     }
+
+    const rawJsonLine = parseRawJsonLine(trimmed)
+    if (rawJsonLine) {
+      yield rawJsonLine
+    }
+  }
+}
+
+function parseDataLine(line: string): SSEPayload | 'done' | null {
+  const data = line.slice(6).trim()
+  if (data === '[DONE]') return 'done'
+  if (!data) return null
+
+  try {
+    return { type: 'data', json: JSON.parse(data) }
+  } catch (error) {
+    logger.warn('SSE: failed to parse data line', { line, error })
+    return null
+  }
+}
+
+function parseRawJsonLine(line: string): SSEPayload | null {
+  try {
+    return { type: 'data', json: JSON.parse(line) }
+  } catch {
+    return null
   }
 }

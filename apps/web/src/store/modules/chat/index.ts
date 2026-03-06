@@ -5,12 +5,12 @@ import { defineStore } from 'pinia'
 import { createChatMessageId, defaultState, getLocalState, setLocalState } from './helper'
 
 const CHAT_STATE_PERSIST_DELAY_MS = 120
-let persistTimer: number | null = null
+let persistTimer: ReturnType<typeof globalThis.setTimeout> | null = null
 let pendingPersistState: ChatState | null = null
 
 function flushPendingPersist() {
   if (persistTimer) {
-    window.clearTimeout(persistTimer)
+    globalThis.clearTimeout(persistTimer)
     persistTimer = null
   }
 
@@ -24,13 +24,13 @@ function schedulePersist(state: ChatState) {
 
   if (persistTimer) return
 
-  persistTimer = window.setTimeout(() => {
+  persistTimer = globalThis.setTimeout(() => {
     flushPendingPersist()
   }, CHAT_STATE_PERSIST_DELAY_MS)
 }
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('pagehide', flushPendingPersist)
+if (typeof globalThis.window !== 'undefined') {
+  globalThis.window.addEventListener('pagehide', flushPendingPersist)
 }
 
 function ensureChatId(chat: Chat, current?: Chat): Chat {

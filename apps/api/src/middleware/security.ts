@@ -227,8 +227,8 @@ export function secureApiKeys(req: Request, res: Response, next: NextFunction) {
  */
 function sanitizeApiKeyString(str: string): string {
   return str
-    .replace(/sk-[a-zA-Z0-9]{20,}/g, 'sk-****')
-    .replace(/sk-proj-[a-zA-Z0-9]{20,}/g, 'sk-proj-****')
+    .replaceAll(/sk-[a-zA-Z0-9]{20,}/g, 'sk-****')
+    .replaceAll(/sk-proj-[a-zA-Z0-9]{20,}/g, 'sk-proj-****')
 }
 
 /**
@@ -271,10 +271,11 @@ function sanitizeApiKeys(obj: unknown): unknown {
       if (shouldFullyMask) {
         sanitized[key] = '****'
       } else {
-        sanitized[key] =
+        const maskedValue =
           value.length > 8
             ? `${value.substring(0, 4)}****${value.substring(value.length - 4)}`
             : '****'
+        sanitized[key] = maskedValue
       }
     } else {
       sanitized[key] = sanitizeApiKeys(value)
@@ -294,12 +295,14 @@ export function createCorsMiddleware() {
   const configuredOrigins = process.env.ALLOWED_ORIGINS?.split(',')
     .map(o => o.trim())
     .filter(Boolean)
-  const allowedOrigins =
-    configuredOrigins && configuredOrigins.length > 0
-      ? configuredOrigins
-      : isProduction
-        ? [] // No default origins in production - must be explicitly configured
-        : ['http://localhost:1002', 'http://127.0.0.1:1002']
+  let allowedOrigins: string[]
+  if (configuredOrigins && configuredOrigins.length > 0) {
+    allowedOrigins = configuredOrigins
+  } else if (isProduction) {
+    allowedOrigins = [] // No default origins in production - must be explicitly configured
+  } else {
+    allowedOrigins = ['http://localhost:1002', 'http://127.0.0.1:1002']
+  }
 
   // Security: Block wildcard CORS in production to prevent broad cross-origin access
   if (isProduction && allowedOrigins.includes('*')) {

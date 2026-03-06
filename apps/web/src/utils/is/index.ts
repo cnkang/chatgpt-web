@@ -1,57 +1,55 @@
-export function isNumber<T extends number>(value: T | unknown): value is number {
+export function isNumber(value: unknown): value is number {
   return Object.prototype.toString.call(value) === '[object Number]'
 }
 
-export function isString<T extends string>(value: T | unknown): value is string {
+export function isString(value: unknown): value is string {
   return Object.prototype.toString.call(value) === '[object String]'
 }
 
-export function isBoolean<T extends boolean>(value: T | unknown): value is boolean {
+export function isBoolean(value: unknown): value is boolean {
   return Object.prototype.toString.call(value) === '[object Boolean]'
 }
 
-export function isNull<T extends null>(value: T | unknown): value is null {
+export function isNull(value: unknown): value is null {
   return Object.prototype.toString.call(value) === '[object Null]'
 }
 
-export function isUndefined<T extends undefined>(value: T | unknown): value is undefined {
+export function isUndefined(value: unknown): value is undefined {
   return Object.prototype.toString.call(value) === '[object Undefined]'
 }
 
-export function isObject<T extends object>(value: T | unknown): value is object {
+export function isObject(value: unknown): value is object {
   return Object.prototype.toString.call(value) === '[object Object]'
 }
 
-export function isArray<T extends unknown[]>(value: T | unknown): value is T {
+export function isArray<T = unknown>(value: unknown): value is T[] {
   return Object.prototype.toString.call(value) === '[object Array]'
 }
 
-export function isFunction<T extends (...args: unknown[]) => unknown | void | never>(
-  value: T | unknown,
-): value is T {
+export function isFunction(value: unknown): value is (...args: unknown[]) => unknown {
   return Object.prototype.toString.call(value) === '[object Function]'
 }
 
-export function isDate<T extends Date>(value: T | unknown): value is T {
+export function isDate(value: unknown): value is Date {
   return Object.prototype.toString.call(value) === '[object Date]'
 }
 
-export function isRegExp<T extends RegExp>(value: T | unknown): value is T {
+export function isRegExp(value: unknown): value is RegExp {
   return Object.prototype.toString.call(value) === '[object RegExp]'
 }
 
-export function isPromise<T extends Promise<unknown>>(value: T | unknown): value is T {
+export function isPromise<T = unknown>(value: unknown): value is Promise<T> {
   return Object.prototype.toString.call(value) === '[object Promise]'
 }
 
-export function isSet<T extends Set<unknown>>(value: T | unknown): value is T {
+export function isSet<T = unknown>(value: unknown): value is Set<T> {
   return Object.prototype.toString.call(value) === '[object Set]'
 }
 
-export function isMap<T extends Map<unknown, unknown>>(value: T | unknown): value is T {
+export function isMap<K = unknown, V = unknown>(value: unknown): value is Map<K, V> {
   return Object.prototype.toString.call(value) === '[object Map]'
 }
 
-export function isFile<T extends File>(value: T | unknown): value is T {
+export function isFile(value: unknown): value is File {
   return Object.prototype.toString.call(value) === '[object File]'
 }

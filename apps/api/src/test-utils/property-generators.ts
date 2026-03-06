@@ -55,10 +55,10 @@ export function reasoningModelGenerator() {
 }
 
 /**
- * Generates temperature values (0.0 to 2.0)
+ * Generates temperature values (0 to 2)
  */
 export function temperatureGenerator() {
-  return fc.float({ min: 0.0, max: 2.0 })
+  return fc.float({ min: 0, max: 2 })
 }
 
 /**
@@ -90,7 +90,7 @@ export function reasoningStepGenerator() {
   return fc.record({
     step: fc.integer({ min: 1, max: 20 }),
     thought: fc.string({ minLength: 10, maxLength: 500 }),
-    confidence: fc.float({ min: 0.0, max: 1.0 }),
+    confidence: fc.float({ min: 0, max: 1 }),
   })
 }
 

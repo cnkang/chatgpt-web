@@ -22,7 +22,7 @@ export function useIconRender() {
 
     if (fontSize) style.fontSize = `${fontSize}px`
 
-    if (!icon) window.console.warn('iconRender: icon is required')
+    if (!icon) globalThis.console.warn('iconRender: icon is required')
 
     return () => h(SvgIcon, { icon, style })
   }

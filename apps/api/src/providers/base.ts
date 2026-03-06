@@ -7,9 +7,7 @@ import type {
   ChatCompletionChunk,
   ChatCompletionRequest,
   ChatCompletionResponse,
-  ChatMessage,
   ProviderError,
-  ReasoningStep,
   UsageInfo,
 } from '@chatgpt-web/shared'
 
@@ -22,7 +20,7 @@ export type {
   ProviderError,
   ReasoningStep,
   UsageInfo,
-}
+} from '@chatgpt-web/shared'
 
 /**
  * Base AI Provider Interface

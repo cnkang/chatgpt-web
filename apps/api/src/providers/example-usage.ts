@@ -99,7 +99,11 @@ async function exampleUsage() {
 
 // Run example if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  exampleUsage().catch(console.error)
+  try {
+    await exampleUsage()
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 export { exampleUsage }

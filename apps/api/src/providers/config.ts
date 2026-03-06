@@ -5,10 +5,7 @@
 import type {
   AIConfig,
   AppConfiguration,
-  AzureOpenAIConfig,
-  BaseProviderConfig,
   DevelopmentConfig,
-  OpenAIConfig,
   SecurityConfig,
   ServerConfig,
 } from '@chatgpt-web/shared'
@@ -23,7 +20,7 @@ export type {
   OpenAIConfig,
   SecurityConfig,
   ServerConfig,
-}
+} from '@chatgpt-web/shared'
 
 /**
  * Configuration manager class

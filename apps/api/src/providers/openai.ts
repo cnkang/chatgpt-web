@@ -62,8 +62,8 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
     'o4-mini-2025-04-16',
   ]
 
-  private client: OpenAI
-  private retryConfig: RetryConfig
+  private readonly client: OpenAI
+  private readonly retryConfig: RetryConfig
 
   constructor(config: OpenAIConfig) {
     super()
@@ -238,17 +238,13 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
    * Get usage information from OpenAI
    */
   async getUsageInfo(): Promise<UsageInfo> {
-    try {
-      // Note: OpenAI doesn't provide usage info in the same API call
-      // This would typically require a separate billing API call
-      // For now, return default values
-      return {
-        totalTokens: 0,
-        promptTokens: 0,
-        completionTokens: 0,
-      }
-    } catch (error) {
-      throw this.handleOpenAIError(error)
+    // Note: OpenAI doesn't provide usage info in the same API call
+    // This would typically require a separate billing API call
+    // For now, return default values
+    return {
+      totalTokens: 0,
+      promptTokens: 0,
+      completionTokens: 0,
     }
   }
 
@@ -266,17 +262,8 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
     // Model-specific token limits
     let maxTokens = 128000 // default for modern models
 
-    if (model.includes('gpt-5')) {
-      // GPT-5.x models - latest generation with enhanced capabilities
-      if (model.includes('gpt-5.2')) {
-        maxTokens = 262144 // GPT-5.2: 256k context window
-      } else {
-        maxTokens = 128000 // Other GPT-5.x models
-      }
-    } else if (model.includes('gpt-4o')) {
-      maxTokens = model.includes('mini') ? 128000 : 128000
-    } else if (isReasoningModel) {
-      maxTokens = 128000
+    if (model.includes('gpt-5.2')) {
+      maxTokens = 262144 // GPT-5.2: 256k context window
     }
 
     return {
@@ -390,44 +377,8 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
     if (error instanceof OpenAI.APIError) {
       const { status: statusCode, message: apiMessage } = error
       const code = error.code || 'OPENAI_API_ERROR'
-
-      let message = apiMessage
-      let errorType = ErrorType.EXTERNAL_API
-
-      // Map common OpenAI errors to user-friendly messages and appropriate error types
-      switch (statusCode) {
-        case 401:
-          message = '[OpenAI] Invalid API key provided'
-          errorType = ErrorType.AUTHENTICATION
-          break
-        case 403:
-          message = '[OpenAI] Access denied. Please check your API key permissions'
-          errorType = ErrorType.AUTHORIZATION
-          break
-        case 429:
-          message = '[OpenAI] Rate limit exceeded. Please try again later'
-          errorType = ErrorType.RATE_LIMIT
-          break
-        case 500:
-          message = '[OpenAI] Internal server error. Please try again later'
-          errorType = ErrorType.EXTERNAL_API
-          break
-        case 502:
-          message = '[OpenAI] Bad gateway. Please try again later'
-          errorType = ErrorType.NETWORK
-          break
-        case 503:
-          message = '[OpenAI] Service unavailable. Please try again later'
-          errorType = ErrorType.EXTERNAL_API
-          break
-        case 504:
-          message = '[OpenAI] Gateway timeout. Please try again later'
-          errorType = ErrorType.TIMEOUT
-          break
-        default:
-          message = `[OpenAI] HTTP ${statusCode}: ${error.message}`
-          errorType = ErrorType.EXTERNAL_API
-      }
+      const mapping = this.mapOpenAIStatusToError(statusCode, apiMessage, error.message)
+      const { message, errorType } = mapping
 
       // Create appropriate error based on type
       switch (errorType) {
@@ -467,5 +418,49 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
     }
 
     return createExternalApiError('Unknown OpenAI API error', { provider: 'openai' })
+  }
+
+  private mapOpenAIStatusToError(
+    statusCode: number,
+    apiMessage: string,
+    fallbackMessage: string,
+  ): { message: string; errorType: ErrorType } {
+    const mappedByStatus: Record<number, { message: string; errorType: ErrorType }> = {
+      401: {
+        message: '[OpenAI] Invalid API key provided',
+        errorType: ErrorType.AUTHENTICATION,
+      },
+      403: {
+        message: '[OpenAI] Access denied. Please check your API key permissions',
+        errorType: ErrorType.AUTHORIZATION,
+      },
+      429: {
+        message: '[OpenAI] Rate limit exceeded. Please try again later',
+        errorType: ErrorType.RATE_LIMIT,
+      },
+      500: {
+        message: '[OpenAI] Internal server error. Please try again later',
+        errorType: ErrorType.EXTERNAL_API,
+      },
+      502: {
+        message: '[OpenAI] Bad gateway. Please try again later',
+        errorType: ErrorType.NETWORK,
+      },
+      503: {
+        message: '[OpenAI] Service unavailable. Please try again later',
+        errorType: ErrorType.EXTERNAL_API,
+      },
+      504: {
+        message: '[OpenAI] Gateway timeout. Please try again later',
+        errorType: ErrorType.TIMEOUT,
+      },
+    }
+
+    return (
+      mappedByStatus[statusCode] ?? {
+        message: `[OpenAI] HTTP ${statusCode}: ${fallbackMessage || apiMessage}`,
+        errorType: ErrorType.EXTERNAL_API,
+      }
+    )
   }
 }

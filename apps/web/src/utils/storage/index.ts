@@ -3,23 +3,31 @@ interface StorageData<T = unknown> {
   expire: number | null
 }
 
+function removeStorageItem(key: string) {
+  globalThis.localStorage.removeItem(key)
+}
+
+function clearStorage() {
+  globalThis.localStorage.clear()
+}
+
 export function createLocalStorage(options?: { expire?: number | null }) {
   const DEFAULT_CACHE_TIME = 60 * 60 * 24 * 7
 
-  const { expire } = Object.assign({ expire: DEFAULT_CACHE_TIME }, options)
+  const { expire } = { expire: DEFAULT_CACHE_TIME, ...options }
 
   function set<T = unknown>(key: string, data: T) {
     const storageData: StorageData<T> = {
       data,
-      expire: expire !== null ? new Date().getTime() + expire * 1000 : null,
+      expire: expire === null ? null : Date.now() + expire * 1000,
     }
 
     const json = JSON.stringify(storageData)
-    window.localStorage.setItem(key, json)
+    globalThis.localStorage.setItem(key, json)
   }
 
   function get(key: string) {
-    const json = window.localStorage.getItem(key)
+    const json = globalThis.localStorage.getItem(key)
     if (json) {
       let storageData: StorageData | null = null
 
@@ -34,20 +42,12 @@ export function createLocalStorage(options?: { expire?: number | null }) {
         if (expire === null || expire >= Date.now()) return data
       }
 
-      remove(key)
+      removeStorageItem(key)
       return null
     }
   }
 
-  function remove(key: string) {
-    window.localStorage.removeItem(key)
-  }
-
-  function clear() {
-    window.localStorage.clear()
-  }
-
-  return { set, get, remove, clear }
+  return { set, get, remove: removeStorageItem, clear: clearStorage }
 }
 
 export const ls = createLocalStorage()

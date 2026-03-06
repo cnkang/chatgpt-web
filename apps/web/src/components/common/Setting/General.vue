@@ -71,7 +71,7 @@ function updateUserInfo(options: Partial<UserInfo>) {
 function handleReset() {
   userStore.resetUserInfo()
   ms.success(t('common.success'))
-  window.location.reload()
+  globalThis.location.reload()
 }
 
 function exportData(): void {
@@ -85,7 +85,8 @@ function exportData(): void {
   link.download = `chat-store_${date}.json`
   document.body.appendChild(link)
   link.click()
-  document.body.removeChild(link)
+  link.remove()
+  URL.revokeObjectURL(url)
 }
 
 function importData(event: Event): void {
@@ -95,23 +96,22 @@ function importData(event: Event): void {
   const file: File = target.files[0]
   if (!file) return
 
-  const reader: FileReader = new FileReader()
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result as string)
+  file
+    .text()
+    .then(text => {
+      const data = JSON.parse(text)
       localStorage.setItem('chatStorage', JSON.stringify(data))
       ms.success(t('common.success'))
-      location.reload()
-    } catch {
+      globalThis.location.reload()
+    })
+    .catch(() => {
       ms.error(t('common.invalidFileFormat'))
-    }
-  }
-  reader.readAsText(file)
+    })
 }
 
 function clearData(): void {
   localStorage.removeItem('chatStorage')
-  location.reload()
+  globalThis.location.reload()
 }
 
 function handleImportButtonClick(): void {

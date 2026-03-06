@@ -24,9 +24,8 @@ const chatStore = useChatStore()
 
 const { isMobile } = useBasicLayout()
 const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
-const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
+const { scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
-void scrollRef
 
 const { uuid } = route.params as { uuid: string }
 
@@ -68,11 +67,11 @@ function handleExport() {
         tempLink.style.display = 'none'
         tempLink.href = imgUrl
         tempLink.setAttribute('download', 'chat-shot.png')
-        if (typeof tempLink.download === 'undefined') tempLink.setAttribute('target', '_blank')
+        if (tempLink.download === undefined) tempLink.setAttribute('target', '_blank')
         document.body.appendChild(tempLink)
         tempLink.click()
-        document.body.removeChild(tempLink)
-        window.URL.revokeObjectURL(imgUrl)
+        tempLink.remove()
+        globalThis.URL.revokeObjectURL(imgUrl)
         d.loading = false
         ms.success(t('chat.exportSuccess'))
       } catch {

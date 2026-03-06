@@ -38,43 +38,79 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
 
   const errors: string[] = []
   const warnings: string[] = []
+  const codebaseResult = await validateCodebaseCleanup(errors, warnings)
+  const configurationValid = await validateConfigurationSystem(errors)
+  validateMigrationGuidance(errors, warnings)
+
+  const overallSuccess =
+    codebaseResult.codebaseClean &&
+    configurationValid &&
+    codebaseResult.securityRisksRemoved &&
+    errors.length === 0
+
+  return {
+    codebaseClean: codebaseResult.codebaseClean,
+    configurationValid,
+    securityRisksRemoved: codebaseResult.securityRisksRemoved,
+    overallSuccess,
+    errors,
+    warnings,
+  }
+}
+
+function createCleanupValidator() {
+  return new CleanupValidator({
+    rootPath: path.join(process.cwd()),
+    excludePatterns: [
+      'node_modules',
+      '.git',
+      'build',
+      'dist',
+      '.next',
+      'coverage',
+      '.nyc_output',
+      'logs',
+      '*.log',
+      '.env.local',
+      '.env.*.local',
+      '*.test.ts',
+      '*.test.js',
+      '*.spec.ts',
+      '*.spec.js',
+      'src/validation',
+      'src/config/validator.ts',
+      'src/security',
+      'MIGRATION.md',
+      'package-lock.json',
+    ],
+  })
+}
+
+function addViolationMessages(
+  cleanupResult: Awaited<ReturnType<CleanupValidator['validateCleanup']>>,
+  errors: string[],
+  warnings: string[],
+) {
+  cleanupResult.violations.forEach(violation => {
+    const message = `${violation.file}:${violation.line || '?'} - ${violation.type}: ${violation.content}`
+    if (violation.severity === 'error') {
+      errors.push(message)
+    } else {
+      warnings.push(message)
+    }
+  })
+}
+
+async function validateCodebaseCleanup(
+  errors: string[],
+  warnings: string[],
+): Promise<{ codebaseClean: boolean; securityRisksRemoved: boolean }> {
   let codebaseClean = false
-  let configurationValid = false
   let securityRisksRemoved = false
 
   try {
-    // 1. Validate codebase cleanup
     log('📁 Validating codebase cleanup...')
-    const validator = new CleanupValidator({
-      rootPath: path.join(process.cwd()),
-      excludePatterns: [
-        'node_modules',
-        '.git',
-        'build',
-        'dist',
-        '.next',
-        'coverage',
-        '.nyc_output',
-        'logs',
-        '*.log',
-        '.env.local',
-        '.env.*.local',
-        // Exclude test files from validation as they may contain test data
-        '*.test.ts',
-        '*.test.js',
-        '*.spec.ts',
-        '*.spec.js',
-        // Exclude validation directory itself (contains patterns it searches for)
-        'src/validation',
-        'src/config/validator.ts',
-        'src/security',
-        // Exclude migration documentation (legitimately contains deprecated terms)
-        'MIGRATION.md',
-        // Exclude package-lock.json (may contain dependency references)
-        'package-lock.json',
-      ],
-    })
-
+    const validator = createCleanupValidator()
     const cleanupResult = await validator.validateCleanup()
 
     if (cleanupResult.isClean) {
@@ -83,23 +119,10 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
     } else {
       log('❌ Codebase cleanup validation failed')
       log(CleanupValidator.generateReport(cleanupResult))
-
-      cleanupResult.violations.forEach(violation => {
-        if (violation.severity === 'error') {
-          errors.push(
-            `${violation.file}:${violation.line || '?'} - ${violation.type}: ${violation.content}`,
-          )
-        } else {
-          warnings.push(
-            `${violation.file}:${violation.line || '?'} - ${violation.type}: ${violation.content}`,
-          )
-        }
-      })
+      addViolationMessages(cleanupResult, errors, warnings)
     }
 
-    // 2. Validate specific cleanup aspects
     log('\n🔧 Validating specific cleanup aspects...')
-
     const noUnofficialAPI = await validator.validateNoUnofficialAPIReferences()
     const noDeprecatedConfig = await validator.validateNoDeprecatedConfigVars()
     const noSecurityRisks = await validator.validateNoSecurityRisks()
@@ -130,95 +153,82 @@ async function runCleanupValidation(): Promise<ValidationSummary> {
     errors.push(`Codebase validation error: ${(error as Error).message}`)
   }
 
+  return { codebaseClean, securityRisksRemoved }
+}
+
+function runDeprecatedVariableCheck(errors: string[]) {
+  process.env.OPENAI_ACCESS_TOKEN = 'test-token'
+  delete process.env.OPENAI_API_KEY
+
+  let deprecatedDetected = false
   try {
-    // 3. Validate configuration validation system
-    log('\n⚙️  Validating configuration validation system...')
+    ConfigurationValidator.validateEnvironment()
+  } catch (error) {
+    const errorMessage = (error as Error).message
+    deprecatedDetected =
+      errorMessage.includes('Deprecated Configuration Detected') ||
+      errorMessage.includes('deprecated configuration')
+  }
 
-    // Test that the configuration validator properly detects deprecated variables
-    const originalEnv = { ...process.env }
+  if (deprecatedDetected) {
+    log('✅ Configuration validator properly detects deprecated variables')
+  } else {
+    log('❌ Configuration validator does not detect deprecated variables')
+    errors.push('Configuration validator does not properly detect deprecated variables')
+  }
+}
 
-    try {
-      // Test deprecated variable detection
-      process.env.OPENAI_ACCESS_TOKEN = 'test-token'
-      delete process.env.OPENAI_API_KEY // Remove API key to isolate deprecated var test
+function runMissingApiKeyCheck(errors: string[]): boolean {
+  delete process.env.OPENAI_API_KEY
+  delete process.env.OPENAI_ACCESS_TOKEN
 
-      let deprecatedDetected = false
-      let errorMessage = ''
-      try {
-        ConfigurationValidator.validateEnvironment()
-      } catch (error) {
-        errorMessage = (error as Error).message
-        if (
-          errorMessage.includes('Deprecated Configuration Detected') ||
-          errorMessage.includes('deprecated configuration')
-        ) {
-          deprecatedDetected = true
-        }
-      }
+  let missingKeyDetected = false
+  try {
+    ConfigurationValidator.validateEnvironment()
+  } catch (error) {
+    missingKeyDetected = (error as Error).message.includes('Missing Required Configuration')
+  }
 
-      if (deprecatedDetected) {
-        log('✅ Configuration validator properly detects deprecated variables')
-      } else {
-        log('❌ Configuration validator does not detect deprecated variables')
-        errors.push('Configuration validator does not properly detect deprecated variables')
-      }
+  if (missingKeyDetected) {
+    log('✅ Configuration validator properly detects missing API key')
+    return true
+  }
 
-      // Test missing API key detection
-      delete process.env.OPENAI_API_KEY
-      delete process.env.OPENAI_ACCESS_TOKEN
+  log('❌ Configuration validator does not detect missing API key')
+  errors.push('Configuration validator does not properly detect missing API key')
+  return false
+}
 
-      let missingKeyDetected = false
-      try {
-        ConfigurationValidator.validateEnvironment()
-      } catch (error) {
-        if ((error as Error).message.includes('Missing Required Configuration')) {
-          missingKeyDetected = true
-        }
-      }
+async function validateConfigurationSystem(errors: string[]): Promise<boolean> {
+  log('\n⚙️  Validating configuration validation system...')
+  const originalEnv = { ...process.env }
 
-      if (missingKeyDetected) {
-        log('✅ Configuration validator properly detects missing API key')
-        configurationValid = true
-      } else {
-        log('❌ Configuration validator does not detect missing API key')
-        errors.push('Configuration validator does not properly detect missing API key')
-      }
-    } finally {
-      // Restore original environment
-      process.env = originalEnv
-    }
+  try {
+    runDeprecatedVariableCheck(errors)
+    return runMissingApiKeyCheck(errors)
   } catch (error) {
     console.error('❌ Configuration validation test failed:', (error as Error).message)
     errors.push(`Configuration validation test error: ${(error as Error).message}`)
+    return false
+  } finally {
+    process.env = originalEnv
   }
+}
 
-  // 4. Test migration guidance
+function validateMigrationGuidance(errors: string[], warnings: string[]): void {
   log('\n📋 Validating migration guidance...')
-
   try {
     const migrationInfo = ConfigurationValidator.getMigrationInfo()
-
     if (migrationInfo.migrationSteps.length > 0) {
       log('✅ Migration guidance system is functional')
-    } else {
-      log('⚠️  Migration guidance system may not be providing steps')
-      warnings.push('Migration guidance system may not be providing migration steps')
+      return
     }
+
+    log('⚠️  Migration guidance system may not be providing steps')
+    warnings.push('Migration guidance system may not be providing migration steps')
   } catch (error) {
     console.error('❌ Migration guidance test failed:', (error as Error).message)
     errors.push(`Migration guidance test error: ${(error as Error).message}`)
-  }
-
-  const overallSuccess =
-    codebaseClean && configurationValid && securityRisksRemoved && errors.length === 0
-
-  return {
-    codebaseClean,
-    configurationValid,
-    securityRisksRemoved,
-    overallSuccess,
-    errors,
-    warnings,
   }
 }
 
@@ -283,7 +293,7 @@ async function main(): Promise<void> {
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main()
+  await main()
 }
 
 export { runCleanupValidation, type ValidationSummary }

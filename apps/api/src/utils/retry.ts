@@ -76,7 +76,7 @@ export class CircuitBreaker {
   private lastFailureTime: number = 0
   private successCount: number = 0
 
-  constructor(private config: CircuitBreakerConfig = defaultCircuitConfig) {}
+  constructor(private readonly config: CircuitBreakerConfig = defaultCircuitConfig) {}
 
   /**
    * Execute function with circuit breaker protection
@@ -276,12 +276,12 @@ export async function retryBatch<T>(
  * Rate-limited retry utility
  */
 export class RateLimitedRetry {
-  private queue: Array<() => Promise<unknown>> = []
+  private readonly queue: Array<() => Promise<unknown>> = []
   private processing = false
   private lastExecutionTime = 0
 
   constructor(
-    private minInterval: number = 1000, // Minimum time between requests
+    private readonly minInterval: number = 1000, // Minimum time between requests
   ) {}
 
   async execute<T>(fn: () => Promise<T>, config?: Partial<RetryConfig>): Promise<T> {

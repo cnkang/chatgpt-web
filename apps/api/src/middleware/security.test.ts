@@ -15,9 +15,6 @@ import {
   validateSecurityEnvironment,
 } from './security.js'
 
-type MockRequest = Partial<Request> & { requestCount?: number }
-type MockResponse = Partial<Response>
-
 // Mock external dependencies
 vi.mock('helmet', () => ({
   default: vi.fn().mockImplementation((options: HelmetOptions) => {
@@ -76,8 +73,8 @@ vi.mock('redis', () => ({
 }))
 
 describe('security middleware', () => {
-  let mockReq: MockRequest
-  let mockRes: MockResponse
+  let mockReq: Request
+  let mockRes: Response
   let mockNext: NextFunction
   let originalEnv: NodeJS.ProcessEnv
 
@@ -95,7 +92,7 @@ describe('security middleware', () => {
       ip: '127.0.0.1',
       headers: {},
       get: vi.fn(),
-    }
+    } as unknown as Request
 
     mockRes = {
       header: vi.fn(),
@@ -104,7 +101,7 @@ describe('security middleware', () => {
       json: vi.fn().mockReturnThis(),
       end: vi.fn(),
       on: vi.fn(),
-    }
+    } as unknown as Response
 
     mockNext = vi.fn()
   })
@@ -146,7 +143,7 @@ describe('security middleware', () => {
       } as Parameters<typeof createSecurityHeaders>[0]
 
       const middleware = createSecurityHeaders(config)
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Security-Policy', expect.any(String))
       expect(mockRes.setHeader).toHaveBeenCalledWith(
@@ -161,7 +158,7 @@ describe('security middleware', () => {
       process.env.NODE_ENV = 'development'
 
       const middleware = createSecurityHeaders()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.setHeader).not.toHaveBeenCalledWith(
         'Strict-Transport-Security',
@@ -177,7 +174,7 @@ describe('security middleware', () => {
         authorization: 'Bearer sk-1234567890abcdef1234567890abcdef1234567890',
       }
 
-      secureApiKeys(mockReq as Request, mockRes as Response, mockNext)
+      secureApiKeys(mockReq, mockRes, mockNext)
 
       expect(mockReq.headers['x-masked-auth']).toBe('Bearer sk-1****')
       expect(mockNext).toHaveBeenCalled()
@@ -189,7 +186,7 @@ describe('security middleware', () => {
         return originalJson.call(this, body)
       })
 
-      secureApiKeys(mockReq as Request, mockRes as Response, mockNext)
+      secureApiKeys(mockReq, mockRes, mockNext)
 
       // Test the wrapped json method
       const responseBody = {
@@ -213,7 +210,7 @@ describe('security middleware', () => {
         return originalJson.call(this, body)
       })
 
-      secureApiKeys(mockReq as Request, mockRes as Response, mockNext)
+      secureApiKeys(mockReq, mockRes, mockNext)
 
       const responseBody = {
         config: {
@@ -248,7 +245,7 @@ describe('security middleware', () => {
         return originalJson.call(this, body)
       })
 
-      secureApiKeys(mockReq as Request, mockRes as Response, mockNext)
+      secureApiKeys(mockReq, mockRes, mockNext)
 
       const responseBody = [{ apiKey: 'sk-test123456789' }, { token: 'secret-token-value' }]
 
@@ -264,7 +261,7 @@ describe('security middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('https://example.com')
 
       const middleware = createCorsMiddleware()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.header).toHaveBeenCalledWith(
         'Access-Control-Allow-Origin',
@@ -288,7 +285,7 @@ describe('security middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('https://any-origin.com')
 
       const middleware = createCorsMiddleware()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.header).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
       expect(mockRes.header).not.toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
@@ -299,7 +296,7 @@ describe('security middleware', () => {
       mockReq.method = 'OPTIONS'
 
       const middleware = createCorsMiddleware()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.end).toHaveBeenCalled()
@@ -311,7 +308,7 @@ describe('security middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('https://malicious.com')
 
       const middleware = createCorsMiddleware()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.header).not.toHaveBeenCalledWith(
         'Access-Control-Allow-Origin',
@@ -326,7 +323,7 @@ describe('security middleware', () => {
       mockReq.get = vi.fn().mockReturnValue('null')
 
       const middleware = createCorsMiddleware()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(mockRes.status).toHaveBeenCalledWith(403)
       expect(mockRes.end).toHaveBeenCalled()
@@ -355,7 +352,7 @@ describe('security middleware', () => {
       })
 
       const middleware = createSecureLogger()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       expect(consoleSpy).toHaveBeenCalledWith('Request:', expect.any(String))
 
@@ -379,7 +376,7 @@ describe('security middleware', () => {
       mockRes.statusCode = 200
 
       const middleware = createSecureLogger()
-      middleware(mockReq as Request, mockRes as Response, mockNext)
+      middleware(mockReq, mockRes, mockNext)
 
       // Simulate response finish
       finishCallback?.()

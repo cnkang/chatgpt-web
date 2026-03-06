@@ -53,7 +53,11 @@ async function testProviders() {
 
 // Run tests if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  testProviders().catch(console.error)
+  try {
+    await testProviders()
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 export { testProviders }
