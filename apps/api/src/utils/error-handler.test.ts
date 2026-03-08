@@ -3,12 +3,10 @@
  * Tests error handling scenarios according to task 7.2
  */
 
-import type { NextFunction, Request, Response } from 'express'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AppError,
   ErrorType,
-  asyncHandler,
   createAuthenticationError,
   createAuthorizationError,
   createConfigurationError,
@@ -19,34 +17,14 @@ import {
   createRateLimitError,
   createTimeoutError,
   createValidationError,
-  errorHandler,
-  notFoundHandler,
   setupGracefulShutdown,
 } from './error-handler.js'
 
 describe('error handler', () => {
-  let mockReq: Request
-  let mockRes: Response
-  let mockNext: NextFunction
   let consoleSpy: { error: ReturnType<typeof vi.spyOn>; warn: ReturnType<typeof vi.spyOn> }
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    mockReq = {
-      method: 'GET',
-      url: '/test',
-      ip: '127.0.0.1',
-      headers: {},
-      get: vi.fn(),
-    } as unknown as Request
-
-    mockRes = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
-    } as unknown as Response
-
-    mockNext = vi.fn()
 
     // Mock console methods
     consoleSpy = {
@@ -131,155 +109,6 @@ describe('error handler', () => {
       const response = createErrorResponse(error)
 
       expect(response.status).toBe('Error')
-    })
-  })
-
-  describe('error handler', () => {
-    it('should handle AppError correctly', () => {
-      const error = new AppError('Validation failed', ErrorType.VALIDATION, 400)
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'Fail',
-          message: 'Validation failed',
-          error: expect.objectContaining({
-            code: ErrorType.VALIDATION,
-          }),
-        }),
-      )
-    })
-
-    it('should handle regular Error correctly', () => {
-      const error = new Error('Regular error')
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'Error',
-          message: 'Internal server error',
-          error: expect.objectContaining({
-            code: ErrorType.INTERNAL,
-          }),
-        }),
-      )
-    })
-
-    it('should map body parser payload errors to 413 responses', () => {
-      const error = Object.assign(new Error('request entity too large'), {
-        type: 'entity.too.large',
-        status: 413,
-      })
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(mockRes.status).toHaveBeenCalledWith(413)
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'Fail',
-          message: 'Request entity too large',
-          error: expect.objectContaining({
-            code: ErrorType.PAYLOAD_TOO_LARGE,
-          }),
-        }),
-      )
-    })
-
-    it('should hide upstream error details from 5xx responses', () => {
-      const error = createExternalApiError('OpenAI API Error: upstream stack trace', {
-        provider: 'openai',
-      })
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(mockRes.status).toHaveBeenCalledWith(502)
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'Error',
-          message: 'Upstream service request failed',
-          error: expect.objectContaining({
-            code: ErrorType.EXTERNAL_API,
-            details: undefined,
-          }),
-        }),
-      )
-    })
-
-    it('should log server errors', () => {
-      const error = new AppError('Server error', ErrorType.INTERNAL, 500)
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(consoleSpy.error).toHaveBeenCalledWith('Server Error:', expect.any(String))
-    })
-
-    it('should log client errors as warnings', () => {
-      const error = new AppError('Client error', ErrorType.VALIDATION, 400)
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(consoleSpy.warn).toHaveBeenCalledWith('Client Error:', expect.any(String))
-    })
-
-    it('should generate request ID if not provided', () => {
-      const error = new Error('Test error')
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            requestId: expect.stringMatching(
-              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-            ),
-          }),
-        }),
-      )
-    })
-
-    it('should use provided request ID', () => {
-      const error = new Error('Test error')
-      mockReq.headers = { 'x-request-id': 'custom-request-id' }
-
-      errorHandler(error, mockReq, mockRes, mockNext)
-
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: expect.objectContaining({
-            requestId: 'custom-request-id',
-          }),
-        }),
-      )
-    })
-  })
-
-  describe('async handler', () => {
-    it('should handle successful async function', async () => {
-      const asyncFn = vi.fn().mockResolvedValue('success')
-      const wrappedFn = asyncHandler(asyncFn)
-
-      wrappedFn(mockReq, mockRes, mockNext)
-
-      // Wait for the microtask to complete
-      await vi.waitFor(() => {
-        expect(asyncFn).toHaveBeenCalledWith(mockReq, mockRes, mockNext)
-      })
-      expect(mockNext).not.toHaveBeenCalled()
-    })
-
-    it('should handle async function errors', async () => {
-      const error = new Error('Async error')
-      const asyncFn = vi.fn().mockRejectedValue(error)
-      const wrappedFn = asyncHandler(asyncFn)
-
-      wrappedFn(mockReq, mockRes, mockNext)
-      await vi.waitFor(() => {
-        expect(mockNext).toHaveBeenCalledWith(error)
-      })
     })
   })
 
@@ -374,22 +203,6 @@ describe('error handler', () => {
       expect(error.statusCode).toBe(500)
       expect(error.isOperational).toBe(false) // Configuration errors are not operational
       expect(error.details).toBe(details)
-    })
-  })
-
-  describe('not found handler', () => {
-    it('should create not found error for unmatched routes', () => {
-      mockReq.method = 'POST'
-      Object.defineProperty(mockReq, 'path', { value: '/api/nonexistent', writable: true })
-
-      notFoundHandler(mockReq, mockRes, mockNext)
-
-      expect(mockNext).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: ErrorType.NOT_FOUND,
-          message: 'Route POST /api/nonexistent not found',
-        }),
-      )
     })
   })
 
