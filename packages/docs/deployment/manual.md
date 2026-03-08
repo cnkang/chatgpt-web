@@ -2,15 +2,18 @@
 
 This guide covers manual deployment of ChatGPT Web on your own server or VPS, providing complete control over the deployment environment.
 
+> **Note**: The backend uses native Node.js 24+ HTTP/2 with automatic HTTP/1.1 fallback. For detailed HTTP/2 configuration, TLS setup, and reverse proxy integration, see the [HTTP/2 Deployment Guide](./http2-deployment.md).
+
 ## Prerequisites
 
 ### System Requirements
 
 - **Operating System**: Linux (Ubuntu 22.04+ recommended), macOS, or Windows
-- **Node.js**: 24.0.0 or higher (LTS recommended)
+- **Node.js**: 24.0.0 or higher (LTS recommended, required for native HTTP/2)
 - **Memory**: Minimum 1GB RAM, 2GB+ recommended
 - **Storage**: Minimum 2GB free space
 - **Network**: Stable internet connection for API calls
+- **TLS Certificates**: Required for HTTP/2 in browsers (production)
 
 ### Required Software
 
@@ -401,6 +404,8 @@ sudo journalctl -u chatgpt-web-frontend -f
 
 ## Reverse Proxy Configuration
 
+> **Important**: For production deployments, using a reverse proxy is recommended. The proxy handles TLS termination and HTTP/2 negotiation, while the backend runs in HTTP/1.1 mode. See the [HTTP/2 Deployment Guide](./http2-deployment.md) for comprehensive reverse proxy configurations.
+
 ### Nginx Configuration
 
 #### Install Nginx
@@ -435,6 +440,7 @@ server {
 
 server {
     listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name your-domain.com www.your-domain.com;
 
     # SSL Configuration
@@ -465,6 +471,10 @@ server {
         proxy_cache_bypass $http_upgrade;
         proxy_read_timeout 300s;
         proxy_connect_timeout 75s;
+
+        # Disable buffering for streaming responses
+        proxy_buffering off;
+        proxy_request_buffering off;
     }
 
     # Frontend Static Files
@@ -491,6 +501,8 @@ server {
     }
 }
 ```
+
+> **Note**: The `listen 443 ssl http2;` directive enables HTTP/2 support in Nginx. The backend receives HTTP/1.1 from Nginx, which is the recommended configuration.
 
 #### Enable Site
 

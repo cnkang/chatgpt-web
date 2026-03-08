@@ -2,10 +2,13 @@
 
 This guide lists the environment variables that are actually read by the current backend runtime.
 
+**For comprehensive configuration documentation, see [Configuration Reference](./configuration-reference.md).**
+
 Canonical references:
 
 - `apps/api/.env.example`
-- `packages/docs/setup/environment-configuration.md`
+- `packages/docs/deployment/configuration-reference.md` (complete reference)
+- `packages/docs/setup/environment-configuration.md` (setup guide)
 
 ## Files and Locations
 
@@ -33,6 +36,8 @@ SESSION_SECRET=replace-with-a-long-random-string
 ALLOWED_ORIGINS=https://your-app.example.com
 CORS_CREDENTIALS=true
 ```
+
+> **Note**: For production deployments with HTTP/2, either configure TLS certificates or deploy behind a reverse proxy. See [HTTP/2 Deployment Guide](./http2-deployment.md) for details.
 
 ## Provider Configuration
 
@@ -96,6 +101,34 @@ PORT=3002
 HOST=0.0.0.0
 LOG_LEVEL=info
 ```
+
+## HTTP/2 and TLS Configuration
+
+> **See Also**: [HTTP/2 Deployment Guide](./http2-deployment.md) for comprehensive TLS and HTTP/2 setup.
+
+```bash
+# Enable TLS (required for HTTP/2 in browsers)
+TLS_ENABLED=true
+TLS_KEY_PATH=/path/to/server-key.pem
+TLS_CERT_PATH=/path/to/server-cert.pem
+
+# Optional: CA certificate for client verification
+TLS_CA_PATH=/path/to/ca-cert.pem
+
+# Optional: Client certificate requirements
+TLS_REQUEST_CERT=false
+TLS_REJECT_UNAUTHORIZED=true
+
+# Enable HTTP/2 (requires TLS for browser support)
+HTTP2_ENABLED=true
+```
+
+**Important Notes:**
+
+- **Development**: TLS not required, server runs in HTTP/1.1 mode
+- **Production (Direct)**: Configure TLS certificates for HTTP/2 browser support
+- **Production (Reverse Proxy)**: Proxy handles TLS, backend uses HTTP/1.1 (recommended)
+- **h2c Warning**: Server logs warning when HTTP/2 enabled without TLS (limited browser support)
 
 ## Proxies and Networking
 

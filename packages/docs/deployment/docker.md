@@ -2,6 +2,8 @@
 
 This guide covers deploying the ChatGPT Web monorepo using Docker containers.
 
+> **Note**: The backend uses native Node.js 24+ HTTP/2 with automatic HTTP/1.1 fallback. For detailed HTTP/2 configuration, TLS setup, and reverse proxy integration, see the [HTTP/2 Deployment Guide](./http2-deployment.md).
+
 ## Quick Start
 
 ### Using Docker Compose (Recommended)
@@ -304,11 +306,12 @@ http {
 
 ### SSL Configuration
 
-For HTTPS support, add SSL configuration:
+For HTTPS support with HTTP/2, add SSL configuration:
 
 ```nginx
 server {
     listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name your-domain.com;
 
     ssl_certificate /etc/nginx/ssl/cert.pem;
@@ -327,6 +330,8 @@ server {
     return 301 https://$server_name$request_uri;
 }
 ```
+
+> **See Also**: [HTTP/2 Deployment Guide](./http2-deployment.md) for comprehensive TLS and HTTP/2 configuration.
 
 ## Building Custom Images
 

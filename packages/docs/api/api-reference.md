@@ -1,89 +1,330 @@
 # API Reference
 
-This document provides comprehensive API documentation for the ChatGPT Web application, including all endpoints, request/response formats, and configuration examples.
+This document provides comprehensive API documentation for the ChatGPT Web backend API, including all endpoints, request/response formats, streaming protocol, and rate limiting details.
 
 ## Table of Contents
 
 - [Base URL](#base-url)
+- [Architecture](#architecture)
 - [Authentication](#authentication)
 - [Rate Limiting](#rate-limiting)
 - [Error Handling](#error-handling)
+- [Streaming Protocol](#streaming-protocol)
 - [Endpoints](#endpoints)
 - [Provider Configuration](#provider-configuration)
 - [Request/Response Examples](#requestresponse-examples)
-- [Error Codes](#error-codes)
 - [Security Headers](#security-headers)
 
 ## Base URL
+
+**Development:**
 
 ```
 http://localhost:3002
 ```
 
-All API endpoints are available under both the root path and `/api` prefix:
+**Production:**
 
-- `http://localhost:3002/endpoint`
-- `http://localhost:3002/api/endpoint`
+```
+https://your-domain.com
+```
+
+All API endpoints support dual path access:
+
+- Direct: `http://localhost:3002/health`
+- Prefixed: `http://localhost:3002/api/health`
+
+Both paths work identically and route to the same handlers.
+
+## Architecture
+
+The backend uses a modern, framework-agnostic architecture built on Node.js 24+ native HTTP/2:
+
+- **Transport Layer**: Framework-agnostic abstractions for HTTP operations
+- **HTTP/2 Support**: Native `node:http2` module with HTTP/1.1 fallback
+- **Zero Framework Dependencies**: No Express, helmet, or other web framework dependencies
+- **Security-First**: Native middleware for authentication, rate limiting, CORS, and validation
+
+### HTTP/2 Deployment
+
+- **With TLS (Recommended)**: Full HTTP/2 support in browsers, requires valid TLS certificates
+- **Without TLS (h2c)**: Limited browser support, suitable for development or behind reverse proxies
+- **Reverse Proxy**: Works seamlessly behind nginx, CloudFlare, AWS ALB (receives HTTP/1.1)
 
 ## Authentication
 
-The API supports optional authentication using a secret key:
+The API supports optional authentication using a Bearer token:
 
 ```bash
 # Set in environment variables
 AUTH_SECRET_KEY=your_secret_key_here
 ```
 
-When authentication is enabled, include the token in your requests:
+When authentication is enabled, protected endpoints require the `Authorization` header:
 
 ```bash
-curl -X POST http://localhost:3002/api/verify \
+curl -X POST http://localhost:3002/api/chat-process \
   -H "Content-Type: application/json" \
-  -d '{"token": "your_secret_key_here"}'
+  -H "Authorization: Bearer your_secret_key_here" \
+  -d '{"prompt": "Hello"}'
 ```
+
+**Protected Endpoints:**
+
+- `POST /chat-process` - Requires Bearer token
+- `POST /config` - Requires Bearer token
+
+**Public Endpoints:**
+
+- `GET /health` - No authentication required
+- `POST /session` - No authentication required
+- `POST /verify` - Token in request body (not header)
 
 ## Rate Limiting
 
-Rate limiting is configurable per hour:
+The API implements two rate limiting tiers:
 
-```bash
-# Environment variables
-MAX_REQUEST_PER_HOUR=100
-RATE_LIMIT_WINDOW_MS=3600000
-RATE_LIMIT_MAX_REQUESTS=100
+### General Rate Limit
+
+Applied to most endpoints:
+
+- **Limit**: 100 requests per hour (configurable via `MAX_REQUEST_PER_HOUR`)
+- **Window**: 60 minutes (3600000 ms)
+- **Applies to**: `/health`, `/chat-process`, `/config`, `/session`
+
+### Strict Rate Limit
+
+Applied to authentication endpoint:
+
+- **Limit**: 10 requests per 15 minutes
+- **Window**: 15 minutes (900000 ms)
+- **Applies to**: `/verify`
+
+### Rate Limit Headers
+
+All responses include rate limit information:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640998800
 ```
 
-Rate limit headers are included in responses:
-
-- `X-RateLimit-Limit`: Maximum requests allowed
+- `X-RateLimit-Limit`: Maximum requests allowed in window
 - `X-RateLimit-Remaining`: Remaining requests in current window
-- `X-RateLimit-Reset`: Time when the rate limit resets
+- `X-RateLimit-Reset`: Unix timestamp (seconds) when limit resets
 
-## Error Handling
+### Rate Limit Exceeded Response
 
-All API responses follow a consistent error format:
+When rate limit is exceeded, the API returns HTTP 429:
 
 ```json
 {
+  "status": "Fail",
+  "message": "Too many requests from this IP, please try again after 60 minutes",
+  "data": null,
   "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable error message",
-    "details": {},
-    "timestamp": 1640995200000,
-    "requestId": "req_123456789"
+    "code": "RATE_LIMIT_ERROR",
+    "type": "RateLimitError",
+    "timestamp": "2026-01-27T12:00:00.000Z"
   }
 }
 ```
 
+### Configuration
+
+Configure rate limiting via environment variables:
+
+```bash
+# General rate limit (default: 100)
+MAX_REQUEST_PER_HOUR=200
+```
+
+The strict rate limit for `/verify` is hardcoded to 10 requests per 15 minutes for security.
+
+## Error Handling
+
+All API errors follow a consistent JSON response structure:
+
+### Error Response Format
+
+```json
+{
+  "status": "Fail" | "Error",
+  "message": "Human-readable error message",
+  "data": null,
+  "error": {
+    "code": "ERROR_CODE",
+    "type": "ErrorType",
+    "timestamp": "2026-01-27T12:00:00.000Z"
+  }
+}
+```
+
+### Status Field Values
+
+- `"Fail"`: Client errors (4xx status codes) - validation, authentication, rate limiting
+- `"Error"`: Server errors (5xx status codes) - internal errors, external API failures
+
+### Error Codes
+
+| Code                   | Description                       | HTTP Status | Status Field |
+| ---------------------- | --------------------------------- | ----------- | ------------ |
+| `VALIDATION_ERROR`     | Request validation failed         | 400         | Fail         |
+| `AUTHENTICATION_ERROR` | Invalid or missing authentication | 401         | Fail         |
+| `AUTHORIZATION_ERROR`  | Insufficient permissions          | 403         | Fail         |
+| `RATE_LIMIT_ERROR`     | Too many requests                 | 429         | Fail         |
+| `INTERNAL_ERROR`       | Internal server error             | 500         | Error        |
+| `EXTERNAL_API_ERROR`   | OpenAI/Azure API error            | 502         | Error        |
+| `NETWORK_ERROR`        | Network connectivity issue        | 503         | Error        |
+| `TIMEOUT_ERROR`        | Request timeout                   | 504         | Error        |
+
+### Example Error Responses
+
+**Validation Error (400):**
+
+```json
+{
+  "status": "Fail",
+  "message": "Validation error: prompt is required",
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "type": "ValidationError",
+    "timestamp": "2026-01-27T12:00:00.000Z"
+  }
+}
+```
+
+**Authentication Error (401):**
+
+```json
+{
+  "status": "Fail",
+  "message": "Invalid authentication token",
+  "data": null,
+  "error": {
+    "code": "AUTHENTICATION_ERROR",
+    "type": "AuthenticationError",
+    "timestamp": "2026-01-27T12:00:00.000Z"
+  }
+}
+```
+
+**Rate Limit Error (429):**
+
+```json
+{
+  "status": "Fail",
+  "message": "Too many requests from this IP, please try again after 60 minutes",
+  "data": null,
+  "error": {
+    "code": "RATE_LIMIT_ERROR",
+    "type": "RateLimitError",
+    "timestamp": "2026-01-27T12:00:00.000Z"
+  }
+}
+```
+
+**Internal Error (500):**
+
+```json
+{
+  "status": "Error",
+  "message": "Internal server error",
+  "data": null,
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "type": "Error",
+    "timestamp": "2026-01-27T12:00:00.000Z"
+  }
+}
+```
+
+## Streaming Protocol
+
+The `/chat-process` endpoint uses streaming responses to deliver AI-generated content in real-time.
+
+### Streaming Headers
+
+```
+Content-Type: application/octet-stream
+Cache-Control: no-cache
+Connection: keep-alive
+```
+
+### Streaming Format
+
+Responses are sent as **newline-delimited JSON** (NDJSON):
+
+- First chunk: JSON object with no leading newline
+- Subsequent chunks: `\n` + JSON object
+- Each chunk is a complete JSON object
+- Connection closes when response is complete
+
+### Chunk Structure
+
+Each streaming chunk contains:
+
+```json
+{
+  "id": "chatcmpl-123",
+  "text": "Accumulated text so far",
+  "delta": "New text in this chunk",
+  "detail": {
+    "usage": {
+      "total_tokens": 25
+    }
+  }
+}
+```
+
+### Example Streaming Response
+
+```
+{"id":"chatcmpl-123","text":"Hello","delta":"Hello","detail":{"usage":{"total_tokens":1}}}
+{"id":"chatcmpl-123","text":"Hello!","delta":"!","detail":{"usage":{"total_tokens":2}}}
+{"id":"chatcmpl-123","text":"Hello! How","delta":" How","detail":{"usage":{"total_tokens":4}}}
+{"id":"chatcmpl-123","text":"Hello! How can","delta":" can","detail":{"usage":{"total_tokens":6}}}
+{"id":"chatcmpl-123","text":"Hello! How can I","delta":" I","detail":{"usage":{"total_tokens":8}}}
+{"id":"chatcmpl-123","text":"Hello! How can I help","delta":" help","detail":{"usage":{"total_tokens":10}}}
+{"id":"chatcmpl-123","text":"Hello! How can I help you","delta":" you","detail":{"usage":{"total_tokens":12}}}
+{"id":"chatcmpl-123","text":"Hello! How can I help you today","delta":" today","detail":{"usage":{"total_tokens":14}}}
+{"id":"chatcmpl-123","text":"Hello! How can I help you today?","delta":"?","detail":{"usage":{"total_tokens":15}}}
+```
+
+### Client Implementation
+
+To consume streaming responses:
+
+1. Make POST request to `/chat-process`
+2. Read response as stream (not buffered)
+3. Split on newline characters (`\n`)
+4. Parse each line as JSON
+5. Update UI with `delta` field for incremental updates
+6. Use `text` field for complete accumulated text
+
+### Error Handling During Streaming
+
+If an error occurs after streaming starts:
+
+- If headers not sent: Returns standard error JSON response
+- If headers already sent: Connection closes immediately
+- Client should handle unexpected connection closure
+
 ## Endpoints
 
-### Health Check
+### GET /health
 
-Check if the service is running and healthy.
+Health check endpoint to verify server status.
 
-**Endpoint:** `GET /health`
+**Path:** `GET /health` or `GET /api/health`
 
-**Response:**
+**Authentication:** None required
+
+**Rate Limit:** General (100 req/hour)
+
+**Response (200 OK):**
 
 ```json
 {
@@ -93,13 +334,27 @@ Check if the service is running and healthy.
 }
 ```
 
-### Session Management
+**Fields:**
+
+- `uptime`: Server uptime in seconds
+- `message`: Status message (always "OK" when healthy)
+- `timestamp`: Current Unix timestamp in milliseconds
+
+---
+
+### POST /session
 
 Get session information including authentication status and current model.
 
-**Endpoint:** `POST /session`
+**Path:** `POST /session` or `POST /api/session`
 
-**Response:**
+**Authentication:** None required
+
+**Rate Limit:** General (100 req/hour)
+
+**Request Body:** Empty object `{}`
+
+**Response (200 OK):**
 
 ```json
 {
@@ -112,13 +367,26 @@ Get session information including authentication status and current model.
 }
 ```
 
-### Token Verification
+**Fields:**
 
-Verify authentication token when auth is enabled.
+- `auth`: Boolean indicating if authentication is enabled
+- `model`: Current AI model being used
 
-**Endpoint:** `POST /verify`
+---
 
-**Request:**
+### POST /verify
+
+Verify authentication token.
+
+**Path:** `POST /verify` or `POST /api/verify`
+
+**Authentication:** Token in request body
+
+**Rate Limit:** Strict (10 req/15min)
+
+**Body Limit:** 1KB (1024 bytes)
+
+**Request Body:**
 
 ```json
 {
@@ -126,7 +394,7 @@ Verify authentication token when auth is enabled.
 }
 ```
 
-**Response:**
+**Success Response (200 OK):**
 
 ```json
 {
@@ -136,13 +404,36 @@ Verify authentication token when auth is enabled.
 }
 ```
 
-### Chat Processing
+**Error Response (401 Unauthorized):**
 
-Process chat messages with streaming response support.
+```json
+{
+  "status": "Fail",
+  "message": "Invalid authentication token",
+  "data": null,
+  "error": {
+    "code": "AUTHENTICATION_ERROR",
+    "type": "AuthenticationError",
+    "timestamp": "2026-01-27T12:00:00.000Z"
+  }
+}
+```
 
-**Endpoint:** `POST /chat-process`
+---
 
-**Request:**
+### POST /chat-process
+
+Process chat messages with streaming AI responses.
+
+**Path:** `POST /chat-process` or `POST /api/chat-process`
+
+**Authentication:** Required (Bearer token in Authorization header)
+
+**Rate Limit:** General (100 req/hour)
+
+**Body Limit:** 1MB (1048576 bytes)
+
+**Request Body:**
 
 ```json
 {
@@ -157,21 +448,41 @@ Process chat messages with streaming response support.
 }
 ```
 
-**Response:** Streaming JSON objects separated by newlines
+**Request Fields:**
 
-```jsonl
-{"id": "msg_789", "text": "Hello!", "delta": "Hello!", "detail": {"usage": {"total_tokens": 25}}}
-{"id": "msg_789", "text": "Hello! I'm", "delta": " I'm", "detail": {"usage": {"total_tokens": 27}}}
-{"id": "msg_789", "text": "Hello! I'm doing well, thank you!", "delta": " doing well, thank you!", "detail": {"usage": {"total_tokens": 35}}}
+- `prompt` (required): User message to send to AI
+- `options` (optional): Conversation context
+  - `parentMessageId`: ID of previous message in conversation
+  - `conversationId`: ID of conversation thread
+- `systemMessage` (optional): System prompt to guide AI behavior
+- `temperature` (optional): Sampling temperature (0.0-2.0)
+- `top_p` (optional): Nucleus sampling parameter (0.0-1.0)
+
+**Response:** Streaming newline-delimited JSON (see [Streaming Protocol](#streaming-protocol))
+
+**Example Streaming Response:**
+
+```
+{"id":"chatcmpl-123","text":"Hello","delta":"Hello","detail":{"usage":{"total_tokens":1}}}
+{"id":"chatcmpl-123","text":"Hello!","delta":"!","detail":{"usage":{"total_tokens":2}}}
+{"id":"chatcmpl-123","text":"Hello! How can I help you?","delta":" How can I help you?","detail":{"usage":{"total_tokens":8}}}
 ```
 
-### Configuration
+---
 
-Get current configuration and usage information.
+### POST /config
 
-**Endpoint:** `POST /config`
+Get current provider configuration and usage information.
 
-**Response:**
+**Path:** `POST /config` or `POST /api/config`
+
+**Authentication:** Required (Bearer token in Authorization header)
+
+**Rate Limit:** General (100 req/hour)
+
+**Request Body:** Empty object `{}`
+
+**Response (200 OK):**
 
 ```json
 {
@@ -186,70 +497,13 @@ Get current configuration and usage information.
 }
 ```
 
-### Migration Info
+**Fields:**
 
-Get migration guidance and current configuration validation results.
-
-**Endpoint:** `GET /migration-info`
-
-**Response (shape):**
-
-```json
-{
-  "status": "Success",
-  "message": "Migration information retrieved",
-  "data": {
-    "migration": {},
-    "validation": {}
-  }
-}
-```
-
-### Security Status
-
-Run a security validation pass and return a risk summary.
-
-**Endpoint:** `GET /security-status`
-
-**Response (shape):**
-
-```json
-{
-  "status": "Success",
-  "message": "Security validation completed",
-  "data": {
-    "isSecure": true,
-    "risks": [],
-    "summary": {
-      "totalRisks": 0,
-      "highSeverity": 0,
-      "mediumSeverity": 0,
-      "lowSeverity": 0
-    }
-  }
-}
-```
-
-### Circuit Breaker Status
-
-Inspect the current circuit breaker state used around provider calls.
-
-**Endpoint:** `GET /circuit-breaker-status`
-
-**Response (shape):**
-
-```json
-{
-  "status": "Success",
-  "message": "Circuit breaker status retrieved",
-  "data": {
-    "state": "CLOSED",
-    "failureCount": 0,
-    "lastFailureTime": null,
-    "successCount": 150
-  }
-}
-```
+- `apiModel`: API model type being used
+- `timeoutMs`: Request timeout in milliseconds
+- `socksProxy`: SOCKS proxy configuration (or "-" if not configured)
+- `httpsProxy`: HTTPS proxy configuration (or "-" if not configured)
+- `usage`: Usage statistics (format varies by provider)
 
 ## Provider Configuration
 
@@ -261,25 +515,22 @@ Configure the application to use OpenAI API (official or compatible):
 # Environment Variables
 AI_PROVIDER=openai
 OPENAI_API_KEY=sk-your_official_api_key_here
-OPENAI_API_BASE_URL=https://api.openai.com
-SKIP_API_DOMAIN_CHECK=false
-DEFAULT_MODEL=gpt-5.4
+DEFAULT_MODEL=gpt-4o
 ```
 
-If you use an OpenAI-compatible third-party endpoint, set:
+**Optional - OpenAI-Compatible Third-Party Endpoints:**
 
 ```bash
 OPENAI_API_BASE_URL=https://your-compatible-provider.example.com/v1
 SKIP_API_DOMAIN_CHECK=true
 ```
 
-`SKIP_API_DOMAIN_CHECK` only applies to `AI_PROVIDER=openai`. Azure endpoint checks remain strict.
+Note: `SKIP_API_DOMAIN_CHECK` only applies to `AI_PROVIDER=openai`. Azure endpoint validation remains strict.
 
 **Supported Models:**
 
-- `gpt-5.4`, `gpt-5.2`, `gpt-5.1`, `gpt-5` - Latest GPT-5.x models with enhanced capabilities
 - `gpt-4o`, `gpt-4o-mini` - Latest GPT-4o models
-- `o3`, `o3-mini`, `o4-mini` - Reasoning models
+- `o3`, `o3-mini`, `o4-mini` - Reasoning models with step-by-step thinking
 
 ### Azure OpenAI Provider
 
@@ -292,16 +543,17 @@ AZURE_OPENAI_API_KEY=your_azure_api_key
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
 AZURE_OPENAI_DEPLOYMENT=gpt-4o-deployment
 AZURE_OPENAI_API_VERSION=2024-02-15-preview
+```
 
-# Enable v1 Responses API (recommended)
+**Optional - Enable v1 Responses API:**
+
+```bash
 AZURE_OPENAI_USE_RESPONSES_API=true
 ```
 
 ## Request/Response Examples
 
-### Chat Completion Request
-
-**Basic Chat Request:**
+### Basic Chat Request
 
 ```bash
 curl -X POST http://localhost:3002/api/chat-process \
@@ -309,68 +561,78 @@ curl -X POST http://localhost:3002/api/chat-process \
   -H "Authorization: Bearer your_secret_key" \
   -d '{
     "prompt": "Explain quantum computing in simple terms",
-    "options": {},
     "systemMessage": "You are a helpful science teacher.",
     "temperature": 0.7
   }'
 ```
 
-### Streaming Chat Response
+### Chat with Conversation Context
 
-The chat endpoint returns streaming responses. Each line contains a JSON object:
-
-```jsonl
-{"id": "chatcmpl-123", "text": "Quantum", "delta": "Quantum", "detail": {"usage": {"total_tokens": 1}}}
-{"id": "chatcmpl-123", "text": "Quantum computing", "delta": " computing", "detail": {"usage": {"total_tokens": 3}}}
-{"id": "chatcmpl-123", "text": "Quantum computing is", "delta": " is", "detail": {"usage": {"total_tokens": 5}}}
+```bash
+curl -X POST http://localhost:3002/api/chat-process \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your_secret_key" \
+  -d '{
+    "prompt": "What did I just ask about?",
+    "options": {
+      "conversationId": "conv_abc123",
+      "parentMessageId": "msg_xyz789"
+    }
+  }'
 ```
 
-### Reasoning Model Response
+### Verify Authentication
 
-When using reasoning models (o3, o3-mini, o4-mini), responses include reasoning steps:
-
-```json
-{
-  "id": "chatcmpl-reasoning-123",
-  "text": "Let me think through this step by step...",
-  "reasoning": [
-    {
-      "step": 1,
-      "thought": "First, I need to understand what quantum computing is fundamentally about.",
-      "confidence": 95
-    },
-    {
-      "step": 2,
-      "thought": "Then I should explain it in terms that are accessible to a general audience.",
-      "confidence": 90
-    }
-  ],
-  "detail": {
-    "usage": {
-      "total_tokens": 150,
-      "reasoning_tokens": 75,
-      "completion_tokens": 75
-    }
-  }
-}
+```bash
+curl -X POST http://localhost:3002/api/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "your_secret_key"
+  }'
 ```
 
-## Error Codes
+### Get Session Info
 
-| Code                    | Description                       | HTTP Status |
-| ----------------------- | --------------------------------- | ----------- |
-| `INVALID_REQUEST`       | Request validation failed         | 400         |
-| `AUTHENTICATION_FAILED` | Invalid or missing authentication | 401         |
-| `AUTHORIZATION_FAILED`  | Insufficient permissions          | 403         |
-| `RATE_LIMIT_EXCEEDED`   | Too many requests                 | 429         |
-| `EXTERNAL_API_ERROR`    | OpenAI/Azure API error            | 502         |
-| `NETWORK_ERROR`         | Network connectivity issue        | 503         |
-| `TIMEOUT_ERROR`         | Request timeout                   | 504         |
-| `INTERNAL_ERROR`        | Internal server error             | 500         |
+```bash
+curl -X POST http://localhost:3002/api/session \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+### Get Configuration
+
+```bash
+curl -X POST http://localhost:3002/api/config \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your_secret_key" \
+  -d '{}'
+```
+
+### Health Check
+
+```bash
+curl http://localhost:3002/api/health
+```
+
+### Streaming Response Example
+
+When calling `/chat-process`, the response streams as newline-delimited JSON:
+
+```
+{"id":"chatcmpl-123","text":"Quantum","delta":"Quantum","detail":{"usage":{"total_tokens":1}}}
+{"id":"chatcmpl-123","text":"Quantum computing","delta":" computing","detail":{"usage":{"total_tokens":3}}}
+{"id":"chatcmpl-123","text":"Quantum computing is","delta":" is","detail":{"usage":{"total_tokens":5}}}
+{"id":"chatcmpl-123","text":"Quantum computing is a","delta":" a","detail":{"usage":{"total_tokens":7}}}
+{"id":"chatcmpl-123","text":"Quantum computing is a revolutionary","delta":" revolutionary","detail":{"usage":{"total_tokens":9}}}
+```
+
+Each line is a complete JSON object that can be parsed independently.
 
 ## Security Headers
 
-The application automatically includes security headers in all responses:
+The API automatically includes security headers in all responses:
+
+### Standard Security Headers
 
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'
@@ -381,7 +643,9 @@ Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), microphone=(), camera=()
 ```
 
-**Rate Limiting Headers:**
+### Rate Limiting Headers
+
+Included in all responses:
 
 ```
 X-RateLimit-Limit: 100
@@ -389,10 +653,56 @@ X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1640998800
 ```
 
-**Request ID Header:**
+### CORS Headers
+
+Configurable via `ALLOWED_ORIGINS` environment variable:
+
+```
+Access-Control-Allow-Origin: http://localhost:1002
+Access-Control-Allow-Methods: GET, POST, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Allow-Credentials: true
+```
+
+### Request Tracking
+
+Each request can include an optional request ID:
 
 ```
 X-Request-ID: req_1640995200_abc123
 ```
 
-This ensures secure communication and helps with debugging and monitoring.
+If not provided by client, the server may generate one for logging purposes.
+
+## Body Size Limits
+
+Different endpoints have different body size limits for security:
+
+| Endpoint        | Body Limit | Reason                   |
+| --------------- | ---------- | ------------------------ |
+| `/chat-process` | 1MB        | Accommodate long prompts |
+| `/verify`       | 1KB        | Token verification only  |
+| `/config`       | Default    | Empty body expected      |
+| `/session`      | Default    | Empty body expected      |
+| Other endpoints | 1MB        | Default limit            |
+
+Requests exceeding body limits will be rejected with HTTP 413 (Payload Too Large).
+
+## Summary
+
+This API provides a secure, rate-limited interface to OpenAI and Azure OpenAI services with:
+
+- **5 endpoints**: health, session, verify, chat-process, config
+- **Dual path support**: Both `/endpoint` and `/api/endpoint` work
+- **Streaming responses**: Real-time AI responses via newline-delimited JSON
+- **Consistent error format**: Structured error responses with codes and timestamps
+- **Two-tier rate limiting**: 100 req/hour general, 10 req/15min for auth
+- **Security-first design**: Native middleware, input validation, secure headers
+- **Framework-agnostic**: Built on Node.js 24+ native HTTP/2
+
+For implementation details, see:
+
+- [Error Handling](./error-handling.md)
+- [Rate Limiting](./rate-limiting.md)
+- [Authentication](./authentication.md)
+- [Provider Integration](./providers.md)

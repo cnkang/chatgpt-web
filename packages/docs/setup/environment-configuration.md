@@ -2,10 +2,13 @@
 
 This guide documents the environment variables that are actually read by the current codebase.
 
+**For comprehensive configuration documentation including body size limits, rate limiting, sessions, and Redis, see [Configuration Reference](../deployment/configuration-reference.md).**
+
 The canonical templates are:
 
 - Backend: `apps/api/.env.example`
 - Frontend: `.env.example`
+- Complete reference: `packages/docs/deployment/configuration-reference.md`
 
 ## Where to Put Variables
 
