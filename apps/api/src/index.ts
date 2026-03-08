@@ -1,35 +1,41 @@
-import type { ChatMessage, RequestProps } from '@chatgpt-web/shared'
-import { isNotEmptyString } from '@chatgpt-web/shared'
-import type { Request, Response } from 'express'
-import express from 'express'
-import { ConfigurationValidator } from './config/validator'
-import { auth, safeEqual } from './middleware/auth'
-import { authLimiter, limiter } from './middleware/limiter'
-import {
-  createCorsMiddleware,
-  createSecurityHeaders,
-  createSessionMiddleware,
-  secureApiKeys,
-  validateSecurityEnvironment,
-} from './middleware/security'
-import {
-  sanitizeRequest,
-  validateBody,
-  validateContentType,
-  validateRequestSize,
-} from './middleware/validation'
-import { performSecurityValidation } from './security/index.js'
-import {
-  asyncHandler,
-  errorHandler,
-  notFoundHandler,
-  setupGracefulShutdown,
-} from './utils/error-handler'
-import { logger, requestLogger } from './utils/logger'
-import { CircuitBreaker } from './utils/retry'
-import { chatProcessRequestSchema, tokenVerificationSchema } from './validation/schemas'
+/**
+ * Native Node.js HTTP/2 Server Entry Point
+ *
+ * This is the main entry point for the native routing implementation using Node.js 24+
+ * HTTP/2 module without Express dependencies. It wires up all middleware, routes,
+ * validates configuration, and starts the server.
+ *
+ * @module index-native
+ */
 
-// Load .env in Node.js 24+ without external dependencies.
+import { HTTP2Adapter } from './adapters/http2-adapter.js'
+import { ConfigurationValidator } from './config/validator.js'
+import {
+  createAuthMiddleware,
+  createAuthRateLimiter,
+  createBodyParserMiddleware,
+  createBodyParserWithLimit,
+  createCorsMiddleware,
+  createGeneralRateLimiter,
+  createRequestLoggerMiddleware,
+} from './middleware-native/index.js'
+import { createSecurityHeadersMiddleware } from './middleware-native/security-headers.js'
+import { createStaticFileMiddleware } from './middleware-native/static.js'
+import {
+  chatProcessHandler,
+  configHandler,
+  healthHandler,
+  sessionHandler,
+  verifyHandler,
+} from './routes/index.js'
+import { performSecurityValidation } from './security/index.js'
+import { MiddlewareChainImpl } from './transport/middleware-chain.js'
+import { RouterImpl } from './transport/router.js'
+import { asyncHandler } from './utils/async-handler.js'
+import { setupGracefulShutdown } from './utils/graceful-shutdown.js'
+import { logger } from './utils/logger.js'
+
+// Load .env in Node.js 24+ without external dependencies
 try {
   process.loadEnvFile()
 } catch (error) {
@@ -38,301 +44,180 @@ try {
   }
 }
 
+// Parse port from environment
 const parsedPort = Number.parseInt(process.env.PORT || '3002', 10)
 const PORT = Number.isNaN(parsedPort) ? 3002 : parsedPort
-const GLOBAL_JSON_BODY_LIMIT = '1mb'
-const GLOBAL_FORM_BODY_LIMIT = '32kb'
 
-type ChatModule = typeof import('./chatgpt/provider-adapter.js')
+/**
+ * Validate Node.js version requirement
+ * Requires Node.js 24.0.0 or higher for native HTTP/2 and modern features
+ */
+function validateNodeVersion(): void {
+  const nodeVersion = process.version
+  const majorVersion = Number.parseInt(nodeVersion.slice(1).split('.')[0], 10)
 
-// Create circuit breaker for external API calls
-const apiCircuitBreaker = new CircuitBreaker({
-  failureThreshold: 5,
-  recoveryTimeout: 60000, // 1 minute
-  monitoringPeriod: 10000, // 10 seconds
-  expectedErrors: ['EXTERNAL_API_ERROR', 'NETWORK_ERROR', 'TIMEOUT_ERROR'],
-})
+  if (majorVersion < 24) {
+    throw new Error(
+      `Node.js 24.0.0 or higher is required. Current version: ${nodeVersion}\n` +
+        'Please upgrade Node.js to continue.',
+    )
+  }
 
-function validateConfigOrExit() {
+  logger.info('Node.js version check passed', { version: nodeVersion })
+}
+
+/**
+ * Validate environment configuration and security settings
+ * Exits process if validation fails
+ */
+function validateConfigOrExit(): void {
   try {
+    // Validate Node.js version
+    validateNodeVersion()
+
+    // Validate configuration (API keys, provider settings)
     ConfigurationValidator.validateEnvironment()
-    console.warn('✓ Configuration validation passed')
+    logger.info('Configuration validation passed')
 
     // Perform comprehensive security validation
     const securityResult = performSecurityValidation()
     if (!securityResult.isSecure) {
-      console.error('✗ Security validation failed:')
+      logger.error('Security validation failed')
       securityResult.risks.forEach(risk => {
-        console.error(`  [${risk.severity}] ${risk.description}`)
-        console.error(`    Mitigation: ${risk.mitigation}`)
+        logger.error(`[${risk.severity}] ${risk.description}`, {
+          mitigation: risk.mitigation,
+        })
       })
       process.exit(1)
     }
-    console.warn('✓ Security validation passed')
-
-    // Validate security environment
-    const envValidation = validateSecurityEnvironment()
-    if (!envValidation.isValid) {
-      console.error('✗ Security environment validation failed')
-      process.exit(1)
-    }
-    if (envValidation.warnings.length > 0) {
-      console.warn('⚠ Security warnings:')
-      envValidation.warnings.forEach(warning => {
-        console.warn(`  - ${warning}`)
-      })
-    }
-    console.warn('✓ Security environment validation passed')
+    logger.info('Security validation passed')
   } catch (error) {
-    console.error('✗ Configuration validation failed:')
-    console.error(error instanceof Error ? error.message : String(error))
+    logger.error('Configuration validation failed', {
+      error: error instanceof Error ? error.message : String(error),
+    })
     process.exit(1)
   }
 }
 
-async function applySecurityMiddleware(app: express.Express) {
-  // Apply security headers with Helmet
-  app.use(createSecurityHeaders())
+/**
+ * Create and configure the HTTP/2 adapter with all middleware and routes
+ */
+async function createServer(): Promise<HTTP2Adapter> {
+  // Create router and middleware chain
+  const router = new RouterImpl()
+  const middleware = new MiddlewareChainImpl()
 
-  // Apply CORS middleware
-  app.use(createCorsMiddleware())
+  // Create middleware instances
+  const authMiddleware = createAuthMiddleware(process.env.AUTH_SECRET_KEY || '')
+  const generalRateLimiter = createGeneralRateLimiter()
+  const authRateLimiter = createAuthRateLimiter()
+  const corsMiddleware = createCorsMiddleware()
+  const securityHeadersMiddleware = createSecurityHeadersMiddleware()
+  const bodyParserMiddleware = createBodyParserMiddleware()
+  const requestLoggerMiddleware = createRequestLoggerMiddleware()
 
-  // Note: Request logging is handled by requestLogger() above.
-  // createSecureLogger() is intentionally omitted to avoid duplicate logs.
+  // Register global middleware (executed for all requests)
+  middleware.use(requestLoggerMiddleware) // Log all requests
+  middleware.use(corsMiddleware)
+  middleware.use(securityHeadersMiddleware)
+  middleware.use(bodyParserMiddleware)
 
-  // Apply API key security
-  app.use(secureApiKeys)
+  // Register static file middleware for serving frontend assets
+  const staticMiddleware = createStaticFileMiddleware('public')
+  middleware.use(staticMiddleware)
 
-  // Apply session middleware
-  const sessionMiddleware = await createSessionMiddleware()
-  app.use(sessionMiddleware)
-}
+  // Register routes with appropriate middleware
 
-function registerHealthRoute(router: express.Router) {
-  router.get('/health', async (_req, res, _next) => {
-    const healthcheck = {
-      uptime: process.uptime(),
-      message: 'OK',
-      timestamp: Date.now(),
-    }
+  // GET /health - Health check endpoint (no auth, general rate limit)
+  router.get('/health', generalRateLimiter.middleware(), asyncHandler(healthHandler))
 
-    try {
-      res.send(healthcheck)
-    } catch (error) {
-      healthcheck.message = error instanceof Error ? error.message : String(error)
-      res.status(503).send()
-    }
-  })
-}
-
-function registerChatRoutes(router: express.Router, chatModule: ChatModule) {
-  const { chatConfig, chatReplyProcess, currentModel } = chatModule
-
+  // POST /chat-process - Chat processing with streaming (auth required, general rate limit, 1MB body limit)
+  const chatBodyParser = createBodyParserWithLimit(1048576) // 1MB
   router.post(
     '/chat-process',
-    [
-      validateContentType(['application/json']),
-      validateRequestSize(1024 * 1024), // 1MB limit
-      sanitizeRequest,
-      validateBody(chatProcessRequestSchema),
-      auth,
-      limiter,
-    ],
-    asyncHandler(async (req: Request, res: Response) => {
-      res.setHeader('Content-type', 'application/octet-stream')
-
-      const { prompt, options = {}, systemMessage, temperature, top_p } = req.body as RequestProps
-      let firstChunk = true
-
-      // Use circuit breaker for external API fault tolerance
-      // Note: provider internally handles retries, no outer retry needed
-      await apiCircuitBreaker.execute(async () => {
-        await chatReplyProcess({
-          message: prompt,
-          lastContext: options,
-          process: (chat: ChatMessage) => {
-            res.write(firstChunk ? JSON.stringify(chat) : `\n${JSON.stringify(chat)}`)
-            firstChunk = false
-          },
-          systemMessage,
-          temperature,
-          top_p,
-        })
-      })
-
-      res.end()
-    }),
+    authMiddleware,
+    generalRateLimiter.middleware(),
+    chatBodyParser,
+    asyncHandler(chatProcessHandler),
   )
 
+  // POST /config - Configuration endpoint (auth required, general rate limit)
   router.post(
     '/config',
-    [validateContentType(['application/json']), sanitizeRequest, auth],
-    asyncHandler(async (_req, res) => {
-      const response = await chatConfig()
-      res.send(response)
-    }),
+    authMiddleware,
+    generalRateLimiter.middleware(),
+    asyncHandler(configHandler),
   )
 
-  router.post(
-    '/session',
-    [limiter, sanitizeRequest],
-    asyncHandler(async (_req, res) => {
-      const { AUTH_SECRET_KEY } = process.env
-      const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
-      res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel() } })
-    }),
-  )
+  // POST /session - Session information (no auth, general rate limit)
+  router.post('/session', generalRateLimiter.middleware(), asyncHandler(sessionHandler))
 
+  // POST /verify - Token verification (strict rate limit, 1KB body limit)
+  const verifyBodyParser = createBodyParserWithLimit(1024) // 1KB
   router.post(
     '/verify',
-    [
-      authLimiter, // Security: Prevent brute-force attacks on authentication
-      validateContentType(['application/json']),
-      validateRequestSize(1024), // 1KB limit for token verification
-      sanitizeRequest,
-      validateBody(tokenVerificationSchema),
-    ],
-    asyncHandler(async (req, res) => {
-      const { token } = req.body as { token: string }
-      const secret = process.env.AUTH_SECRET_KEY ?? ''
-
-      if (!secret || !safeEqual(token, secret)) {
-        throw new Error('Secret key is invalid')
-      }
-
-      res.send({ status: 'Success', message: 'Verify successfully', data: null })
-    }),
-  )
-}
-
-function registerMigrationRoute(router: express.Router) {
-  // Security: Diagnostic endpoints require authentication in production
-  // to prevent information disclosure about internal application state.
-  router.get(
-    '/migration-info',
-    [auth],
-    asyncHandler(async (_req, res) => {
-      const migrationInfo = ConfigurationValidator.getMigrationInfo()
-      const validationResult = ConfigurationValidator.validateSafely()
-
-      res.send({
-        status: 'Success',
-        message: 'Migration information retrieved',
-        data: {
-          migration: migrationInfo,
-          validation: validationResult,
-        },
-      })
-    }),
-  )
-}
-
-function registerSecurityRoute(router: express.Router) {
-  // Security: Diagnostic endpoints require authentication in production
-  // to prevent information disclosure about internal application state.
-  router.get(
-    '/security-status',
-    [auth],
-    asyncHandler(async (_req, res) => {
-      const securityResult = performSecurityValidation()
-
-      res.send({
-        status: 'Success',
-        message: 'Security validation completed',
-        data: {
-          isSecure: securityResult.isSecure,
-          risks: securityResult.risks,
-          summary: {
-            totalRisks: securityResult.risks.length,
-            highSeverity: securityResult.risks.filter(r => r.severity === 'HIGH').length,
-            mediumSeverity: securityResult.risks.filter(r => r.severity === 'MEDIUM').length,
-            lowSeverity: securityResult.risks.filter(r => r.severity === 'LOW').length,
-          },
-        },
-      })
-    }),
+    authRateLimiter.middleware(),
+    verifyBodyParser,
+    asyncHandler(verifyHandler),
   )
 
-  // Add circuit breaker status endpoint
-  router.get(
-    '/circuit-breaker-status',
-    [auth],
-    asyncHandler(async (_req, res) => {
-      const status = apiCircuitBreaker.getStatus()
-      res.send({
-        status: 'Success',
-        message: 'Circuit breaker status retrieved',
-        data: status,
-      })
-    }),
-  )
+  // Create HTTP/2 adapter with configuration
+  const adapter = new HTTP2Adapter(router, middleware, {
+    http2: true, // Enable HTTP/2 protocol
+    tls: undefined, // TLS configuration (if needed, load from env)
+    bodyLimit: {
+      json: 1048576, // 1MB default for JSON
+      urlencoded: 32768, // 32KB default for URL-encoded
+    },
+    staticDir: 'public',
+  })
+
+  return adapter
 }
 
-function attachRouter(app: express.Express, router: express.Router) {
-  app.use('', router)
-  app.use('/api', router)
-
-  // Security: Configure trust proxy based on deployment topology.
-  // TRUST_PROXY env var allows explicit configuration per environment.
-  // Default: 1 (single reverse proxy, e.g. nginx or Docker network).
-  // Set to 0/false to disable, or a number matching your proxy hop count.
-  const trustProxy = process.env.TRUST_PROXY
-  if (trustProxy === 'false' || trustProxy === '0') {
-    app.set('trust proxy', false)
-  } else if (trustProxy) {
-    const parsed = Number.parseInt(trustProxy, 10)
-    app.set('trust proxy', Number.isNaN(parsed) ? trustProxy : parsed)
-  } else {
-    app.set('trust proxy', 1)
-  }
-}
-
-function listen(app: express.Express) {
-  return app.listen(PORT, () => console.warn(`Server is running on port ${PORT}`))
-}
-
-async function startServer() {
+/**
+ * Start the server and setup graceful shutdown
+ */
+async function startServer(): Promise<void> {
+  // Validate configuration before starting
   validateConfigOrExit()
 
-  // Use the provider adapter for both OpenAI and Azure providers.
-  const chatModule: ChatModule = await import('./chatgpt/provider-adapter.js')
+  // Create and configure server
+  const adapter = await createServer()
 
-  const app = express()
-  const router = express.Router()
+  // Start listening
+  await adapter.listen(PORT, '0.0.0.0')
 
-  app.disable('x-powered-by')
-  app.use(express.static('public'))
-  app.use(express.json({ limit: GLOBAL_JSON_BODY_LIMIT }))
-  app.use(express.urlencoded({ extended: false, limit: GLOBAL_FORM_BODY_LIMIT, parameterLimit: 100 }))
-
-  // Request logging middleware
-  app.use(requestLogger())
-
-  // Apply comprehensive security middleware
-  await applySecurityMiddleware(app)
-
-  registerHealthRoute(router)
-  registerChatRoutes(router, chatModule)
-  registerMigrationRoute(router)
-  registerSecurityRoute(router)
-  attachRouter(app, router)
-
-  // 404 handler for unmatched routes
-  app.use(notFoundHandler)
-
-  // Global error handler (must be last)
-  app.use(errorHandler)
-
-  // Start server
-  const server = listen(app)
-
-  // Setup graceful shutdown
-  setupGracefulShutdown(server)
+  // Log startup information
+  const nodeVersion = process.version
+  const http2Enabled = true // Always true in this implementation
+  const tlsConfigured = false // TODO: Check if TLS is configured from env
 
   logger.info('Server started successfully', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
-    nodeVersion: process.version,
+    nodeVersion,
+    http2: http2Enabled,
+    tls: tlsConfigured,
+  })
+
+  // Output warning if TLS not configured
+  if (!tlsConfigured) {
+    logger.warn(
+      'Warning: HTTP/2 without TLS (h2c) has limited browser support. ' +
+        'Configure TLS for production use.',
+    )
+  }
+
+  // Setup graceful shutdown handlers
+  setupGracefulShutdown(adapter.getServer(), {
+    timeout: 30000, // 30 second timeout
+    onShutdownStart: async signal => {
+      logger.info(`Received ${signal}, starting graceful shutdown`)
+    },
+    onShutdownComplete: async () => {
+      logger.info('Graceful shutdown completed')
+    },
   })
 }
 
@@ -340,6 +225,9 @@ async function startServer() {
 try {
   await startServer()
 } catch (error) {
-  console.error('Failed to start server:', error)
+  logger.error('Failed to start server', {
+    error: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+  })
   process.exit(1)
 }
