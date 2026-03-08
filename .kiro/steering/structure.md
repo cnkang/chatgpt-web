@@ -1,230 +1,215 @@
+---
+inclusion: always
+---
+
 # Project Structure & Organization
 
-## Root Directory Layout
+## Monorepo Architecture
 
-```
-chatgpt-web/
-├── apps/                   # Monorepo applications
-│   ├── web/               # Frontend Vue.js application
-│   └── api/               # Backend Node.js service
-├── packages/              # Shared packages (if any)
-├── tools/                 # Build tools and utilities
-├── docs/                  # Documentation and images
-├── docker-compose/        # Docker deployment configuration
-├── kubernetes/            # Kubernetes deployment manifests
-├── .kiro/                 # Kiro IDE configuration and steering
-├── .serena/               # Serena agent memories and cache
-├── .husky/                # Git hooks configuration
-├── .turbo/                # Turborepo cache
-├── turbo.json             # Turborepo configuration
-├── pnpm-workspace.yaml    # PNPM workspace configuration
-└── [config files]         # Root-level configuration files
-```
+This is a PNPM workspace monorepo with two main applications:
+
+- `apps/web/` - Vue.js 3 frontend (port 1002)
+- `apps/api/` - Node.js 24 backend (port 3002)
+
+When creating new files, always place them in the appropriate workspace based on their purpose.
 
 ## Frontend Structure (`apps/web/src/`)
 
-### Component Organization
+### Where to Place New Frontend Code
 
-```
-apps/web/src/components/
-├── common/                 # Reusable UI components
-│   ├── HoverButton/       # Button with hover effects
-│   ├── LoadingSpinner/    # Loading indicators
-│   ├── NaiveProvider/     # UI library provider wrapper
-│   ├── PromptStore/       # Prompt management component
-│   ├── Setting/           # Settings panels (About, Advanced, General)
-│   ├── SvgIcon/           # SVG icon component
-│   └── UserAvatar/        # User avatar display
-├── custom/                # Project-specific components
-│   └── GithubSite.vue     # GitHub integration component
-└── reasoning/             # AI reasoning model components
-    ├── ModelSelector/     # Model selection interface
-    ├── ReasoningLoader/   # Loading states for reasoning
-    └── ReasoningSteps/    # Step-by-step reasoning display
-```
+**Components** (`apps/web/src/components/`):
 
-### Application Architecture
+- `common/` - Reusable UI components (buttons, loaders, icons, settings panels)
+- `custom/` - Project-specific components (GitHub integration, etc.)
+- `reasoning/` - AI reasoning model UI (model selector, reasoning steps display)
+- Use PascalCase folder names matching component name
+- Always create `index.vue` as the main component file
 
-```
-apps/web/src/
-├── views/                 # Page-level components
-│   ├── chat/             # Main chat interface
-│   │   ├── components/   # Chat-specific components (Header, Message)
-│   │   ├── hooks/        # Chat-specific composables
-│   │   └── layout/       # Chat layout components
-│   └── exception/        # Error pages (404, 500)
-├── store/                # Pinia state management
-│   └── modules/          # Feature-based store modules
-│       ├── app/          # Global app state
-│       ├── auth/         # Authentication state
-│       ├── chat/         # Chat session state
-│       ├── prompt/       # Prompt templates
-│       ├── settings/     # User preferences
-│       └── user/         # User profile data
-├── router/               # Vue Router configuration
-├── hooks/                # Reusable composition functions
-├── utils/                # Utility functions and helpers
-├── api/                  # API client and endpoints
-├── locales/              # Internationalization files
-├── styles/               # Global styles and themes
-├── typings/              # TypeScript type definitions
-└── plugins/              # Vue plugins and setup
-```
+**Views** (`apps/web/src/views/`):
+
+- Page-level components that map to routes
+- `chat/` contains the main chat interface with its own `components/`, `hooks/`, and `layout/` subdirectories
+- `exception/` for error pages (404, 500)
+
+**State Management** (`apps/web/src/store/modules/`):
+
+- Create feature-based Pinia stores: `app/`, `auth/`, `chat/`, `prompt/`, `settings/`, `user/`
+- Each store module should be self-contained with its own state, getters, and actions
+
+**Composables** (`apps/web/src/hooks/`):
+
+- Reusable Vue composition functions
+- Chat-specific composables go in `views/chat/hooks/`
+
+**Utilities** (`apps/web/src/utils/`):
+
+- Pure functions and helper utilities
+- Keep framework-agnostic when possible
+
+**API Client** (`apps/web/src/api/`):
+
+- API endpoint definitions and client configuration
+- Use TypeScript interfaces for request/response types
+
+**Internationalization** (`apps/web/src/locales/`):
+
+- All user-facing text must use i18n keys
+- Add translations for all supported languages
 
 ## Backend Structure (`apps/api/src/`)
 
-### Service Architecture
+### Where to Place New Backend Code
 
-```
-apps/api/src/
-├── chatgpt/              # AI provider implementations
-│   ├── index.ts          # Legacy OpenAI implementation
-│   ├── provider-adapter.ts # Modern provider abstraction
-│   └── types.ts          # ChatGPT-specific types
-├── providers/            # AI service providers
-│   ├── base.ts           # Abstract provider interface
-│   ├── openai.ts         # OpenAI API implementation
-│   ├── azure.ts          # Azure OpenAI implementation
-│   ├── factory.ts        # Provider factory pattern
-│   └── config.ts         # Provider configuration
-├── middleware/           # Express middleware
-│   ├── auth.ts           # Authentication middleware
-│   ├── limiter.ts        # Rate limiting
-│   ├── security.ts       # Security headers and validation
-│   └── validation.ts     # Request validation and sanitization
-├── security/             # Security utilities
-│   ├── auth-validator.ts # Authentication validation
-│   └── validator.ts      # Security validation logic
-├── utils/                # Utility functions
-│   ├── error-handler.ts  # Error handling and logging
-│   ├── logger.ts         # Structured logging
-│   ├── retry.ts          # Retry logic and circuit breaker
-│   └── is.ts             # Type checking utilities
-├── validation/           # Input validation schemas
-│   ├── schemas.ts        # Zod validation schemas
-│   └── cleanup-validator.ts # Configuration cleanup
-├── config/               # Configuration management
-│   └── validator.ts      # Environment validation
-└── test/                 # Test utilities and integration tests
-```
+**AI Providers** (`apps/api/src/providers/`):
 
-## Configuration Files
+- `base.ts` - Abstract provider interface (extend for new providers)
+- `openai.ts`, `azure.ts` - Concrete provider implementations
+- `factory.ts` - Provider factory pattern (modify when adding new providers)
+- `config.ts` - Provider configuration and validation
 
-### Root Level Configuration
+**Middleware** (`apps/api/src/middleware/`):
 
-- `package.json` - Monorepo root dependencies and scripts
-- `turbo.json` - Turborepo build pipeline configuration
-- `pnpm-workspace.yaml` - PNPM workspace configuration
-- `eslint.config.js` - ESLint configuration with @antfu/eslint-config
-- `.prettierrc` - Prettier formatting rules
-- `.env` - Environment variables (create from .env.example)
+- `auth.ts` - Authentication and authorization
+- `limiter.ts` - Rate limiting logic
+- `security.ts` - Security headers, XSS protection, input sanitization
+- `validation.ts` - Request validation using Zod schemas
+- All middleware must be Express 5 compatible
 
-### Frontend Configuration (`apps/web/`)
+**Security** (`apps/api/src/security/`):
 
-- `package.json` - Frontend dependencies and scripts
-- `vite.config.ts` - Vite build configuration with Node.js 24 optimizations
-- `tsconfig.json` - TypeScript configuration for frontend
-- `tailwind.config.js` - Tailwind CSS configuration
-- `eslint.config.js` - Frontend-specific ESLint rules
-- `.prettierrc` - Frontend-specific Prettier rules
+- Security-critical validation logic
+- Authentication validators
+- Keep security logic separate from business logic
 
-### Backend Configuration (`apps/api/`)
+**Validation** (`apps/api/src/validation/`):
 
-- `package.json` - Backend dependencies and scripts
-- `tsconfig.json` - TypeScript configuration for backend
-- `tsup.config.ts` - Build configuration for backend
-- `vitest.config.ts` - Test configuration
-- `eslint.config.js` - Backend-specific ESLint rules
-- `.env` - Backend environment variables (create from .env.example)
+- Zod schemas for request/response validation
+- Configuration cleanup and validation
+- All user inputs must be validated here
+
+**Utilities** (`apps/api/src/utils/`):
+
+- `error-handler.ts` - Centralized error handling
+- `logger.ts` - Structured logging (use for all logging)
+- `retry.ts` - Retry logic with circuit breaker pattern
+- `is.ts` - Type checking utilities
+
+**Configuration** (`apps/api/src/config/`):
+
+- Environment variable validation
+- Startup configuration checks
+
+**Tests** (`apps/api/src/test/` or colocated `*.test.ts`):
+
+- Unit tests colocated with source files
+- Integration tests in `test/` directory
+- Use Vitest with fast-check for property-based testing
 
 ## File Naming Conventions
 
-### Components
+**Frontend (Vue.js)**:
 
-- **Vue Components**: PascalCase with `.vue` extension
-- **Component Folders**: PascalCase matching component name
-- **Index Files**: Always `index.vue` or `index.ts` for main exports
+- Vue components: PascalCase with `.vue` extension (`UserAvatar.vue`)
+- Component folders: PascalCase matching component name (`UserAvatar/`)
+- Main component export: Always `index.vue` or `index.ts`
+- TypeScript utilities: camelCase (e.g., `formatMessage.ts`)
+- Type definitions: `types.ts` or descriptive names
 
-### TypeScript Files
+**Backend (Node.js)**:
 
-- **Utilities**: camelCase (e.g., `errorHandler.ts`)
-- **Types**: PascalCase or descriptive names (e.g., `types.ts`)
-- **Configs**: descriptive names (e.g., `validator.ts`)
+- TypeScript files: camelCase (e.g., `errorHandler.ts`, `authValidator.ts`)
+- Test files: Same name as source with `.test.ts` suffix (`validator.test.ts`)
+- Type files: `types.ts` or descriptive names
+- Config files: descriptive names (`validator.ts`, `config.ts`)
 
-### Directories
+**Directories**:
 
-- **Feature Directories**: camelCase (e.g., `chatgpt/`, `middleware/`)
-- **Component Directories**: PascalCase (e.g., `HoverButton/`)
+- Feature directories: camelCase (`chatgpt/`, `middleware/`, `providers/`)
+- Component directories: PascalCase (`HoverButton/`, `ModelSelector/`)
 
 ## Import Path Conventions
 
-### Frontend Aliases
+**Frontend** (`apps/web/`):
 
 ```typescript
-// Use @ alias for src imports (in apps/web)
+// ALWAYS use @ alias for src imports
 import { useChat } from '@/hooks/useChat'
 import { ChatMessage } from '@/components/chat/Message'
+import type { User } from '@/typings/user'
 ```
 
-### Backend Imports
+**Backend** (`apps/api/`):
 
 ```typescript
-// Use relative imports with .js extension (ESM) (in apps/api)
+// ALWAYS use relative imports with .js extension (ESM requirement)
 import { logger } from './utils/logger.js'
+import { validateRequest } from '../middleware/validation.js'
 import type { ChatMessage } from './chatgpt/types.js'
+
+// Type-only imports use 'type' keyword
+import type { Request, Response } from 'express'
 ```
 
-## Asset Organization
+**Critical**: Backend imports MUST include `.js` extension even though source files are `.ts` - this is required for ESM compatibility.
 
-### Static Assets (`apps/web/public/`)
+## Code Organization Principles
 
-- `favicon.ico` / `favicon.svg` - Site icons
-- `pwa-*.png` - Progressive Web App icons
+**Separation of Concerns**:
 
-### Source Assets (`apps/web/src/assets/`)
+- Keep frontend and backend completely separate
+- No shared code between `apps/web/` and `apps/api/` (use `packages/` if needed)
+- Business logic separate from presentation logic
 
-- `avatar.jpg` - Default user avatar
-- `recommend.json` - Recommended prompts data
+**Feature-Based Organization**:
 
-## Build Output Structure
+- Group related files together (components, hooks, types)
+- Chat feature has its own subdirectory with components, hooks, and layout
+- Provider implementations grouped in `providers/` directory
 
-### Frontend Build (`apps/web/dist/`)
+**Modular Design**:
 
-```
-apps/web/dist/
-├── js/                   # JavaScript bundles with hash names
-├── css/                  # CSS files with hash names
-├── img/                  # Optimized images
-├── fonts/                # Web fonts
-└── index.html            # Main HTML file
-```
+- Each module has a single, clear responsibility
+- Use factory pattern for provider selection
+- Middleware functions are composable and reusable
 
-### Backend Build (`apps/api/build/`)
+**Type Safety**:
 
-```
-apps/api/build/
-├── index.js              # Main server entry point
-├── [modules].js          # Compiled TypeScript modules
-└── [assets]              # Any bundled assets
-```
+- Comprehensive TypeScript coverage (zero errors policy)
+- Define types in `types.ts` files or colocated with implementation
+- Use Zod for runtime validation, TypeScript for compile-time types
 
-## Development Workflow Directories
+**Security First**:
 
-### IDE Configuration (`.kiro/`)
+- All security logic in dedicated `security/` and `middleware/` directories
+- Validate all inputs in `validation/` using Zod schemas
+- Never mix security logic with business logic
 
-- `steering/` - AI assistant guidance documents
-- `settings/` - IDE-specific settings
+**Testability**:
 
-### Agent Memory (`.serena/`)
+- Colocate unit tests with source files (`*.test.ts`)
+- Integration tests in `test/` directory
+- Use dependency injection for easier mocking
+- Property-based tests for validation logic
 
-- `memories/` - Persistent knowledge about the project
-- `cache/` - Temporary analysis cache for TypeScript and Vue
+## Quick Reference: Where to Add New Code
 
-## Key Architectural Principles
+**New Vue Component**: `apps/web/src/components/common/` or `components/custom/`
+**New Page/View**: `apps/web/src/views/`
+**New Pinia Store**: `apps/web/src/store/modules/{feature}/`
+**New Composable**: `apps/web/src/hooks/` (or `views/chat/hooks/` if chat-specific)
+**New API Endpoint**: `apps/web/src/api/`
+**New i18n Translation**: `apps/web/src/locales/`
 
-1. **Separation of Concerns**: Clear frontend/backend separation
-2. **Feature-Based Organization**: Group related functionality together
-3. **Modular Design**: Each module has clear responsibilities
-4. **Type Safety**: Comprehensive TypeScript coverage
-5. **Security First**: Dedicated security modules and validation
-6. **Testability**: Clear separation for unit and integration testing
+**New Backend Route**: Add to `apps/api/src/index.ts` with appropriate middleware
+**New AI Provider**: `apps/api/src/providers/` (extend `base.ts`, update `factory.ts`)
+**New Middleware**: `apps/api/src/middleware/`
+**New Validation Schema**: `apps/api/src/validation/schemas.ts`
+**New Utility Function**: `apps/api/src/utils/`
+**New Test**: Colocate as `*.test.ts` or add to `apps/api/src/test/`
+
+## Configuration Files Reference
+
+**Root**: `turbo.json`, `pnpm-workspace.yaml`, `eslint.config.js`, `.prettierrc`
+**Frontend**: `apps/web/vite.config.ts`, `apps/web/tsconfig.json`
+**Backend**: `apps/api/tsconfig.json`, `apps/api/tsup.config.ts`, `apps/api/vitest.config.ts`
+**Environment**: `apps/api/.env` (create from `.env.example`)

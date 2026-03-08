@@ -1,118 +1,153 @@
+---
+inclusion: always
+---
+
 # Technology Stack & Build System
 
-## Core Technologies
+## Critical Technology Constraints
 
-### Frontend Stack
+When writing code for this project, you MUST adhere to these requirements:
 
-- **Vue.js 3.5+**: Composition API, reactive props destructuring, modern optimizations
-- **TypeScript 5.9+**: Strict configuration with zero errors policy
-- **Vite 7+**: Build system optimized for Node.js 24 with ESNext targets
-- **Naive UI 2.43+**: Primary UI component library
-- **Pinia 3+**: State management with modular store architecture
-- **Vue Router 4+**: Client-side routing with lazy loading
-- **Vue i18n 11+**: Internationalization support
+### Frontend Requirements
 
-### Backend Stack
+- Use Vue 3 Composition API (not Options API)
+- TypeScript strict mode - zero errors tolerated
+- Use `@/` alias for all src imports (never relative paths like `../../`)
+- All user-facing text must use i18n keys from `@/locales/`
+- Use Naive UI components (not custom implementations)
+- Pinia stores for state management (not Vuex)
 
-- **Node.js 24+**: Required for native fetch, modern JS features, performance
-- **Express.js 5+**: Web framework with enhanced security middleware
-- **TypeScript 5.9+**: Strict type checking, zero errors
-- **OpenAI SDK 6+**: Official OpenAI API v1 integration
-- **Zod 4+**: Runtime type validation and schema parsing
-- **Redis 5+**: Session storage and caching
+### Backend Requirements
 
-### Development Tools
+- Node.js 24+ native fetch (never use axios, node-fetch, or other HTTP libraries)
+- ESM modules only - all imports MUST include `.js` extension even for `.ts` files
+- Express 5 patterns (not Express 4)
+- OpenAI SDK v6+ official API (never unofficial/proxy APIs)
+- Zod schemas for ALL input validation
+- All middleware must be Express 5 compatible
 
-- **PNPM 10+**: Package manager (required)
-- **ESLint 9+**: Code linting with @antfu/eslint-config, zero-warning policy
-- **Prettier 3+**: Code formatting with consistent style
-- **Vitest 4+**: Testing framework with Fast-check property testing
-- **Husky 9+**: Git hooks for pre-commit validation
+### Forbidden Patterns
 
-## Build System
+- ❌ CommonJS (require/module.exports)
+- ❌ Unofficial ChatGPT APIs or proxy services
+- ❌ External HTTP libraries (axios, node-fetch, got, etc.)
+- ❌ Express 4 patterns
+- ❌ Options API in Vue components
+- ❌ Hardcoded strings instead of i18n keys
+- ❌ Relative imports without `.js` extension in backend
 
-### Frontend Build (Vite)
+## Package Manager
+
+ALWAYS use `pnpm` commands, never npm or yarn:
+
+- Install: `pnpm install` (not `npm install`)
+- Add dependency: `pnpm add <package>` (not `npm install <package>`)
+- Run scripts: `pnpm <script>` (not `npm run <script>`)
+
+## Monorepo Structure
+
+This is a PNPM workspace with two apps:
+
+- `apps/web/` - Frontend (Vue 3, port 1002)
+- `apps/api/` - Backend (Node.js 24, port 3002)
+
+When running commands:
+
+- Frontend: Run from `apps/web/` or root with `pnpm dev`
+- Backend: Run from `apps/api/` (paths like `cd service` are legacy references to `apps/api`)
+
+## Development Commands
+
+### Starting Development Servers
 
 ```bash
-# Development
-pnpm dev                 # Start dev server on port 1002
+# Frontend (from root or apps/web/)
+pnpm dev                 # Port 1002
 
-# Production Build
-pnpm build              # Type check + build
-pnpm build-only         # Build without type check
-pnpm preview            # Preview production build
+# Backend (from apps/api/)
+pnpm dev                 # Port 3002 with watch mode
+pnpm start               # Port 3002 without watch
 ```
 
-### Backend Build (tsup)
+### Code Quality (run before committing)
 
 ```bash
-# Development
-pnpm start              # Start with esno (development)
-pnpm dev                # Watch mode with esno
+# From root - checks both apps
+pnpm quality             # Type-check + lint + format check
+pnpm quality:fix         # Auto-fix all issues
 
-# Production Build
-pnpm build              # Build to ./build directory
-pnpm prod               # Run production build
-```
-
-## Common Commands
-
-### Project Setup
-
-```bash
-# Initial setup (root directory)
-pnpm bootstrap          # Install deps + prepare husky
-
-# Backend setup
-cd service && pnpm install
-```
-
-### Development Workflow
-
-```bash
-# Start both services
-pnpm dev                # Frontend (port 1002)
-cd service && pnpm dev  # Backend (port 3002)
-
-# Code quality
-pnpm quality            # Run type-check + lint + format check
-pnpm quality:fix        # Auto-fix lint + format + type-check
+# These commands MUST pass with zero errors/warnings
 ```
 
 ### Testing
 
 ```bash
-# Backend tests only
-cd service && pnpm test          # Run tests
-cd service && pnpm test:watch    # Watch mode
-cd service && pnpm test:ui       # Vitest UI
+# Backend tests (from apps/api/)
+pnpm test                # Run all tests
+pnpm test:watch          # Watch mode
+pnpm test:ui             # Vitest UI
+
+# Use fast-check for property-based testing
 ```
 
-### Production Deployment
+### Building for Production
 
 ```bash
-# Manual deployment
-pnpm build                       # Build frontend
-cd service && pnpm build         # Build backend
-cd service && pnpm prod          # Run production server
+# Frontend (from apps/web/)
+pnpm build               # Type-check + build
+pnpm build-only          # Build without type-check
+pnpm preview             # Preview production build
 
-# Docker deployment
-docker build -t chatgpt-web .
-docker run -p 3002:3002 --env OPENAI_API_KEY=sk-xxx chatgpt-web
+# Backend (from apps/api/)
+pnpm build               # Build to ./build directory
+pnpm prod                # Run production build
 ```
 
-## Environment Requirements
+## Code Quality Standards
 
-### Node.js Version
+Before suggesting any code changes, ensure:
 
-- **Required**: Node.js 24.0.0+
-- **Package Manager**: PNPM 10.0.0+
-- **Reason**: Native fetch, modern JS features, performance optimizations
+1. **TypeScript**: Strict mode enabled, zero errors
+2. **ESLint**: Zero warnings (warnings treated as errors)
+3. **Formatting**: Prettier enforced via pre-commit hooks
+4. **Testing**: Property-based tests for validation logic
+5. **Security**: All inputs validated with Zod schemas
 
-### Environment Variables
+## Import Conventions
+
+### Frontend (apps/web/)
+
+```typescript
+// ✅ CORRECT - Use @ alias
+import { useChat } from '@/hooks/useChat'
+import { ChatMessage } from '@/components/chat/Message'
+import type { User } from '@/typings/user'
+
+// ❌ WRONG - Never use relative paths
+import { useChat } from '../../hooks/useChat'
+```
+
+### Backend (apps/api/)
+
+```typescript
+// ✅ CORRECT - Relative imports with .js extension
+import { logger } from './utils/logger.js'
+import { validateRequest } from '../middleware/validation.js'
+import type { Request, Response } from 'express'
+
+// ❌ WRONG - Missing .js extension
+import { logger } from './utils/logger'
+
+// ❌ WRONG - Using .ts extension
+import { logger } from './utils/logger.ts'
+```
+
+## Environment Configuration
+
+Backend requires these environment variables in `apps/api/.env`:
 
 ```bash
-# Required (service/.env)
+# Required
 OPENAI_API_KEY=sk-xxx                    # OpenAI API key
 AI_PROVIDER=openai                       # or 'azure'
 
@@ -121,39 +156,64 @@ AZURE_OPENAI_API_KEY=xxx
 AZURE_OPENAI_ENDPOINT=https://xxx.openai.azure.com
 AZURE_OPENAI_DEPLOYMENT=gpt-4o-deployment
 
-# Security & Performance
+# Security
 AUTH_SECRET_KEY=xxx                      # Access control
 MAX_REQUEST_PER_HOUR=100                # Rate limiting
 TIMEOUT_MS=60000                        # Request timeout
 ```
 
-## Build Optimizations
+Always validate environment variables on startup using Zod schemas.
 
-### Frontend Optimizations
+## Technology Versions
 
-- **Target**: ESNext, Chrome 131+, Firefox 133+, Safari 18+
-- **Code Splitting**: Manual chunks for Vue ecosystem, UI libraries, utilities
-- **Tree Shaking**: Aggressive with manual pure functions
-- **Bundle Analysis**: Optimized chunk sizes, asset inlining
+### Frontend Stack
 
-### Backend Optimizations
+- Vue.js 3.5+ (Composition API)
+- TypeScript 5.9+
+- Vite 7+
+- Naive UI 2.43+
+- Pinia 3+
+- Vue Router 4+
+- Vue i18n 11+
 
-- **Native Fetch**: No external HTTP libraries
-- **Circuit Breaker**: Fault tolerance for external APIs
-- **Retry Logic**: Exponential backoff for failed requests
-- **Security**: Helmet, CORS, rate limiting, input validation
+### Backend Stack
 
-## Development Guidelines
+- Node.js 24+ (required for native fetch)
+- Express.js 5+
+- TypeScript 5.9+
+- OpenAI SDK 6+
+- Zod 4+
+- Redis 5+
 
-### Code Quality Standards
+### Development Tools
 
-- **Zero TypeScript Errors**: Strict configuration enforced
-- **Zero ESLint Warnings**: All warnings treated as errors
-- **Consistent Formatting**: Prettier with pre-commit hooks
-- **Property Testing**: Fast-check for comprehensive validation
+- PNPM 10+ (required)
+- ESLint 9+ (@antfu/eslint-config)
+- Prettier 3+
+- Vitest 4+ with fast-check
+- Husky 9+
 
-### Performance Targets
+## Build Targets
 
-- **Frontend**: Route-based code splitting, lazy loading
-- **Backend**: Connection pooling, response streaming
-- **Build**: Optimized for modern browsers, minimal bundle size
+### Frontend
+
+- Target: ESNext, Chrome 131+, Firefox 133+, Safari 18+
+- Code splitting: Route-based lazy loading
+- Manual chunks: Vue ecosystem, UI libraries, utilities
+- Tree shaking: Aggressive with manual pure annotations
+
+### Backend
+
+- Target: Node.js 24 ESM
+- Native fetch: No external HTTP libraries
+- Circuit breaker: Fault tolerance for external APIs
+- Retry logic: Exponential backoff
+
+## Performance Guidelines
+
+When implementing features:
+
+- Frontend: Use route-based code splitting and lazy loading
+- Backend: Stream responses, use connection pooling
+- Bundle size: Keep main chunk < 500KB
+- API response: < 200ms (excluding AI provider latency)
