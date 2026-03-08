@@ -82,8 +82,8 @@ importers:
         specifier: ^4.8.0
         version: 4.8.0
       fast-check:
-        specifier: ^4.5.3
-        version: 4.5.3
+        specifier: ^4.6.0
+        version: 4.6.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -195,8 +195,8 @@ importers:
         version: 4.3.6
     devDependencies:
       fast-check:
-        specifier: ^4.5.3
-        version: 4.5.3
+        specifier: ^4.6.0
+        version: 4.6.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -1947,8 +1947,8 @@ packages:
   exsolve@1.0.8:
     resolution: {integrity: sha512-LmDxfWXwcTArk8fUEnOfSZpHOJ6zOMUJKOtFLFqJLoKJetuQG874Uc7/Kki7zFLzYybmZhp1M7+98pfMqeX8yA==}
 
-  fast-check@4.5.3:
-    resolution: {integrity: sha512-IE9csY7lnhxBnA8g/WI5eg/hygA6MGWJMSNfFRrBlXUciADEhS1EDB0SIsMSvzubzIlOBbVITSsypCsW717poA==}
+  fast-check@4.6.0:
+    resolution: {integrity: sha512-h7H6Dm0Fy+H4ciQYFxFjXnXkzR2kr9Fb22c0UBpHnm59K2zpr2t13aPTHlltFiNT6zuxp6HMPAVVvgur4BLdpA==}
     engines: {node: '>=12.17.0'}
 
   fast-glob@3.3.3:
@@ -2769,8 +2769,8 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  pure-rand@7.0.1:
-    resolution: {integrity: sha512-oTUZM/NAZS8p7ANR3SHh30kXB+zK2r2BPcEn/awJIbOvq82WoMN4p62AWWp3Hhw50G0xMsw1mhIBLqHw64EcNQ==}
+  pure-rand@8.0.0:
+    resolution: {integrity: sha512-7rgWlxG2gAvFPIQfUreo1XYlNvrQ9VnQPFWdncPkdl3icucLK0InOxsaafbvxGTnI6Bk/Rxmslg0lQlRCuzOXw==}
 
   qs@6.14.2:
     resolution: {integrity: sha512-V/yCWTTF7VJ9hIh18Ugr2zhJMP01MY7c5kh4J870L7imm6/DIzBsNLTXzMwUA3yZ5b/KBqLx8Kp3uRvd7xSe3Q==}
@@ -5085,9 +5085,9 @@ snapshots:
 
   exsolve@1.0.8: {}
 
-  fast-check@4.5.3:
+  fast-check@4.6.0:
     dependencies:
-      pure-rand: 7.0.1
+      pure-rand: 8.0.0
 
   fast-glob@3.3.3:
     dependencies:
@@ -5977,7 +5977,7 @@ snapshots:
   punycode@2.3.1:
     optional: true
 
-  pure-rand@7.0.1: {}
+  pure-rand@8.0.0: {}
 
   qs@6.14.2:
     dependencies:
