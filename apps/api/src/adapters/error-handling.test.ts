@@ -12,13 +12,19 @@ import { MiddlewareChainImpl, RouterImpl } from '../transport/index.js'
 import { AppError, ErrorType } from '../utils/error-handler.js'
 import { HTTP2Adapter } from './http2-adapter.js'
 
+type HttpTestResponse = {
+  statusCode: number
+  body: any
+  headers: any
+}
+
 function createAdapter() {
   const router = new RouterImpl()
   const middleware = new MiddlewareChainImpl()
   const adapter = new HTTP2Adapter(router, middleware, {
     http2: false, // Use HTTP/1.1 for easier testing
   })
-  return { adapter, router, middleware }
+  return { adapter, router }
 }
 
 async function makeRequest(
@@ -26,7 +32,7 @@ async function makeRequest(
   method: string,
   path: string,
   body?: unknown,
-): Promise<{ statusCode: number; body: any; headers: any }> {
+): Promise<HttpTestResponse> {
   return new Promise((resolve, reject) => {
     const address = server.address()
     if (!address || typeof address === 'string') {
@@ -77,23 +83,35 @@ async function makeRequest(
   })
 }
 
+async function expectRouteErrorResponse(
+  thrownError: Error,
+  assertions: (response: HttpTestResponse) => void,
+) {
+  const { adapter, router } = createAdapter()
+
+  router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
+    throw thrownError
+  })
+
+  await adapter.listen(0)
+  const server = adapter.getServer() as HttpServer
+
+  try {
+    const response = await makeRequest(server, 'POST', '/test', {})
+    assertions(response)
+  } finally {
+    await adapter.close()
+  }
+}
+
 describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
   describe('Error Response Structure', () => {
-    it('should return 400 for validation errors with correct structure', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Validation failed', ErrorType.VALIDATION, 400)
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(400)
-        expect(response.body).toMatchObject({
+    it.each([
+      {
+        name: 'validation errors',
+        error: new AppError('Validation failed', ErrorType.VALIDATION, 400),
+        statusCode: 400,
+        body: {
           status: 'Fail',
           message: 'Validation failed',
           data: null,
@@ -102,27 +120,13 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
             type: 'AppError',
             timestamp: expect.any(String),
           },
-        })
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should return 401 for authentication errors with correct structure', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Authentication required', ErrorType.AUTHENTICATION, 401)
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(401)
-        expect(response.body).toMatchObject({
+        },
+      },
+      {
+        name: 'authentication errors',
+        error: new AppError('Authentication required', ErrorType.AUTHENTICATION, 401),
+        statusCode: 401,
+        body: {
           status: 'Fail',
           message: 'Authentication required',
           data: null,
@@ -131,27 +135,13 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
             type: 'AppError',
             timestamp: expect.any(String),
           },
-        })
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should return 413 for payload too large errors', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Request entity too large', ErrorType.PAYLOAD_TOO_LARGE, 413)
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(413)
-        expect(response.body).toMatchObject({
+        },
+      },
+      {
+        name: 'payload too large errors',
+        error: new AppError('Request entity too large', ErrorType.PAYLOAD_TOO_LARGE, 413),
+        statusCode: 413,
+        body: {
           status: 'Fail',
           message: 'Request entity too large',
           data: null,
@@ -160,27 +150,13 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
             type: 'AppError',
             timestamp: expect.any(String),
           },
-        })
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should return 429 for rate limit errors', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Rate limit exceeded', ErrorType.RATE_LIMIT, 429)
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(429)
-        expect(response.body).toMatchObject({
+        },
+      },
+      {
+        name: 'rate limit errors',
+        error: new AppError('Rate limit exceeded', ErrorType.RATE_LIMIT, 429),
+        statusCode: 429,
+        body: {
           status: 'Fail',
           message: 'Rate limit exceeded',
           data: null,
@@ -189,27 +165,13 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
             type: 'AppError',
             timestamp: expect.any(String),
           },
-        })
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should return 500 for internal errors', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Unexpected error')
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(500)
-        expect(response.body).toMatchObject({
+        },
+      },
+      {
+        name: 'internal errors',
+        error: new Error('Unexpected error'),
+        statusCode: 500,
+        body: {
           status: 'Error',
           message: 'Internal server error',
           data: null,
@@ -218,27 +180,13 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
             type: 'Error',
             timestamp: expect.any(String),
           },
-        })
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should return 502 for external API errors', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Upstream service failed', ErrorType.EXTERNAL_API, 502)
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(502)
-        expect(response.body).toMatchObject({
+        },
+      },
+      {
+        name: 'external API errors',
+        error: new AppError('Upstream service failed', ErrorType.EXTERNAL_API, 502),
+        statusCode: 502,
+        body: {
           status: 'Error',
           message: 'Upstream service request failed',
           data: null,
@@ -247,27 +195,13 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
             type: 'AppError',
             timestamp: expect.any(String),
           },
-        })
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should return 504 for timeout errors', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Request timeout', ErrorType.TIMEOUT, 504)
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(504)
-        expect(response.body).toMatchObject({
+        },
+      },
+      {
+        name: 'timeout errors',
+        error: new AppError('Request timeout', ErrorType.TIMEOUT, 504),
+        statusCode: 504,
+        body: {
           status: 'Error',
           message: 'Request timeout',
           data: null,
@@ -276,202 +210,60 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
             type: 'AppError',
             timestamp: expect.any(String),
           },
-        })
-      } finally {
-        await adapter.close()
-      }
+        },
+      },
+    ])('should return the expected structure for $name', async ({ error, statusCode, body }) => {
+      await expectRouteErrorResponse(error, response => {
+        expect(response.statusCode).toBe(statusCode)
+        expect(response.body).toMatchObject(body)
+      })
     })
   })
 
   describe('Error Message Mapping', () => {
-    it('should map "invalid json" message to 400 validation error', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Invalid JSON payload')
+    it.each([
+      ['Invalid JSON payload', 400, 'VALIDATION_ERROR'],
+      ['Validation error: field required', 400, 'VALIDATION_ERROR'],
+      ['Authentication failed', 401, 'AUTHENTICATION_ERROR'],
+      ['Error: No access rights', 401, 'AUTHENTICATION_ERROR'],
+      ['Rate limit exceeded', 429, 'RATE_LIMIT_ERROR'],
+      ['Upstream service error', 502, 'EXTERNAL_API_ERROR'],
+      ['Request timeout', 504, 'TIMEOUT_ERROR'],
+    ])('should map %j to %s / %s', async (message, statusCode, errorCode) => {
+      await expectRouteErrorResponse(new Error(message), response => {
+        expect(response.statusCode).toBe(statusCode)
+        expect(response.body.error.code).toBe(errorCode)
       })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error.code).toBe('VALIDATION_ERROR')
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should map "validation" message to 400 validation error', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Validation error: field required')
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error.code).toBe('VALIDATION_ERROR')
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should map "authentication" message to 401 auth error', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Authentication failed')
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(401)
-        expect(response.body.error.code).toBe('AUTHENTICATION_ERROR')
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should map "no access rights" message to 401 auth error', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Error: No access rights')
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(401)
-        expect(response.body.error.code).toBe('AUTHENTICATION_ERROR')
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should map "rate limit" message to 429 rate limit error', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Rate limit exceeded')
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(429)
-        expect(response.body.error.code).toBe('RATE_LIMIT_ERROR')
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should map "upstream" message to 502 external API error', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Upstream service error')
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(502)
-        expect(response.body.error.code).toBe('EXTERNAL_API_ERROR')
-      } finally {
-        await adapter.close()
-      }
-    })
-
-    it('should map "timeout" message to 504 timeout error', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new Error('Request timeout')
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(504)
-        expect(response.body.error.code).toBe('TIMEOUT_ERROR')
-      } finally {
-        await adapter.close()
-      }
     })
   })
 
   describe('Error Details Handling', () => {
     it('should include details for 4xx errors', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Validation failed', ErrorType.VALIDATION, 400, true, {
+      await expectRouteErrorResponse(
+        new AppError('Validation failed', ErrorType.VALIDATION, 400, true, {
           field: 'email',
           reason: 'invalid format',
-        })
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(400)
-        expect(response.body.error.details).toEqual({
-          field: 'email',
-          reason: 'invalid format',
-        })
-      } finally {
-        await adapter.close()
-      }
+        }),
+        response => {
+          expect(response.statusCode).toBe(400)
+          expect(response.body.error.details).toEqual({
+            field: 'email',
+            reason: 'invalid format',
+          })
+        },
+      )
     })
 
-    it('should NOT include details for 5xx errors', async () => {
-      const { adapter, router } = createAdapter()
-
-      router.post('/test', async (_req: TransportRequest, _res: TransportResponse) => {
-        throw new AppError('Internal error', ErrorType.INTERNAL, 500, true, {
+    it('should not include details for 5xx errors', async () => {
+      await expectRouteErrorResponse(
+        new AppError('Internal error', ErrorType.INTERNAL, 500, true, {
           sensitive: 'data',
-        })
-      })
-
-      await adapter.listen(0)
-      const server = adapter.getServer() as HttpServer
-
-      try {
-        const response = await makeRequest(server, 'POST', '/test', {})
-
-        expect(response.statusCode).toBe(500)
-        expect(response.body.error.details).toBeUndefined()
-      } finally {
-        await adapter.close()
-      }
+        }),
+        response => {
+          expect(response.statusCode).toBe(500)
+          expect(response.body.error.details).toBeUndefined()
+        },
+      )
     })
   })
 

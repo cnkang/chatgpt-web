@@ -12,8 +12,12 @@ export function parseTrustedProxyConfig(value: string | undefined): TrustedProxy
   }
 
   const normalizedValue = value.toLowerCase()
-  if (normalizedValue === 'true' || normalizedValue === 'loopback') {
+  if (normalizedValue === 'true') {
     return true
+  }
+
+  if (normalizedValue === 'loopback') {
+    return Array.from(LOOPBACK_ADDRESSES)
   }
 
   if (/^\d+$/.test(value.trim())) {
@@ -48,7 +52,7 @@ export function isTrustedProxyAddress(
   }
 
   if (trustedProxy === true) {
-    return LOOPBACK_ADDRESSES.has(normalizedRemoteAddress)
+    return true
   }
 
   if (typeof trustedProxy === 'number') {
@@ -80,7 +84,7 @@ export function readForwardedClientIp(
 
     if (forwardedIps.length > 0) {
       if (typeof trustedProxy === 'number') {
-        const clientIndex = Math.max(0, forwardedIps.length - trustedProxy)
+        const clientIndex = Math.max(0, forwardedIps.length - trustedProxy - 1)
         return forwardedIps[clientIndex]
       }
 

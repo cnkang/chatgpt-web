@@ -43,6 +43,10 @@ export interface SessionStore {
   destroy(id: string): Promise<void>
 }
 
+interface AvailabilityAwareSessionStore extends SessionStore {
+  isAvailable?(): Promise<boolean>
+}
+
 /**
  * In-memory session store
  *
@@ -51,6 +55,10 @@ export interface SessionStore {
  */
 export class MemorySessionStore implements SessionStore {
   private readonly sessions = new Map<string, SessionData>()
+
+  async isAvailable(): Promise<boolean> {
+    return true
+  }
 
   async get(id: string): Promise<SessionData | null> {
     const session = this.sessions.get(id)
@@ -82,7 +90,6 @@ export class MemorySessionStore implements SessionStore {
  */
 export class RedisSessionStore implements SessionStore {
   private readonly client: ReturnType<typeof createClient>
-  private readonly fallbackStore = new MemorySessionStore()
   private readonly connectPromise: Promise<void>
   private connectionFailed = false
 
@@ -115,22 +122,22 @@ export class RedisSessionStore implements SessionStore {
   }
 
   async get(id: string): Promise<SessionData | null> {
-    if (!(await this.isClientReady())) {
-      return await this.fallbackStore.get(id)
+    if (!(await this.isAvailable())) {
+      return null
     }
 
     try {
       const data = await this.client.get(`session:${id}`)
       return data ? JSON.parse(data) : null
     } catch (error) {
+      this.connectionFailed = true
       console.error('Redis get error:', error)
       return null
     }
   }
 
   async set(id: string, session: SessionData): Promise<void> {
-    if (!(await this.isClientReady())) {
-      await this.fallbackStore.set(id, session)
+    if (!(await this.isAvailable())) {
       return
     }
 
@@ -143,19 +150,20 @@ export class RedisSessionStore implements SessionStore {
         await this.client.setEx(`session:${id}`, ttl, JSON.stringify(session))
       }
     } catch (error) {
+      this.connectionFailed = true
       console.error('Redis set error:', error)
     }
   }
 
   async destroy(id: string): Promise<void> {
-    if (!(await this.isClientReady())) {
-      await this.fallbackStore.destroy(id)
+    if (!(await this.isAvailable())) {
       return
     }
 
     try {
       await this.client.del(`session:${id}`)
     } catch (error) {
+      this.connectionFailed = true
       console.error('Redis destroy error:', error)
     }
   }
@@ -170,7 +178,7 @@ export class RedisSessionStore implements SessionStore {
     }
   }
 
-  private async isClientReady(): Promise<boolean> {
+  async isAvailable(): Promise<boolean> {
     await this.connectPromise
     return this.client.isReady && !this.connectionFailed
   }
@@ -243,6 +251,8 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
 
   return async (req: TransportRequest, res: TransportResponse, next) => {
     try {
+      const canPersistSession = await isSessionStoreAvailable(store)
+
       // Parse session cookie from Cookie header
       const cookies = parseCookies(req.getHeader('cookie') || '')
       const sessionId = verifySignedSessionId(cookies[options.name], options.secret)
@@ -269,13 +279,14 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
         if (req.session) {
           req.session.expires = Date.now() + options.maxAge
 
-          // Save session to store
-          store.set(req.session.id, req.session).catch(error => {
-            console.error('Failed to save session:', error)
-          })
+          if (canPersistSession) {
+            store.set(req.session.id, req.session).catch(error => {
+              console.error('Failed to save session:', error)
+            })
+          }
 
-          // Avoid mutating headers after streaming responses have already flushed them.
-          if (!res.headersSent && !res.finished) {
+          // Avoid issuing a durable cookie when the backing store is unavailable.
+          if (canPersistSession && !res.headersSent && !res.finished) {
             const cookieValue = serializeCookie(options.name, req.session.id, {
               secret: options.secret,
               maxAge: options.maxAge,
@@ -285,6 +296,8 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
               path: '/',
             })
             res.setHeader('Set-Cookie', cookieValue)
+          } else if (!canPersistSession) {
+            console.warn('Session store unavailable, skipping session cookie issuance')
           }
         }
 
@@ -297,6 +310,19 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
       console.error('Session middleware error:', error)
       next(error instanceof Error ? error : new Error('Session middleware error'))
     }
+  }
+}
+
+async function isSessionStoreAvailable(store: SessionStore): Promise<boolean> {
+  const availabilityChecker = (store as AvailabilityAwareSessionStore).isAvailable
+  if (!availabilityChecker) {
+    return true
+  }
+
+  try {
+    return Boolean(await availabilityChecker.call(store))
+  } catch {
+    return false
   }
 }
 

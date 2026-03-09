@@ -4,399 +4,268 @@
  * Tests CORS configuration with environment-aware defaults and security checks.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { TransportRequest, TransportResponse } from '../transport/types.js'
-import { buildHttpOrigin } from '../test/test-helpers.js'
+import { describe, expect, it, vi } from 'vitest'
+import { buildHttpOrigin, createMockRequest, createMockResponse } from '../test/test-helpers.js'
 import { createCorsMiddleware } from './cors.js'
 
-describe('CORS Middleware', () => {
-  const allowedLocalhostOrigin = buildHttpOrigin('localhost:1002')
-  const allowedLoopbackOrigin = buildHttpOrigin('127.0.0.1:1002')
-  const blockedOrigin = buildHttpOrigin('evil.com')
+type CorsContextOptions = {
+  environment?: 'development' | 'production'
+  allowedOrigins?: string
+  method?: string
+  origin?: string
+}
 
-  let mockReq: TransportRequest
-  let mockRes: TransportResponse
-  let nextFn: (error?: Error) => void
-  let headers: Map<string, string | string[]>
+const allowedLocalhostOrigin = buildHttpOrigin('localhost:1002')
+const allowedLoopbackOrigin = buildHttpOrigin('127.0.0.1:1002')
+const blockedOrigin = buildHttpOrigin('evil.com')
 
-  beforeEach(() => {
-    headers = new Map()
+async function runCors(options: CorsContextOptions = {}) {
+  const originalEnv = process.env.NODE_ENV
+  const originalAllowedOrigins = process.env.ALLOWED_ORIGINS
 
-    mockReq = {
-      method: 'GET',
+  if (options.environment !== undefined) {
+    process.env.NODE_ENV = options.environment
+  }
+  if (options.allowedOrigins !== undefined) {
+    process.env.ALLOWED_ORIGINS = options.allowedOrigins
+  } else {
+    delete process.env.ALLOWED_ORIGINS
+  }
+
+  try {
+    const req = createMockRequest({
+      method: options.method ?? 'GET',
       path: '/api/health',
-      url: new URL('http://localhost:3002/api/health'),
-      headers: new Headers(),
-      body: null,
-      ip: '127.0.0.1',
-      getHeader: (name: string) => mockReq.headers.get(name) || undefined,
-      getQuery: vi.fn(),
-    } as unknown as TransportRequest
+      headers: options.origin ? { origin: options.origin } : undefined,
+    })
+    const res = createMockResponse()
+    const next = vi.fn()
 
-    mockRes = {
-      status: vi.fn().mockReturnThis(),
-      setHeader: vi.fn((name: string, value: string | string[]) => {
-        headers.set(name.toLowerCase(), value)
-        return mockRes
-      }),
-      getHeader: vi.fn((name: string) => headers.get(name.toLowerCase())),
-      json: vi.fn(),
-      send: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
+    await createCorsMiddleware()(req, res, next)
 
-    nextFn = vi.fn()
-  })
-
-  describe('Development Environment', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'development')
+    return { req, res, next }
+  } finally {
+    process.env.NODE_ENV = originalEnv
+    if (originalAllowedOrigins === undefined) {
       delete process.env.ALLOWED_ORIGINS
-    })
+    } else {
+      process.env.ALLOWED_ORIGINS = originalAllowedOrigins
+    }
+  }
+}
 
-    it('should allow localhost:1002 by default in development', async () => {
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
+function getCapturedHeader(
+  res: ReturnType<typeof createMockResponse>,
+  name: string,
+): string | string[] | undefined {
+  return res._capture.headers.get(name.toLowerCase())
+}
 
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
+function expectAllowedOrigin(res: ReturnType<typeof createMockResponse>, origin: string) {
+  expect(getCapturedHeader(res, 'Access-Control-Allow-Origin')).toBe(origin)
+  expect(getCapturedHeader(res, 'Access-Control-Allow-Credentials')).toBe('true')
+}
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        allowedLocalhostOrigin,
-      )
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Vary', 'Origin')
-      expect(nextFn).toHaveBeenCalled()
-    })
+function expectBlockedOrigin(res: ReturnType<typeof createMockResponse>) {
+  expect(getCapturedHeader(res, 'Access-Control-Allow-Origin')).toBeUndefined()
+  expect(getCapturedHeader(res, 'Access-Control-Allow-Credentials')).toBeUndefined()
+}
 
-    it('should allow 127.0.0.1:1002 by default in development', async () => {
-      mockReq.headers.set('origin', allowedLoopbackOrigin)
+describe('CORS Middleware', () => {
+  it.each([
+    {
+      name: 'allow localhost:1002 by default in development',
+      options: {
+        environment: 'development',
+        origin: allowedLocalhostOrigin,
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectAllowedOrigin(res, allowedLocalhostOrigin)
+        expect(getCapturedHeader(res, 'Vary')).toBe('Origin')
+      },
+    },
+    {
+      name: 'allow 127.0.0.1:1002 by default in development',
+      options: {
+        environment: 'development',
+        origin: allowedLoopbackOrigin,
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectAllowedOrigin(res, allowedLoopbackOrigin)
+      },
+    },
+    {
+      name: 'block disallowed origins in development',
+      options: {
+        environment: 'development',
+        origin: blockedOrigin,
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectBlockedOrigin(res)
+      },
+    },
+    {
+      name: 'block localhost by default in production',
+      options: {
+        environment: 'production',
+        origin: allowedLocalhostOrigin,
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectBlockedOrigin(res)
+      },
+    },
+    {
+      name: 'block wildcard origins in production',
+      options: {
+        environment: 'production',
+        allowedOrigins: '*',
+        origin: buildHttpOrigin('example.com'),
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectBlockedOrigin(res)
+      },
+    },
+    {
+      name: 'parse comma-separated ALLOWED_ORIGINS',
+      options: {
+        environment: 'production',
+        allowedOrigins: 'https://app.example.com,https://admin.example.com',
+        origin: 'https://app.example.com',
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectAllowedOrigin(res, 'https://app.example.com')
+      },
+    },
+    {
+      name: 'trim ALLOWED_ORIGINS entries',
+      options: {
+        environment: 'production',
+        allowedOrigins: ' https://app.example.com , https://admin.example.com ',
+        origin: 'https://admin.example.com',
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectAllowedOrigin(res, 'https://admin.example.com')
+      },
+    },
+    {
+      name: 'filter wildcard entries from ALLOWED_ORIGINS',
+      options: {
+        environment: 'production',
+        allowedOrigins: 'https://app.example.com,*,https://admin.example.com',
+        origin: blockedOrigin,
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectBlockedOrigin(res)
+      },
+    },
+    {
+      name: 'allow configured origins',
+      options: {
+        environment: 'production',
+        allowedOrigins: 'https://app.example.com',
+        origin: 'https://app.example.com',
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectAllowedOrigin(res, 'https://app.example.com')
+        expect(getCapturedHeader(res, 'Vary')).toBe('Origin')
+      },
+    },
+    {
+      name: 'reject origins not in ALLOWED_ORIGINS',
+      options: {
+        environment: 'production',
+        allowedOrigins: 'https://app.example.com',
+        origin: blockedOrigin,
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectBlockedOrigin(res)
+      },
+    },
+    {
+      name: 'reject null origins',
+      options: {
+        environment: 'development',
+        origin: 'null',
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectBlockedOrigin(res)
+      },
+    },
+    {
+      name: 'ignore missing Origin headers',
+      options: {
+        environment: 'development',
+      } satisfies CorsContextOptions,
+      assert: ({ res }: Awaited<ReturnType<typeof runCors>>) => {
+        expectBlockedOrigin(res)
+      },
+    },
+  ])('should $name', async ({ options, assert }) => {
+    const context = await runCors(options)
 
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        allowedLoopbackOrigin,
-      )
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
-      expect(nextFn).toHaveBeenCalled()
-    })
-
-    it('should not set CORS headers for disallowed origins in development', async () => {
-      mockReq.headers.set('origin', blockedOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        expect.anything(),
-      )
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Credentials',
-        expect.anything(),
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
+    assert(context)
+    expect(context.next).toHaveBeenCalled()
   })
 
-  describe('Production Environment', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'production')
-      delete process.env.ALLOWED_ORIGINS
-    })
+  it.each([
+    {
+      name: 'return 200 for allowed preflight origins',
+      options: {
+        environment: 'development',
+        method: 'OPTIONS',
+        origin: allowedLocalhostOrigin,
+      } satisfies CorsContextOptions,
+      statusCode: 200,
+    },
+    {
+      name: 'return 403 for disallowed preflight origins',
+      options: {
+        environment: 'development',
+        method: 'OPTIONS',
+        origin: blockedOrigin,
+      } satisfies CorsContextOptions,
+      statusCode: 403,
+    },
+    {
+      name: 'return 403 for null preflight origins',
+      options: {
+        environment: 'development',
+        method: 'OPTIONS',
+        origin: 'null',
+      } satisfies CorsContextOptions,
+      statusCode: 403,
+    },
+  ])('should $name', async ({ options, statusCode }) => {
+    const { res, next } = await runCors(options)
 
-    it('should not allow any origins by default in production', async () => {
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        expect.anything(),
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
-
-    it('should block wildcard (*) origins in production', async () => {
-      vi.stubEnv('ALLOWED_ORIGINS', '*')
-      mockReq.headers.set('origin', buildHttpOrigin('example.com'))
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        expect.anything(),
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
+    expect(res._capture.statusCode).toBe(statusCode)
+    expect(res.end).toHaveBeenCalled()
+    expect(next).not.toHaveBeenCalled()
   })
 
-  describe('ALLOWED_ORIGINS Configuration', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'production')
+  it.each(['GET', 'POST'])('should call next() for %s requests', async method => {
+    const { res, next } = await runCors({
+      environment: 'development',
+      method,
+      origin: allowedLocalhostOrigin,
     })
 
-    it('should parse comma-separated ALLOWED_ORIGINS', async () => {
-      vi.stubEnv('ALLOWED_ORIGINS', 'https://app.example.com,https://admin.example.com')
-      mockReq.headers.set('origin', 'https://app.example.com')
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        'https://app.example.com',
-      )
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
-      expect(nextFn).toHaveBeenCalled()
-    })
-
-    it('should trim whitespace from ALLOWED_ORIGINS', async () => {
-      vi.stubEnv('ALLOWED_ORIGINS', ' https://app.example.com , https://admin.example.com ')
-      mockReq.headers.set('origin', 'https://admin.example.com')
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        'https://admin.example.com',
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
-
-    it('should filter out wildcard (*) from ALLOWED_ORIGINS', async () => {
-      vi.stubEnv('ALLOWED_ORIGINS', 'https://app.example.com,*,https://admin.example.com')
-      mockReq.headers.set('origin', 'https://evil.com')
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        expect.anything(),
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
-
-    it('should allow configured origins', async () => {
-      vi.stubEnv('ALLOWED_ORIGINS', 'https://app.example.com')
-      mockReq.headers.set('origin', 'https://app.example.com')
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        'https://app.example.com',
-      )
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Vary', 'Origin')
-      expect(nextFn).toHaveBeenCalled()
-    })
-
-    it('should reject origins not in ALLOWED_ORIGINS', async () => {
-      vi.stubEnv('ALLOWED_ORIGINS', 'https://app.example.com')
-      mockReq.headers.set('origin', 'https://evil.com')
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        expect.anything(),
-      )
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Credentials',
-        expect.anything(),
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
+    expect(next).toHaveBeenCalled()
+    expect(res.end).not.toHaveBeenCalled()
   })
 
-  describe('Null Origin Handling', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'development')
-      delete process.env.ALLOWED_ORIGINS
+  it('should always set the shared CORS response headers', async () => {
+    const { res } = await runCors({
+      environment: 'development',
+      origin: allowedLocalhostOrigin,
     })
 
-    it('should not set CORS headers for null origin', async () => {
-      mockReq.headers.set('origin', 'null')
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        expect.anything(),
-      )
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Credentials',
-        expect.anything(),
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
-  })
-
-  describe('OPTIONS Preflight Requests', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'development')
-      delete process.env.ALLOWED_ORIGINS
-      mockReq.method = 'OPTIONS'
-    })
-
-    it('should return 200 for allowed origins', async () => {
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.end).toHaveBeenCalled()
-      expect(nextFn).not.toHaveBeenCalled()
-    })
-
-    it('should return 403 for disallowed origins', async () => {
-      mockReq.headers.set('origin', blockedOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.status).toHaveBeenCalledWith(403)
-      expect(mockRes.end).toHaveBeenCalled()
-      expect(nextFn).not.toHaveBeenCalled()
-    })
-
-    it('should return 403 for null origin', async () => {
-      mockReq.headers.set('origin', 'null')
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.status).toHaveBeenCalledWith(403)
-      expect(mockRes.end).toHaveBeenCalled()
-      expect(nextFn).not.toHaveBeenCalled()
-    })
-
-    it('should set Access-Control-Allow-Headers', async () => {
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Headers',
-        'authorization, Content-Type, X-Requested-With',
-      )
-    })
-
-    it('should set Access-Control-Allow-Methods', async () => {
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Methods',
-        'GET, POST, PUT, DELETE, OPTIONS',
-      )
-    })
-
-    it('should set Access-Control-Max-Age', async () => {
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Max-Age', '86400')
-    })
-  })
-
-  describe('Non-OPTIONS Requests', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'development')
-      delete process.env.ALLOWED_ORIGINS
-    })
-
-    it('should call next() for GET requests', async () => {
-      mockReq.method = 'GET'
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(nextFn).toHaveBeenCalled()
-      expect(mockRes.end).not.toHaveBeenCalled()
-    })
-
-    it('should call next() for POST requests', async () => {
-      mockReq.method = 'POST'
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(nextFn).toHaveBeenCalled()
-      expect(mockRes.end).not.toHaveBeenCalled()
-    })
-
-    it('should set CORS headers for allowed origins on non-OPTIONS requests', async () => {
-      mockReq.method = 'POST'
-      mockReq.headers.set('origin', allowedLocalhostOrigin)
-
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        allowedLocalhostOrigin,
-      )
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
-      expect(mockRes.setHeader).toHaveBeenCalledWith('Vary', 'Origin')
-      expect(nextFn).toHaveBeenCalled()
-    })
-  })
-
-  describe('Missing Origin Header', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'development')
-      delete process.env.ALLOWED_ORIGINS
-    })
-
-    it('should not set CORS headers when Origin header is missing', async () => {
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Origin',
-        expect.anything(),
-      )
-      expect(mockRes.setHeader).not.toHaveBeenCalledWith(
-        'Access-Control-Allow-Credentials',
-        expect.anything(),
-      )
-      expect(nextFn).toHaveBeenCalled()
-    })
-
-    it('should still set Access-Control-Allow-Headers and Methods', async () => {
-      const middleware = createCorsMiddleware()
-      await middleware(mockReq, mockRes, nextFn)
-
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Headers',
-        'authorization, Content-Type, X-Requested-With',
-      )
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Methods',
-        'GET, POST, PUT, DELETE, OPTIONS',
-      )
-    })
+    expect(getCapturedHeader(res, 'Access-Control-Allow-Headers')).toBe(
+      'authorization, Content-Type, X-Requested-With',
+    )
+    expect(getCapturedHeader(res, 'Access-Control-Allow-Methods')).toBe(
+      'GET, POST, PUT, DELETE, OPTIONS',
+    )
+    expect(getCapturedHeader(res, 'Access-Control-Max-Age')).toBe('86400')
   })
 })

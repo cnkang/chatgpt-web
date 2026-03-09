@@ -12,6 +12,10 @@ import {
   type SessionStore,
 } from './session.js'
 
+type TestSessionStore = SessionStore & {
+  isAvailable?: () => Promise<boolean>
+}
+
 describe('MemorySessionStore', () => {
   let store: MemorySessionStore
 
@@ -328,5 +332,39 @@ describe('createSessionMiddleware', () => {
 
     expect(mockReq.session?.id).not.toBe(originalSessionId)
     expect(nextFn).toHaveBeenCalled()
+  })
+
+  it('should skip cookie issuance when the backing store is unavailable', async () => {
+    const unavailableStore: TestSessionStore = {
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      destroy: vi.fn().mockResolvedValue(undefined),
+      isAvailable: vi.fn().mockResolvedValue(false),
+    }
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const middleware = createSessionMiddleware({
+      secret: 'test-secret',
+      name: 'sessionId',
+      maxAge: 1000,
+      secure: false,
+      httpOnly: true,
+      sameSite: 'strict',
+      store: unavailableStore,
+    })
+
+    await middleware(mockReq, mockRes, nextFn)
+    mockRes.end()
+
+    expect(unavailableStore.set).not.toHaveBeenCalled()
+    expect(mockRes.setHeader).not.toHaveBeenCalledWith(
+      'Set-Cookie',
+      expect.stringContaining('sessionId='),
+    )
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Session store unavailable, skipping session cookie issuance',
+    )
+
+    warnSpy.mockRestore()
   })
 })

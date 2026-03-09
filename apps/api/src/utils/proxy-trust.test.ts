@@ -44,16 +44,37 @@ describe('proxy trust utilities', () => {
     expect(parseTrustedProxyConfig('2')).toBe(2)
   })
 
+  it('distinguishes TRUST_PROXY=true from TRUST_PROXY=loopback', () => {
+    expect(parseTrustedProxyConfig('true')).toBe(true)
+    expect(parseTrustedProxyConfig('loopback')).toEqual(['127.0.0.1', '::1'])
+  })
+
   it('uses numeric hop counts to extract the first untrusted forwarded IP', () => {
     const nativeRequest = createNativeRequest(
       {
-        'x-forwarded-for': '198.51.100.8, 203.0.113.10',
+        'x-forwarded-for': '198.51.100.8, 203.0.113.10, 192.0.2.44',
       },
       'trusted-proxy-hop',
     )
 
     expect(readForwardedClientIp(nativeRequest as never, 1)).toBe('203.0.113.10')
     expect(readForwardedClientIp(nativeRequest as never, 2)).toBe('198.51.100.8')
+  })
+
+  it('trusts forwarded HTTPS headers for non-loopback proxies when TRUST_PROXY=true', () => {
+    const req = createTransportRequest(
+      {
+        'x-forwarded-proto': 'https',
+      },
+      createNativeRequest(
+        {
+          'x-forwarded-proto': 'https',
+        },
+        '10.0.0.10',
+      ),
+    )
+
+    expect(isTrustedForwardedHttps(req, true)).toBe(true)
   })
 
   it('treats direct TLS requests as HTTPS even without proxy headers', () => {

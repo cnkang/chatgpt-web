@@ -3,69 +3,25 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import type { TransportRequest, TransportResponse } from '../transport/types.js'
+import { createMockRequest, createMockResponse } from '../test/test-helpers.js'
+import type { TransportRequest } from '../transport/types.js'
 import { createAuthMiddleware } from './auth.js'
 
-function createMockRequest(authHeader?: string): TransportRequest {
-  return {
+function createAuthRequest(authHeader?: string) {
+  return createMockRequest({
     method: 'POST',
     path: '/api/config',
-    url: new URL('http://localhost:3002/api/config'),
-    headers: new Headers(),
+    headers: authHeader ? { authorization: authHeader } : undefined,
     body: {},
-    ip: '127.0.0.1',
-    getHeader: (name: string) => {
-      if (name.toLowerCase() === 'authorization') {
-        return authHeader
-      }
-      return undefined
-    },
-    getQuery: () => undefined,
-  }
-}
-
-function createMockResponse() {
-  let statusCode = 200
-  let responseData: unknown = null
-  let headersSentFlag = false
-
-  const res: TransportResponse = {
-    status: (code: number) => {
-      statusCode = code
-      return res
-    },
-    setHeader: () => res,
-    getHeader: () => undefined,
-    json: (data: unknown) => {
-      responseData = data
-      headersSentFlag = true
-    },
-    send: () => {
-      headersSentFlag = true
-    },
-    write: () => true,
-    end: () => {},
-    get headersSent() {
-      return headersSentFlag
-    },
-    get finished() {
-      return headersSentFlag
-    },
-  }
-
-  return {
-    res,
-    getResponseData: () => responseData,
-    getStatusCode: () => statusCode,
-  }
+  })
 }
 
 describe('Authentication Middleware', () => {
   describe('when AUTH_SECRET_KEY is not configured', () => {
     it('should allow request to proceed without authentication', async () => {
       const middleware = createAuthMiddleware('')
-      const req = createMockRequest()
-      const { res } = createMockResponse()
+      const req = createAuthRequest()
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
@@ -80,8 +36,8 @@ describe('Authentication Middleware', () => {
 
     it('should allow request with valid Bearer token', async () => {
       const middleware = createAuthMiddleware(SECRET_KEY)
-      const req = createMockRequest(`Bearer ${SECRET_KEY}`)
-      const { res } = createMockResponse()
+      const req = createAuthRequest(`Bearer ${SECRET_KEY}`)
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
@@ -92,8 +48,8 @@ describe('Authentication Middleware', () => {
 
     it('should allow request with valid token (with extra whitespace)', async () => {
       const middleware = createAuthMiddleware(`  ${SECRET_KEY}  `)
-      const req = createMockRequest(`Bearer   ${SECRET_KEY}  `)
-      const { res } = createMockResponse()
+      const req = createAuthRequest(`Bearer   ${SECRET_KEY}  `)
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
@@ -104,16 +60,16 @@ describe('Authentication Middleware', () => {
 
     it('should reject request with missing Authorization header', async () => {
       const middleware = createAuthMiddleware(SECRET_KEY)
-      const req = createMockRequest()
-      const { res, getStatusCode, getResponseData } = createMockResponse()
+      const req = createAuthRequest()
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
 
       expect(next).not.toHaveBeenCalled()
-      expect(getStatusCode()).toBe(401)
+      expect(res._capture.statusCode).toBe(401)
 
-      const response = getResponseData() as {
+      const response = res._capture.body as {
         status: string
         message: string
         data: null
@@ -130,16 +86,16 @@ describe('Authentication Middleware', () => {
 
     it('should reject request with invalid Bearer token', async () => {
       const middleware = createAuthMiddleware(SECRET_KEY)
-      const req = createMockRequest('Bearer wrong-token')
-      const { res, getStatusCode, getResponseData } = createMockResponse()
+      const req = createAuthRequest('Bearer wrong-token')
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
 
       expect(next).not.toHaveBeenCalled()
-      expect(getStatusCode()).toBe(401)
+      expect(res._capture.statusCode).toBe(401)
 
-      const response = getResponseData() as {
+      const response = res._capture.body as {
         status: string
         message: string
         data: null
@@ -154,16 +110,16 @@ describe('Authentication Middleware', () => {
 
     it('should reject request with empty Bearer token', async () => {
       const middleware = createAuthMiddleware(SECRET_KEY)
-      const req = createMockRequest('Bearer ')
-      const { res, getStatusCode, getResponseData } = createMockResponse()
+      const req = createAuthRequest('Bearer ')
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
 
       expect(next).not.toHaveBeenCalled()
-      expect(getStatusCode()).toBe(401)
+      expect(res._capture.statusCode).toBe(401)
 
-      const response = getResponseData() as {
+      const response = res._capture.body as {
         status: string
         message: string
         data: null
@@ -175,38 +131,38 @@ describe('Authentication Middleware', () => {
 
     it('should reject request with token that differs only in case', async () => {
       const middleware = createAuthMiddleware(SECRET_KEY)
-      const req = createMockRequest(`Bearer ${SECRET_KEY.toUpperCase()}`)
-      const { res, getStatusCode } = createMockResponse()
+      const req = createAuthRequest(`Bearer ${SECRET_KEY.toUpperCase()}`)
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
 
       expect(next).not.toHaveBeenCalled()
-      expect(getStatusCode()).toBe(401)
+      expect(res._capture.statusCode).toBe(401)
     })
 
     it('should reject request with token that has different length', async () => {
       const middleware = createAuthMiddleware(SECRET_KEY)
-      const req = createMockRequest(`Bearer ${SECRET_KEY}extra`)
-      const { res, getStatusCode } = createMockResponse()
+      const req = createAuthRequest(`Bearer ${SECRET_KEY}extra`)
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
 
       expect(next).not.toHaveBeenCalled()
-      expect(getStatusCode()).toBe(401)
+      expect(res._capture.statusCode).toBe(401)
     })
 
     it('should reject request without Bearer prefix', async () => {
       const middleware = createAuthMiddleware(SECRET_KEY)
-      const req = createMockRequest(SECRET_KEY)
-      const { res, getStatusCode } = createMockResponse()
+      const req = createAuthRequest(SECRET_KEY)
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
 
       expect(next).not.toHaveBeenCalled()
-      expect(getStatusCode()).toBe(401)
+      expect(res._capture.statusCode).toBe(401)
     })
 
     it('should use constant-time comparison (timing attack prevention)', async () => {
@@ -218,12 +174,12 @@ describe('Authentication Middleware', () => {
       const shortToken = 'short'
       const longToken = 'a'.repeat(100)
 
-      const req1 = createMockRequest(`Bearer ${shortToken}`)
-      const { res: res1 } = createMockResponse()
+      const req1 = createAuthRequest(`Bearer ${shortToken}`)
+      const res1 = createMockResponse()
       const next1 = vi.fn()
 
-      const req2 = createMockRequest(`Bearer ${longToken}`)
-      const { res: res2 } = createMockResponse()
+      const req2 = createAuthRequest(`Bearer ${longToken}`)
+      const res2 = createMockResponse()
       const next2 = vi.fn()
 
       await middleware(req1, res1, next1)
@@ -253,15 +209,15 @@ describe('Authentication Middleware', () => {
         getQuery: () => undefined,
       } as TransportRequest
 
-      const { res, getStatusCode, getResponseData } = createMockResponse()
+      const res = createMockResponse()
       const next = vi.fn()
 
       await middleware(req, res, next)
 
       expect(next).not.toHaveBeenCalled()
-      expect(getStatusCode()).toBe(401)
+      expect(res._capture.statusCode).toBe(401)
 
-      const response = getResponseData() as {
+      const response = res._capture.body as {
         status: string
         message: string
         error: { code: string; type: string }

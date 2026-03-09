@@ -6,305 +6,155 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildHttpOrigin, createMockRequest, createMockResponse } from '../test/test-helpers.js'
 import { createSecurityHeadersMiddleware } from './security-headers.js'
 
-function createSecurityTestRequest() {
+type SecurityContextOptions = {
+  environment?: 'development' | 'production'
+  forwardedProto?: string
+  trustProxy?: boolean
+  directTls?: boolean
+}
+
+const localhostConnectSource = `${buildHttpOrigin('localhost')}:*`
+const localhostWebSocketSource = 'ws://localhost:*'
+
+function createSecurityContext(options: SecurityContextOptions = {}) {
   const req = createMockRequest({ path: '/api/health' })
-  req._nativeRequest = { socket: { remoteAddress: '127.0.0.1' } }
-  return req
+  req._nativeRequest = {
+    socket: {
+      remoteAddress: options.directTls ? 'direct-tls-socket' : '127.0.0.1',
+      encrypted: options.directTls || undefined,
+    },
+  }
+
+  if (options.forwardedProto) {
+    req.headers.set('x-forwarded-proto', options.forwardedProto)
+  }
+
+  const res = createMockResponse()
+  const next = vi.fn()
+  const middleware = createSecurityHeadersMiddleware(options.trustProxy ?? false)
+
+  return { middleware, req, res, next }
+}
+
+async function runSecurityHeaders(options: SecurityContextOptions = {}) {
+  const originalEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = options.environment ?? originalEnv
+
+  try {
+    const context = createSecurityContext(options)
+    await context.middleware(context.req, context.res, context.next)
+    return context
+  } finally {
+    process.env.NODE_ENV = originalEnv
+  }
+}
+
+function getCapturedHeader(
+  res: ReturnType<typeof createMockResponse>,
+  name: string,
+): string | string[] | undefined {
+  return res._capture.headers.get(name.toLowerCase())
 }
 
 describe('createSecurityHeadersMiddleware', () => {
-  const localhostConnectSource = `${buildHttpOrigin('localhost')}:*`
-  const localhostWebSocketSource = 'ws://localhost:*'
-
-  it('should set Content-Security-Policy header', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    expect(res.setHeader).toHaveBeenCalledWith(
-      'Content-Security-Policy',
-      expect.stringContaining("default-src 'self'"),
-    )
-    expect(next).toHaveBeenCalled()
-  })
-
-  it('should include unsafe-eval for Mermaid in script-src', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const cspCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Content-Security-Policy',
-    )
-    expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).toContain("'unsafe-eval'")
-  })
-
-  it('should include unsafe-inline for Naive UI in style-src', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const cspCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Content-Security-Policy',
-    )
-    expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).toContain("style-src 'self' 'unsafe-inline'")
-  })
-
-  it('should set X-Content-Type-Options: nosniff', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    expect(res.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff')
-    expect(next).toHaveBeenCalled()
-  })
-
-  it('should set X-Frame-Options: DENY', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    expect(res.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY')
-    expect(next).toHaveBeenCalled()
-  })
-
-  it('should set Referrer-Policy: strict-origin-when-cross-origin', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    expect(res.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'strict-origin-when-cross-origin')
-    expect(next).toHaveBeenCalled()
-  })
-
-  it('should set X-Permitted-Cross-Domain-Policies: none', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    expect(res.setHeader).toHaveBeenCalledWith('X-Permitted-Cross-Domain-Policies', 'none')
-    expect(next).toHaveBeenCalled()
-  })
-
-  it('should set Strict-Transport-Security in production', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'production'
-
-    const middleware = createSecurityHeadersMiddleware(true)
-    const req = createSecurityTestRequest()
-    req.headers.set('x-forwarded-proto', 'https')
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    expect(res.setHeader).toHaveBeenCalledWith(
-      'Strict-Transport-Security',
-      'max-age=31536000; includeSubDomains; preload',
-    )
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should set Strict-Transport-Security for direct TLS production requests', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'production'
-
-    const middleware = createSecurityHeadersMiddleware(false)
-    const req = createSecurityTestRequest()
-    req._nativeRequest = { socket: { remoteAddress: 'direct-tls-socket', encrypted: true } }
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    expect(res.setHeader).toHaveBeenCalledWith(
-      'Strict-Transport-Security',
-      'max-age=31536000; includeSubDomains; preload',
-    )
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should not set Strict-Transport-Security for non-HTTPS production requests', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'production'
-
-    const middleware = createSecurityHeadersMiddleware(true)
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const hstsCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Strict-Transport-Security',
-    )
-    expect(hstsCall).toBeUndefined()
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should not set Strict-Transport-Security in development', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
-
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const hstsCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Strict-Transport-Security',
-    )
-    expect(hstsCall).toBeUndefined()
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should include upgrade-insecure-requests in production CSP', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'production'
-
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const cspCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Content-Security-Policy',
-    )
-    expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).toContain('upgrade-insecure-requests')
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should not include upgrade-insecure-requests in development CSP', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
-
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const cspCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Content-Security-Policy',
-    )
-    expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).not.toContain('upgrade-insecure-requests')
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should allow localhost WebSocket connections in development', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
-
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const cspCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Content-Security-Policy',
-    )
-    expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).toContain(localhostConnectSource)
-    expect(cspCall?.[1]).toContain(localhostWebSocketSource)
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should not allow localhost connections in production', async () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'production'
-
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
-    const cspCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
-      call => call[0] === 'Content-Security-Policy',
-    )
-    expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).not.toContain(localhostConnectSource)
-    expect(cspCall?.[1]).not.toContain(localhostWebSocketSource)
-    expect(next).toHaveBeenCalled()
-
-    process.env.NODE_ENV = originalEnv
-  })
-
-  it('should call next() to continue middleware chain', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
-
+  it('should set all required security headers in a single request', async () => {
+    const { res, next } = await runSecurityHeaders()
+
+    expect(getCapturedHeader(res, 'Content-Security-Policy')).toEqual(expect.any(String))
+    expect(getCapturedHeader(res, 'X-Content-Type-Options')).toBe('nosniff')
+    expect(getCapturedHeader(res, 'X-Frame-Options')).toBe('DENY')
+    expect(getCapturedHeader(res, 'Referrer-Policy')).toBe('strict-origin-when-cross-origin')
+    expect(getCapturedHeader(res, 'X-Permitted-Cross-Domain-Policies')).toBe('none')
     expect(next).toHaveBeenCalledOnce()
     expect(next).toHaveBeenCalledWith()
   })
 
-  it('should set all required security headers in a single request', async () => {
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createSecurityTestRequest()
-    const res = createMockResponse()
-    const next = vi.fn()
+  it.each([["default-src 'self'"], ["'unsafe-eval'"], ["style-src 'self' 'unsafe-inline'"]])(
+    'should include %s in the CSP header',
+    async expectedDirective => {
+      const { res, next } = await runSecurityHeaders()
+      const csp = getCapturedHeader(res, 'Content-Security-Policy')
 
-    await middleware(req, res, next)
+      expect(csp).toEqual(expect.any(String))
+      expect(csp).toContain(expectedDirective)
+      expect(next).toHaveBeenCalled()
+    },
+  )
 
-    const setHeaderCalls = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls
-    const headerNames = setHeaderCalls.map(call => call[0])
+  it('should set Strict-Transport-Security for trusted HTTPS proxy traffic in production', async () => {
+    const { res, next } = await runSecurityHeaders({
+      environment: 'production',
+      trustProxy: true,
+      forwardedProto: 'https',
+    })
 
-    expect(headerNames).toContain('Content-Security-Policy')
-    expect(headerNames).toContain('X-Content-Type-Options')
-    expect(headerNames).toContain('X-Frame-Options')
-    expect(headerNames).toContain('Referrer-Policy')
-    expect(headerNames).toContain('X-Permitted-Cross-Domain-Policies')
+    expect(getCapturedHeader(res, 'Strict-Transport-Security')).toBe(
+      'max-age=31536000; includeSubDomains; preload',
+    )
+    expect(next).toHaveBeenCalled()
+  })
+
+  it('should set Strict-Transport-Security for direct TLS production requests', async () => {
+    const { res, next } = await runSecurityHeaders({
+      environment: 'production',
+      directTls: true,
+    })
+
+    expect(getCapturedHeader(res, 'Strict-Transport-Security')).toBe(
+      'max-age=31536000; includeSubDomains; preload',
+    )
+    expect(next).toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      name: 'non-HTTPS production requests',
+      options: { environment: 'production', trustProxy: true } satisfies SecurityContextOptions,
+    },
+    {
+      name: 'development requests',
+      options: { environment: 'development' } satisfies SecurityContextOptions,
+    },
+  ])('should not set Strict-Transport-Security for $name', async ({ options }) => {
+    const { res, next } = await runSecurityHeaders(options)
+
+    expect(getCapturedHeader(res, 'Strict-Transport-Security')).toBeUndefined()
+    expect(next).toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      name: 'include upgrade-insecure-requests in production',
+      environment: 'production' as const,
+      matcher: (csp: string) => expect(csp).toContain('upgrade-insecure-requests'),
+    },
+    {
+      name: 'exclude upgrade-insecure-requests in development',
+      environment: 'development' as const,
+      matcher: (csp: string) => expect(csp).not.toContain('upgrade-insecure-requests'),
+    },
+    {
+      name: 'allow localhost websocket sources in development',
+      environment: 'development' as const,
+      matcher: (csp: string) => {
+        expect(csp).toContain(localhostConnectSource)
+        expect(csp).toContain(localhostWebSocketSource)
+      },
+    },
+    {
+      name: 'exclude localhost websocket sources in production',
+      environment: 'production' as const,
+      matcher: (csp: string) => {
+        expect(csp).not.toContain(localhostConnectSource)
+        expect(csp).not.toContain(localhostWebSocketSource)
+      },
+    },
+  ])('should $name', async ({ environment, matcher }) => {
+    const { res, next } = await runSecurityHeaders({ environment })
+    const csp = getCapturedHeader(res, 'Content-Security-Policy')
+
+    expect(csp).toEqual(expect.any(String))
+    matcher(csp as string)
     expect(next).toHaveBeenCalled()
   })
 })

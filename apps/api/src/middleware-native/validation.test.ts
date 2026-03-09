@@ -4,105 +4,36 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import type { TransportRequest, TransportResponse } from '../transport/types.js'
+import {
+  createMockRequest as baseCreateMockRequest,
+  createMockResponse as baseCreateMockResponse,
+} from '../test/test-helpers.js'
 import { createValidationMiddleware, sanitizeObject, sanitizeString } from './validation.js'
 
-/**
- * Creates a mock TransportRequest for testing
- */
-function createMockRequest(body: unknown): TransportRequest {
-  return {
+function createValidationRequest(body: unknown) {
+  return baseCreateMockRequest({
     method: 'POST',
     path: '/api/test',
-    url: new URL('http://localhost:3002/api/test'),
-    headers: new Headers(),
     body,
-    ip: '127.0.0.1',
-    getHeader: () => undefined,
-    getQuery: () => undefined,
-  }
+  })
 }
 
-/**
- * Creates a mock TransportResponse for testing
- */
-function createMockResponse(): TransportResponse & {
-  statusCode: number
-  jsonData: unknown
-} {
-  let statusCode = 200
-  let jsonData: unknown = null
-
-  return {
-    statusCode,
-    jsonData,
-    status(code: number) {
-      statusCode = code
-      this.statusCode = code
-      return this
-    },
-    setHeader: vi.fn().mockReturnThis(),
-    getHeader: vi.fn(),
-    json(data: unknown) {
-      jsonData = data
-      this.jsonData = data
-    },
-    send: vi.fn(),
-    write: vi.fn(),
-    end: vi.fn(),
-    headersSent: false,
-    finished: false,
-  }
+function createValidationResponse() {
+  return baseCreateMockResponse()
 }
 
 describe('sanitizeString', () => {
-  it('should escape HTML entities', () => {
-    const input = '<script>alert("XSS")</script>'
-    const result = sanitizeString(input)
-    expect(result).toBe('&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;')
-  })
-
-  it('should escape ampersands', () => {
-    const input = 'Tom & Jerry'
-    const result = sanitizeString(input)
-    expect(result).toBe('Tom &amp; Jerry')
-  })
-
-  it('should escape single quotes', () => {
-    const input = "It's a test"
-    const result = sanitizeString(input)
-    expect(result).toBe('It&#39;s a test')
-  })
-
-  it('should escape double quotes', () => {
-    const input = 'He said "hello"'
-    const result = sanitizeString(input)
-    expect(result).toBe('He said &quot;hello&quot;')
-  })
-
-  it('should remove null bytes', () => {
-    const input = 'test\0string'
-    const result = sanitizeString(input)
-    expect(result).not.toContain('\0')
-    expect(result).toBe('teststring')
-  })
-
-  it('should normalize unicode with NFKC', () => {
-    const input = '\u00BD' // ½ (vulgar fraction one half)
-    const result = sanitizeString(input)
-    expect(result).toBe('1⁄2') // Normalized form
-  })
-
-  it('should trim whitespace', () => {
-    const input = '  test  '
-    const result = sanitizeString(input)
-    expect(result).toBe('test')
-  })
-
-  it('should handle empty strings', () => {
-    const input = ''
-    const result = sanitizeString(input)
-    expect(result).toBe('')
+  it.each([
+    ['<script>alert("XSS")</script>', '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;'],
+    ['Tom & Jerry', 'Tom &amp; Jerry'],
+    ["It's a test", 'It&#39;s a test'],
+    ['He said "hello"', 'He said &quot;hello&quot;'],
+    ['test\0string', 'teststring'],
+    ['\u00BD', '1⁄2'],
+    ['  test  ', 'test'],
+    ['', ''],
+  ])('should sanitize %j into %j', (input, expected) => {
+    expect(sanitizeString(input)).toBe(expected)
   })
 
   it('should handle strings with multiple dangerous characters', () => {
@@ -282,8 +213,8 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({ name: 'John', age: 25 })
-    const res = createMockResponse()
+    const req = createValidationRequest({ name: 'John', age: 25 })
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
@@ -298,8 +229,8 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({ name: '<script>alert("XSS")</script>' })
-    const res = createMockResponse()
+    const req = createValidationRequest({ name: '<script>alert("XSS")</script>' })
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
@@ -315,15 +246,15 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({ name: 'John' }) // Missing age
-    const res = createMockResponse()
+    const req = createValidationRequest({ name: 'John' }) // Missing age
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
 
     expect(next).not.toHaveBeenCalled()
-    expect(res.statusCode).toBe(400)
-    expect(res.jsonData).toMatchObject({
+    expect(res._capture.statusCode).toBe(400)
+    expect(res._capture.body).toMatchObject({
       status: 'Fail',
       message: 'Validation failed',
       data: null,
@@ -347,15 +278,15 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({ name: 'John', age: 'twenty-five' }) // Wrong type
-    const res = createMockResponse()
+    const req = createValidationRequest({ name: 'John', age: 'twenty-five' }) // Wrong type
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
 
     expect(next).not.toHaveBeenCalled()
-    expect(res.statusCode).toBe(400)
-    expect(res.jsonData).toMatchObject({
+    expect(res._capture.statusCode).toBe(400)
+    expect(res._capture.body).toMatchObject({
       status: 'Fail',
       message: 'Validation failed',
       data: null,
@@ -380,19 +311,19 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({
+    const req = createValidationRequest({
       name: 'Jo', // Too short
       age: 15, // Too young
       email: 'invalid-email', // Invalid format
     })
-    const res = createMockResponse()
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
 
     expect(next).not.toHaveBeenCalled()
-    expect(res.statusCode).toBe(400)
-    expect(res.jsonData).toMatchObject({
+    expect(res._capture.statusCode).toBe(400)
+    expect(res._capture.body).toMatchObject({
       status: 'Fail',
       message: 'Validation failed',
       data: null,
@@ -401,7 +332,7 @@ describe('createValidationMiddleware', () => {
         type: 'ValidationError',
       },
     })
-    const errors = (res.jsonData as { error: { details: unknown[] } }).error.details
+    const errors = (res._capture.body as { error: { details: unknown[] } }).error.details
     expect(errors).toHaveLength(3)
   })
 
@@ -411,11 +342,11 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({
+    const req = createValidationRequest({
       name: 'test',
       __proto__: { admin: true },
     })
-    const res = createMockResponse()
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
@@ -436,7 +367,7 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({
+    const req = createValidationRequest({
       user: {
         name: '<script>alert(1)</script>',
         profile: {
@@ -444,7 +375,7 @@ describe('createValidationMiddleware', () => {
         },
       },
     })
-    const res = createMockResponse()
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
@@ -468,12 +399,12 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({
+    const req = createValidationRequest({
       prompt: 'Write code: <script>alert(1)</script>',
       systemMessage: 'You are <strong>powerful</strong>',
       regularField: '<script>alert(1)</script>',
     })
-    const res = createMockResponse()
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
@@ -492,10 +423,10 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({
+    const req = createValidationRequest({
       tags: ['<script>alert(1)</script>', 'normal', '<img src=x>'],
     })
-    const res = createMockResponse()
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
@@ -512,8 +443,8 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({ name: 'test' })
-    const res = createMockResponse()
+    const req = createValidationRequest({ name: 'test' })
+    const res = createValidationResponse()
     const next = vi.fn()
 
     // Force an error by making safeParse throw
@@ -524,8 +455,8 @@ describe('createValidationMiddleware', () => {
     await middleware(req, res, next)
 
     expect(next).not.toHaveBeenCalled()
-    expect(res.statusCode).toBe(500)
-    expect(res.jsonData).toMatchObject({
+    expect(res._capture.statusCode).toBe(500)
+    expect(res._capture.body).toMatchObject({
       status: 'Error',
       message: 'Unexpected error',
       data: null,
@@ -542,8 +473,8 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({ name: 'John' })
-    const res = createMockResponse()
+    const req = createValidationRequest({ name: 'John' })
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
@@ -559,8 +490,8 @@ describe('createValidationMiddleware', () => {
     })
 
     const middleware = createValidationMiddleware(schema)
-    const req = createMockRequest({ name: 'John' })
-    const res = createMockResponse()
+    const req = createValidationRequest({ name: 'John' })
+    const res = createValidationResponse()
     const next = vi.fn()
 
     await middleware(req, res, next)
