@@ -134,6 +134,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
     const middleware = createSecurityHeadersMiddleware()
     const req = createMockRequest()
+    req.getHeader = vi.fn((name: string) => (name === 'x-forwarded-proto' ? 'https' : undefined))
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -143,6 +144,26 @@ describe('createSecurityHeadersMiddleware', () => {
       'Strict-Transport-Security',
       'max-age=31536000; includeSubDomains; preload',
     )
+    expect(next).toHaveBeenCalled()
+
+    process.env.NODE_ENV = originalEnv
+  })
+
+  it('should not set Strict-Transport-Security for non-HTTPS production requests', async () => {
+    const originalEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+
+    const middleware = createSecurityHeadersMiddleware()
+    const req = createMockRequest()
+    const res = createMockResponse()
+    const next = vi.fn()
+
+    await middleware(req, res, next)
+
+    const hstsCall = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls.find(
+      call => call[0] === 'Strict-Transport-Security',
+    )
+    expect(hstsCall).toBeUndefined()
     expect(next).toHaveBeenCalled()
 
     process.env.NODE_ENV = originalEnv

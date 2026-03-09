@@ -44,7 +44,7 @@ Native middleware implementations:
 ## Development
 
 ```bash
-# Start development server (HTTP/1.1 mode)
+# Start development server (HTTP/1.1 by default, HTTP/2 when enabled)
 pnpm dev
 
 # Run tests
@@ -94,7 +94,7 @@ HTTP/1.1 mode, suitable for:
 - Behind reverse proxy (nginx, CloudFlare, AWS ALB)
 
 ```bash
-# Default mode (no TLS required)
+# Default mode (HTTP/1.1, no TLS required)
 pnpm dev
 ```
 
@@ -140,11 +140,17 @@ Optional:
 ```bash
 AUTH_SECRET_KEY=xxx            # API authentication token
 SESSION_SECRET=xxx             # Session encryption key
+SESSION_COOKIE_NAME=sessionId  # Session cookie name
+SESSION_MAX_AGE_MS=86400000    # Session lifetime (24h default)
 MAX_REQUEST_PER_HOUR=100       # Rate limit threshold
 TIMEOUT_MS=60000               # Request timeout
 ALLOWED_ORIGINS=http://localhost:1002,https://example.com
 REDIS_URL=redis://localhost:6379
 REDIS_PASSWORD=xxx
+JSON_BODY_LIMIT=1048576        # 1MB default JSON limit
+FORM_BODY_LIMIT=32768          # 32KB default form limit
+CHAT_BODY_LIMIT=1048576        # 1MB /chat-process limit
+VERIFY_BODY_LIMIT=1024         # 1KB /verify limit
 NODE_ENV=production            # Environment mode
 ```
 

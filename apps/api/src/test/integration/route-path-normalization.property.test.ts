@@ -9,21 +9,11 @@
 
 import * as fc from 'fast-check'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { HTTP2Adapter } from '../../adapters/http2-adapter.js'
-import { createAuthMiddleware } from '../../middleware-native/auth.js'
-import { createBodyParserWithLimit } from '../../middleware-native/body-parser.js'
-import { createCorsMiddleware } from '../../middleware-native/cors.js'
-import { RateLimiter } from '../../middleware-native/rate-limiter.js'
-import { createSecurityHeadersMiddleware } from '../../middleware-native/security-headers.js'
-import { chatProcessHandler } from '../../routes/chat.js'
-import { configHandler } from '../../routes/config.js'
-import { healthHandler } from '../../routes/health.js'
-import { sessionHandler } from '../../routes/session.js'
-import { verifyHandler } from '../../routes/verify.js'
-import { MiddlewareChainImpl } from '../../transport/middleware-chain.js'
-import { RouterImpl } from '../../transport/router.js'
+import type { HTTP2Adapter } from '../../adapters/http2-adapter.js'
+import { createConfiguredServer } from '../../server.js'
+import type { MiddlewareChainImpl } from '../../transport/middleware-chain.js'
+import type { RouterImpl } from '../../transport/router.js'
 import type { TransportRequest, TransportResponse } from '../../transport/types.js'
-import { asyncHandler } from '../../utils/async-handler.js'
 
 // ============================================================================
 // Test Configuration
@@ -56,68 +46,8 @@ describe('Property 1: Route Path Normalization', () => {
    * Create a test adapter with all routes registered
    */
   function createTestAdapter(): HTTP2Adapter {
-    const router = new RouterImpl()
-    const middleware = new MiddlewareChainImpl()
-
-    // Register middleware
-    const corsMiddleware = createCorsMiddleware()
-    const securityHeadersMiddleware = createSecurityHeadersMiddleware()
-    const bodyParserMiddleware = createBodyParserWithLimit(1048576) // 1MB
-    const authMiddleware = createAuthMiddleware(process.env.AUTH_SECRET_KEY || '')
-
-    // Rate limiters
-    const generalRateLimiter = new RateLimiter({
-      windowMs: 60 * 60 * 1000,
-      max: 100,
-      message: 'Too many requests',
-    })
-
-    const authRateLimiter = new RateLimiter({
-      windowMs: 15 * 60 * 1000,
-      max: 10,
-      message: 'Too many authentication attempts',
-    })
-
-    middleware.use(corsMiddleware)
-    middleware.use(securityHeadersMiddleware)
-    middleware.use(bodyParserMiddleware)
-
-    // Register routes (without /api prefix)
-    router.get('/health', generalRateLimiter.middleware(), asyncHandler(healthHandler))
-
-    const chatBodyParser = createBodyParserWithLimit(1048576) // 1MB
-    router.post(
-      '/chat-process',
-      authMiddleware,
-      generalRateLimiter.middleware(),
-      chatBodyParser,
-      asyncHandler(chatProcessHandler),
-    )
-
-    router.post(
-      '/config',
-      authMiddleware,
-      generalRateLimiter.middleware(),
-      asyncHandler(configHandler),
-    )
-
-    router.post('/session', generalRateLimiter.middleware(), asyncHandler(sessionHandler))
-
-    const verifyBodyParser = createBodyParserWithLimit(1024) // 1KB
-    router.post(
-      '/verify',
-      authRateLimiter.middleware(),
-      verifyBodyParser,
-      asyncHandler(verifyHandler),
-    )
-
-    return new HTTP2Adapter(router, middleware, {
-      http2: false, // Use HTTP/1.1 for testing
-      bodyLimit: {
-        json: 1048576,
-        urlencoded: 32768,
-      },
-    })
+    process.env.HTTP2_ENABLED = 'false'
+    return createConfiguredServer().adapter
   }
 
   /**

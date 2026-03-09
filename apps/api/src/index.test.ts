@@ -14,9 +14,12 @@ import { setupGracefulShutdown } from './utils/graceful-shutdown.js'
 
 describe('Server Startup Tests', () => {
   let adapter: HTTP2Adapter | undefined
+  let shutdownCleanup: (() => void) | undefined
   const testPort = 30000 + Math.floor(Math.random() * 10000)
 
   afterEach(async () => {
+    shutdownCleanup?.()
+    shutdownCleanup = undefined
     if (adapter) {
       try {
         await adapter.close()
@@ -364,7 +367,7 @@ describe('Server Startup Tests', () => {
       expect(() => {
         const server = adapter?.getServer()
         if (server) {
-          setupGracefulShutdown(server, {
+          shutdownCleanup = setupGracefulShutdown(server, {
             timeout: 1000,
             onShutdownStart: async _signal => {
               callOrder.push('start')
@@ -397,7 +400,7 @@ describe('Server Startup Tests', () => {
 
       // Setup graceful shutdown with short timeout - should not throw
       expect(() => {
-        setupGracefulShutdown(server, {
+        shutdownCleanup = setupGracefulShutdown(server, {
           timeout: 100, // 100ms timeout
         })
       }).not.toThrow()

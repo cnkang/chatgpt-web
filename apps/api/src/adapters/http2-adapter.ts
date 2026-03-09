@@ -333,7 +333,7 @@ export class HTTP2Adapter {
           res.statusCode = statusCode
           res.setHeader('Content-Type', 'application/json')
         }
-        res.end(JSON.stringify(data))
+        wrapped.end(JSON.stringify(data))
       },
 
       send(data: string | Buffer) {
@@ -344,7 +344,7 @@ export class HTTP2Adapter {
             typeof data === 'string' ? 'text/plain' : 'application/octet-stream',
           )
         }
-        res.end(data)
+        wrapped.end(data)
       },
 
       write(chunk: string | Buffer) {

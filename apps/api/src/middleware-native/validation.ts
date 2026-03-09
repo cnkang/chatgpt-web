@@ -22,20 +22,6 @@ const AI_CONTENT_KEYS = new Set(['prompt', 'systemMessage', 'content', 'text', '
 const BLOCKED_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
 
 /**
- * Validation error response interface
- */
-interface ValidationErrorResponse {
-  status: 'Fail'
-  message: string
-  data: null
-  errors?: Array<{
-    field: string
-    message: string
-    code: string
-  }>
-}
-
-/**
  * Sanitizes string input to prevent XSS attacks
  *
  * Escapes HTML entities (&, <, >, ", ') to prevent script injection.
@@ -142,35 +128,40 @@ export function createValidationMiddleware<T>(schema: ZodSchema<T>): MiddlewareH
 
       if (!result.success) {
         // Extract validation errors
-        const errors = result.error.issues.map(err => ({
+        const details = result.error.issues.map(err => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code,
         }))
 
-        const response: ValidationErrorResponse = {
+        res.status(400).json({
           status: 'Fail',
           message: 'Validation failed',
           data: null,
-          errors,
-        }
-
-        res.status(400).json(response)
+          error: {
+            code: 'VALIDATION_ERROR',
+            type: 'ValidationError',
+            details,
+            timestamp: new Date().toISOString(),
+          },
+        })
         return
       }
 
       // Replace request body with validated and sanitized data
       req.body = result.data
       next()
-    } catch {
-      // Handle unexpected errors during validation
-      const response: ValidationErrorResponse = {
-        status: 'Fail',
-        message: 'Validation error occurred',
+    } catch (error) {
+      res.status(500).json({
+        status: 'Error',
+        message: error instanceof Error ? error.message : 'Validation error occurred',
         data: null,
-      }
-
-      res.status(500).json(response)
+        error: {
+          code: 'INTERNAL_ERROR',
+          type: error instanceof Error ? error.constructor.name : 'Error',
+          timestamp: new Date().toISOString(),
+        },
+      })
     }
   }
 }

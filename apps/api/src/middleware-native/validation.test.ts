@@ -327,12 +327,16 @@ describe('createValidationMiddleware', () => {
       status: 'Fail',
       message: 'Validation failed',
       data: null,
-      errors: expect.arrayContaining([
-        expect.objectContaining({
-          field: 'age',
-          code: 'invalid_type',
-        }),
-      ]),
+      error: {
+        code: 'VALIDATION_ERROR',
+        type: 'ValidationError',
+        details: expect.arrayContaining([
+          expect.objectContaining({
+            field: 'age',
+            code: 'invalid_type',
+          }),
+        ]),
+      },
     })
   })
 
@@ -355,12 +359,16 @@ describe('createValidationMiddleware', () => {
       status: 'Fail',
       message: 'Validation failed',
       data: null,
-      errors: expect.arrayContaining([
-        expect.objectContaining({
-          field: 'age',
-          code: 'invalid_type',
-        }),
-      ]),
+      error: {
+        code: 'VALIDATION_ERROR',
+        type: 'ValidationError',
+        details: expect.arrayContaining([
+          expect.objectContaining({
+            field: 'age',
+            code: 'invalid_type',
+          }),
+        ]),
+      },
     })
   })
 
@@ -388,8 +396,12 @@ describe('createValidationMiddleware', () => {
       status: 'Fail',
       message: 'Validation failed',
       data: null,
+      error: {
+        code: 'VALIDATION_ERROR',
+        type: 'ValidationError',
+      },
     })
-    const errors = (res.jsonData as { errors: unknown[] }).errors
+    const errors = (res.jsonData as { error: { details: unknown[] } }).error.details
     expect(errors).toHaveLength(3)
   })
 
@@ -514,9 +526,12 @@ describe('createValidationMiddleware', () => {
     expect(next).not.toHaveBeenCalled()
     expect(res.statusCode).toBe(500)
     expect(res.jsonData).toMatchObject({
-      status: 'Fail',
-      message: 'Validation error occurred',
+      status: 'Error',
+      message: 'Unexpected error',
       data: null,
+      error: {
+        code: 'INTERNAL_ERROR',
+      },
     })
   })
 

@@ -148,9 +148,14 @@ export class RateLimiter {
  * ```
  */
 export function createGeneralRateLimiter(maxRequestsPerHour: number = 100): RateLimiter {
+  const configuredLimit =
+    maxRequestsPerHour === 100
+      ? Number.parseInt(process.env.MAX_REQUEST_PER_HOUR || String(maxRequestsPerHour), 10)
+      : maxRequestsPerHour
+
   return new RateLimiter({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: maxRequestsPerHour,
+    max: Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 100,
     message: 'Too many requests from this IP, please try again after 60 minutes',
   })
 }

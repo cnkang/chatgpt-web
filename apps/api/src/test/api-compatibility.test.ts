@@ -12,26 +12,8 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { HTTP2Adapter } from '../adapters/http2-adapter.js'
-import {
-  createAuthMiddleware,
-  createAuthRateLimiter,
-  createBodyParserMiddleware,
-  createBodyParserWithLimit,
-  createCorsMiddleware,
-  createGeneralRateLimiter,
-} from '../middleware-native/index.js'
-import { createSecurityHeadersMiddleware } from '../middleware-native/security-headers.js'
-import {
-  chatProcessHandler,
-  configHandler,
-  healthHandler,
-  sessionHandler,
-  verifyHandler,
-} from '../routes/index.js'
-import { MiddlewareChainImpl } from '../transport/middleware-chain.js'
-import { RouterImpl } from '../transport/router.js'
-import { asyncHandler } from '../utils/async-handler.js'
+import type { HTTP2Adapter } from '../adapters/http2-adapter.js'
+import { createConfiguredServer } from '../server.js'
 
 describe('API Compatibility Tests', () => {
   let adapter: HTTP2Adapter
@@ -45,72 +27,14 @@ describe('API Compatibility Tests', () => {
     process.env.NODE_ENV = 'test'
     process.env.OPENAI_API_KEY = 'sk-test-key'
     process.env.AI_PROVIDER = 'openai'
+    process.env.PORT = String(TEST_PORT)
+    process.env.HOST = '127.0.0.1'
+    process.env.HTTP2_ENABLED = 'false'
 
-    // Create router and middleware chain
-    const router = new RouterImpl()
-    const middleware = new MiddlewareChainImpl()
-
-    // Create middleware instances
-    const authMiddleware = createAuthMiddleware(TEST_AUTH_TOKEN)
-    const generalRateLimiter = createGeneralRateLimiter()
-    const authRateLimiter = createAuthRateLimiter()
-    const corsMiddleware = createCorsMiddleware()
-    const securityHeadersMiddleware = createSecurityHeadersMiddleware()
-    const bodyParserMiddleware = createBodyParserMiddleware()
-
-    // Register global middleware
-    middleware.use(corsMiddleware)
-    middleware.use(securityHeadersMiddleware)
-    // Note: Body parser is applied per-route, not globally, to allow different size limits
-
-    // Register routes
-    router.get('/health', generalRateLimiter.middleware(), asyncHandler(healthHandler))
-
-    const chatBodyParser = createBodyParserWithLimit(1048576) // 1MB
-    router.post(
-      '/chat-process',
-      authMiddleware,
-      generalRateLimiter.middleware(),
-      chatBodyParser,
-      asyncHandler(chatProcessHandler),
-    )
-
-    router.post(
-      '/config',
-      authMiddleware,
-      generalRateLimiter.middleware(),
-      bodyParserMiddleware,
-      asyncHandler(configHandler),
-    )
-
-    router.post(
-      '/session',
-      generalRateLimiter.middleware(),
-      bodyParserMiddleware,
-      asyncHandler(sessionHandler),
-    )
-
-    const verifyBodyParser = createBodyParserWithLimit(1024) // 1KB
-    router.post(
-      '/verify',
-      authRateLimiter.middleware(),
-      verifyBodyParser,
-      asyncHandler(verifyHandler),
-    )
-
-    // Create HTTP/2 adapter
-    adapter = new HTTP2Adapter(router, middleware, {
-      http2: false, // Use HTTP/1.1 for easier testing
-      tls: undefined,
-      bodyLimit: {
-        json: 1048576,
-        urlencoded: 32768,
-      },
-    })
-
-    // Start server
+    const configuredServer = createConfiguredServer()
+    adapter = configuredServer.adapter
     await adapter.listen(TEST_PORT, '127.0.0.1')
-    baseUrl = `http://127.0.0.1:${TEST_PORT}`
+    baseUrl = `http://${configuredServer.runtime.host}:${configuredServer.runtime.port}`
   })
 
   afterAll(async () => {

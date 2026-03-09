@@ -3,11 +3,27 @@
  * Serves static files from a designated directory
  */
 
-import { lookup as getMimeType } from 'mime-types'
 import { createReadStream, statSync } from 'node:fs'
-import { extname, join } from 'node:path'
+import { extname, resolve, sep } from 'node:path'
 import type { MiddlewareHandler } from '../transport/types.js'
 import { logger } from '../utils/logger.js'
+
+const MIME_TYPES: Record<string, string> = {
+  '.css': 'text/css; charset=utf-8',
+  '.gif': 'image/gif',
+  '.htm': 'text/html; charset=utf-8',
+  '.html': 'text/html; charset=utf-8',
+  '.ico': 'image/x-icon',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.txt': 'text/plain; charset=utf-8',
+  '.webp': 'image/webp',
+}
 
 /**
  * Create static file serving middleware
@@ -16,6 +32,8 @@ import { logger } from '../utils/logger.js'
  * @returns Middleware handler for static file serving
  */
 export function createStaticFileMiddleware(rootDir: string): MiddlewareHandler {
+  const absoluteRootDir = resolve(rootDir)
+
   return async (req, res, next) => {
     // Only handle GET requests
     if (req.method !== 'GET') {
@@ -23,15 +41,16 @@ export function createStaticFileMiddleware(rootDir: string): MiddlewareHandler {
     }
 
     try {
-      // Resolve file path
-      const filePath = join(rootDir, req.path)
+      // Resolve the requested file relative to the configured static root.
+      const decodedPath = decodeURIComponent(req.path)
+      const filePath = resolve(absoluteRootDir, `.${decodedPath}`)
 
       // Prevent directory traversal attacks
-      if (!filePath.startsWith(rootDir)) {
+      if (filePath !== absoluteRootDir && !filePath.startsWith(`${absoluteRootDir}${sep}`)) {
         logger.warn('Directory traversal attempt detected', {
           requestedPath: req.path,
           resolvedPath: filePath,
-          rootDir,
+          rootDir: absoluteRootDir,
         })
         return next()
       }
@@ -51,7 +70,7 @@ export function createStaticFileMiddleware(rootDir: string): MiddlewareHandler {
 
       // Determine Content-Type from file extension
       const ext = extname(filePath)
-      const contentType = getMimeType(ext) || 'application/octet-stream'
+      const contentType = MIME_TYPES[ext.toLowerCase()] || 'application/octet-stream'
 
       // Set response headers
       res.setHeader('Content-Type', contentType)

@@ -12,26 +12,8 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { HTTP2Adapter } from '../adapters/http2-adapter.js'
-import {
-  createAuthMiddleware,
-  createAuthRateLimiter,
-  createBodyParserMiddleware,
-  createBodyParserWithLimit,
-  createCorsMiddleware,
-  createGeneralRateLimiter,
-} from '../middleware-native/index.js'
-import { createSecurityHeadersMiddleware } from '../middleware-native/security-headers.js'
-import {
-  chatProcessHandler,
-  configHandler,
-  healthHandler,
-  sessionHandler,
-  verifyHandler,
-} from '../routes/index.js'
-import { MiddlewareChainImpl } from '../transport/middleware-chain.js'
-import { RouterImpl } from '../transport/router.js'
-import { asyncHandler } from '../utils/async-handler.js'
+import type { HTTP2Adapter } from '../adapters/http2-adapter.js'
+import { createConfiguredServer } from '../server.js'
 
 describe('Security Policies Tests', () => {
   let adapter: HTTP2Adapter
@@ -47,71 +29,14 @@ describe('Security Policies Tests', () => {
     process.env.AI_PROVIDER = 'openai'
     process.env.MAX_REQUEST_PER_HOUR = '100'
     process.env.ALLOWED_ORIGINS = 'http://localhost:1002,http://127.0.0.1:1002'
+    process.env.PORT = String(TEST_PORT)
+    process.env.HOST = '127.0.0.1'
+    process.env.HTTP2_ENABLED = 'false'
 
-    // Create router and middleware chain
-    const router = new RouterImpl()
-    const middleware = new MiddlewareChainImpl()
-
-    // Create middleware instances
-    const authMiddleware = createAuthMiddleware(TEST_AUTH_TOKEN)
-    const generalRateLimiter = createGeneralRateLimiter()
-    const authRateLimiter = createAuthRateLimiter()
-    const corsMiddleware = createCorsMiddleware()
-    const securityHeadersMiddleware = createSecurityHeadersMiddleware()
-    const bodyParserMiddleware = createBodyParserMiddleware()
-
-    // Register global middleware
-    middleware.use(corsMiddleware)
-    middleware.use(securityHeadersMiddleware)
-
-    // Register routes
-    router.get('/health', generalRateLimiter.middleware(), asyncHandler(healthHandler))
-
-    const chatBodyParser = createBodyParserWithLimit(1048576) // 1MB
-    router.post(
-      '/chat-process',
-      authMiddleware,
-      generalRateLimiter.middleware(),
-      chatBodyParser,
-      asyncHandler(chatProcessHandler),
-    )
-
-    router.post(
-      '/config',
-      authMiddleware,
-      generalRateLimiter.middleware(),
-      bodyParserMiddleware,
-      asyncHandler(configHandler),
-    )
-
-    router.post(
-      '/session',
-      generalRateLimiter.middleware(),
-      bodyParserMiddleware,
-      asyncHandler(sessionHandler),
-    )
-
-    const verifyBodyParser = createBodyParserWithLimit(1024) // 1KB
-    router.post(
-      '/verify',
-      authRateLimiter.middleware(),
-      verifyBodyParser,
-      asyncHandler(verifyHandler),
-    )
-
-    // Create HTTP/2 adapter
-    adapter = new HTTP2Adapter(router, middleware, {
-      http2: false, // Use HTTP/1.1 for easier testing
-      tls: undefined,
-      bodyLimit: {
-        json: 1048576,
-        urlencoded: 32768,
-      },
-    })
-
-    // Start server
+    const configuredServer = createConfiguredServer()
+    adapter = configuredServer.adapter
     await adapter.listen(TEST_PORT, '127.0.0.1')
-    baseUrl = `http://127.0.0.1:${TEST_PORT}`
+    baseUrl = `http://${configuredServer.runtime.host}:${configuredServer.runtime.port}`
   })
 
   afterAll(async () => {
@@ -444,13 +369,11 @@ describe('Security Policies Tests', () => {
         })
 
         const setCookie = response.headers.get('set-cookie')
-        if (setCookie) {
-          expect(setCookie).toContain('HttpOnly')
-        }
+        expect(setCookie).toBeTruthy()
+        expect(setCookie).toContain('HttpOnly')
       })
 
-      it('should create session cookie with secure flag when HTTPS enabled', async () => {
-        // In test environment without HTTPS, secure flag should not be set
+      it('should not set secure flag on session cookie for HTTP requests', async () => {
         const response = await fetch(`${baseUrl}/session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -458,11 +381,23 @@ describe('Security Policies Tests', () => {
         })
 
         const setCookie = response.headers.get('set-cookie')
-        // In HTTP mode, Secure should not be present
-        if (setCookie) {
-          // This is expected behavior for HTTP
-          expect(true).toBe(true)
-        }
+        expect(setCookie).toBeTruthy()
+        expect(setCookie).not.toContain('Secure')
+      })
+
+      it('should create session cookie with secure flag when HTTPS is indicated by proxy headers', async () => {
+        const response = await fetch(`${baseUrl}/session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Forwarded-Proto': 'https',
+          },
+          body: JSON.stringify({}),
+        })
+
+        const setCookie = response.headers.get('set-cookie')
+        expect(setCookie).toBeTruthy()
+        expect(setCookie).toContain('Secure')
       })
 
       it('should create session cookie with sameSite attribute', async () => {
@@ -473,9 +408,8 @@ describe('Security Policies Tests', () => {
         })
 
         const setCookie = response.headers.get('set-cookie')
-        if (setCookie) {
-          expect(setCookie.toLowerCase()).toMatch(/samesite=(strict|lax|none)/i)
-        }
+        expect(setCookie).toBeTruthy()
+        expect(setCookie!.toLowerCase()).toMatch(/samesite=(strict|lax|none)/i)
       })
     })
 
@@ -489,23 +423,22 @@ describe('Security Policies Tests', () => {
         })
 
         const setCookie = response1.headers.get('set-cookie')
+        expect(setCookie).toBeTruthy()
 
-        if (setCookie) {
-          // Extract cookie value
-          const cookieValue = setCookie.split(';')[0]
+        // Extract cookie value
+        const cookieValue = setCookie!.split(';')[0]
 
-          // Second request with cookie
-          const response2 = await fetch(`${baseUrl}/session`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Cookie: cookieValue,
-            },
-            body: JSON.stringify({}),
-          })
+        // Second request with cookie
+        const response2 = await fetch(`${baseUrl}/session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieValue,
+          },
+          body: JSON.stringify({}),
+        })
 
-          expect(response2.status).toBe(200)
-        }
+        expect(response2.status).toBe(200)
       })
     })
 
@@ -520,10 +453,8 @@ describe('Security Policies Tests', () => {
         })
 
         const setCookie = response.headers.get('set-cookie')
-        if (setCookie) {
-          // Should have Max-Age or Expires
-          expect(setCookie).toMatch(/Max-Age=\d+|Expires=/i)
-        }
+        expect(setCookie).toBeTruthy()
+        expect(setCookie).toMatch(/Max-Age=\d+|Expires=/i)
       })
     })
 

@@ -40,7 +40,10 @@ interface ShutdownOptions {
  * })
  * ```
  */
-export function setupGracefulShutdown(server: ClosableServer, options: ShutdownOptions = {}): void {
+export function setupGracefulShutdown(
+  server: ClosableServer,
+  options: ShutdownOptions = {},
+): () => void {
   const { timeout = 30000, onShutdownStart, onShutdownComplete } = options
 
   const shutdown = async (signal: string) => {
@@ -85,17 +88,30 @@ export function setupGracefulShutdown(server: ClosableServer, options: ShutdownO
   }
 
   // Register signal handlers
-  process.on('SIGTERM', () => shutdown('SIGTERM'))
-  process.on('SIGINT', () => shutdown('SIGINT'))
-
-  // Handle uncaught exceptions and unhandled rejections
-  process.on('uncaughtException', error => {
+  const sigtermHandler = () => {
+    void shutdown('SIGTERM')
+  }
+  const sigintHandler = () => {
+    void shutdown('SIGINT')
+  }
+  const uncaughtExceptionHandler = (error: Error) => {
     logger.error('Uncaught Exception:', error)
     process.exit(1)
-  })
-
-  process.on('unhandledRejection', (reason, promise) => {
+  }
+  const unhandledRejectionHandler = (reason: unknown, promise: Promise<unknown>) => {
     logger.error('Unhandled Rejection', { promise: String(promise), reason })
     process.exit(1)
-  })
+  }
+
+  process.on('SIGTERM', sigtermHandler)
+  process.on('SIGINT', sigintHandler)
+  process.on('uncaughtException', uncaughtExceptionHandler)
+  process.on('unhandledRejection', unhandledRejectionHandler)
+
+  return () => {
+    process.off('SIGTERM', sigtermHandler)
+    process.off('SIGINT', sigintHandler)
+    process.off('uncaughtException', uncaughtExceptionHandler)
+    process.off('unhandledRejection', unhandledRejectionHandler)
+  }
 }

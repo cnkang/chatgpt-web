@@ -22,7 +22,7 @@ export function createSecurityHeadersMiddleware(): MiddlewareHandler {
   const isDevelopment = process.env.NODE_ENV === 'development'
   const isProduction = process.env.NODE_ENV === 'production'
 
-  return async (_req, res, next) => {
+  return async (req, res, next) => {
     // Content Security Policy
     const cspDirectives = [
       "default-src 'self'",
@@ -60,8 +60,9 @@ export function createSecurityHeadersMiddleware(): MiddlewareHandler {
     // X-Permitted-Cross-Domain-Policies: Restrict cross-domain policy files
     res.setHeader('X-Permitted-Cross-Domain-Policies', 'none')
 
-    // Strict-Transport-Security: Enforce HTTPS in production
-    if (isProduction) {
+    // Strict-Transport-Security: only emit when the request is effectively HTTPS.
+    const isHttpsRequest = req.getHeader('x-forwarded-proto') === 'https'
+    if (isProduction && isHttpsRequest) {
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
     }
 

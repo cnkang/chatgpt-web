@@ -5,7 +5,7 @@
 
 import { currentModel } from '../chatgpt/provider-adapter.js'
 import { getConfig } from '../providers/config.js'
-import type { RouteHandler } from '../transport/types.js'
+import type { RouteHandler, SessionData } from '../transport/types.js'
 
 /**
  * Session endpoint
@@ -15,10 +15,23 @@ import type { RouteHandler } from '../transport/types.js'
  * @authentication None required
  * @rateLimit General limit (100 req/hour)
  */
-export const sessionHandler: RouteHandler = async (_req, res) => {
+function updateSessionMetadata(session: SessionData | undefined): void {
+  if (!session) {
+    return
+  }
+
+  const previousCount =
+    typeof session.data.requestCount === 'number' ? session.data.requestCount : 0
+
+  session.data.requestCount = previousCount + 1
+  session.data.lastAccessedAt = new Date().toISOString()
+}
+
+export const sessionHandler: RouteHandler = async (req, res) => {
   try {
     const config = getConfig()
     const model = currentModel()
+    updateSessionMetadata(req.session)
 
     res.status(200).json({
       status: 'Success',

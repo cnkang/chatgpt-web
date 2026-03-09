@@ -158,7 +158,7 @@ export interface SessionOptions {
   maxAge: number
 
   /** Set secure flag on cookie (requires HTTPS) */
-  secure: boolean
+  secure: boolean | 'auto'
 
   /** Set httpOnly flag on cookie */
   httpOnly: boolean
@@ -244,7 +244,7 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
           // Set session cookie
           const cookieValue = serializeCookie(options.name, req.session.id, {
             maxAge: options.maxAge,
-            secure: options.secure,
+            secure: shouldSetSecureCookie(req, options.secure),
             httpOnly: options.httpOnly,
             sameSite: options.sameSite,
             path: '/',
@@ -323,4 +323,12 @@ function serializeCookie(
   parts.push(`SameSite=${options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1)}`)
 
   return parts.join('; ')
+}
+
+function shouldSetSecureCookie(req: TransportRequest, secureOption: boolean | 'auto'): boolean {
+  if (secureOption === true || secureOption === false) {
+    return secureOption
+  }
+
+  return req.getHeader('x-forwarded-proto') === 'https'
 }

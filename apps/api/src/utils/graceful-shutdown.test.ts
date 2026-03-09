@@ -10,6 +10,7 @@ describe('graceful shutdown', () => {
   let processExitSpy: any
   let processOnSpy: any
   let setTimeoutSpy: any
+  let cleanup: (() => void) | undefined
 
   beforeEach(() => {
     // Mock server
@@ -27,30 +28,32 @@ describe('graceful shutdown', () => {
   })
 
   afterEach(() => {
+    cleanup?.()
+    cleanup = undefined
     vi.restoreAllMocks()
   })
 
   it('should register SIGTERM and SIGINT handlers', () => {
-    setupGracefulShutdown(mockServer)
+    cleanup = setupGracefulShutdown(mockServer)
 
     expect(processOnSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function))
     expect(processOnSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function))
   })
 
   it('should register uncaughtException handler', () => {
-    setupGracefulShutdown(mockServer)
+    cleanup = setupGracefulShutdown(mockServer)
 
     expect(processOnSpy).toHaveBeenCalledWith('uncaughtException', expect.any(Function))
   })
 
   it('should register unhandledRejection handler', () => {
-    setupGracefulShutdown(mockServer)
+    cleanup = setupGracefulShutdown(mockServer)
 
     expect(processOnSpy).toHaveBeenCalledWith('unhandledRejection', expect.any(Function))
   })
 
   it('should close server on SIGTERM', async () => {
-    setupGracefulShutdown(mockServer)
+    cleanup = setupGracefulShutdown(mockServer)
 
     // Get the SIGTERM handler
     const sigtermHandler = processOnSpy.mock.calls.find(
@@ -70,7 +73,7 @@ describe('graceful shutdown', () => {
   })
 
   it('should close server on SIGINT', async () => {
-    setupGracefulShutdown(mockServer)
+    cleanup = setupGracefulShutdown(mockServer)
 
     // Get the SIGINT handler
     const sigintHandler = processOnSpy.mock.calls.find(
@@ -96,7 +99,7 @@ describe('graceful shutdown', () => {
       }),
     }
 
-    setupGracefulShutdown(errorServer)
+    cleanup = setupGracefulShutdown(errorServer)
 
     const sigtermHandler = processOnSpy.mock.calls.find(
       (call: [string, ...unknown[]]) => call[0] === 'SIGTERM',
@@ -110,7 +113,7 @@ describe('graceful shutdown', () => {
   })
 
   it('should set timeout for forced shutdown', () => {
-    setupGracefulShutdown(mockServer, { timeout: 5000 })
+    cleanup = setupGracefulShutdown(mockServer, { timeout: 5000 })
 
     const sigtermHandler = processOnSpy.mock.calls.find(
       (call: [string, ...unknown[]]) => call[0] === 'SIGTERM',
@@ -125,7 +128,7 @@ describe('graceful shutdown', () => {
   it('should call onShutdownStart callback', async () => {
     const onShutdownStart = vi.fn()
 
-    setupGracefulShutdown(mockServer, { onShutdownStart })
+    cleanup = setupGracefulShutdown(mockServer, { onShutdownStart })
 
     const sigtermHandler = processOnSpy.mock.calls.find(
       (call: [string, ...unknown[]]) => call[0] === 'SIGTERM',
@@ -141,7 +144,7 @@ describe('graceful shutdown', () => {
   it('should call onShutdownComplete callback', async () => {
     const onShutdownComplete = vi.fn()
 
-    setupGracefulShutdown(mockServer, { onShutdownComplete })
+    cleanup = setupGracefulShutdown(mockServer, { onShutdownComplete })
 
     const sigtermHandler = processOnSpy.mock.calls.find(
       (call: [string, ...unknown[]]) => call[0] === 'SIGTERM',
@@ -155,7 +158,7 @@ describe('graceful shutdown', () => {
   })
 
   it('should exit with code 1 on uncaught exception', () => {
-    setupGracefulShutdown(mockServer)
+    cleanup = setupGracefulShutdown(mockServer)
 
     const uncaughtHandler = processOnSpy.mock.calls.find(
       (call: [string, ...unknown[]]) => call[0] === 'uncaughtException',
@@ -167,7 +170,7 @@ describe('graceful shutdown', () => {
   })
 
   it('should exit with code 1 on unhandled rejection', () => {
-    setupGracefulShutdown(mockServer)
+    cleanup = setupGracefulShutdown(mockServer)
 
     const unhandledHandler = processOnSpy.mock.calls.find(
       (call: [string, ...unknown[]]) => call[0] === 'unhandledRejection',
