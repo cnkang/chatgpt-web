@@ -13,16 +13,16 @@ import { MiddlewareChainImpl } from './transport/middleware-chain.js'
 import { RouterImpl } from './transport/router.js'
 import { setupGracefulShutdown } from './utils/graceful-shutdown.js'
 
+function createServerParts() {
+  return {
+    router: new RouterImpl(),
+    middleware: new MiddlewareChainImpl(),
+  }
+}
+
 describe('Server Startup Tests', () => {
   let adapter: HTTP2Adapter | undefined
   let shutdownCleanup: (() => void) | undefined
-
-  function createServerParts() {
-    return {
-      router: new RouterImpl(),
-      middleware: new MiddlewareChainImpl(),
-    }
-  }
 
   async function startAdapter(
     options: ConstructorParameters<typeof HTTP2Adapter>[2],
