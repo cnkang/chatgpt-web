@@ -17,6 +17,26 @@ describe('Server Startup Tests', () => {
   let adapter: HTTP2Adapter | undefined
   let shutdownCleanup: (() => void) | undefined
 
+  function createServerParts() {
+    return {
+      router: new RouterImpl(),
+      middleware: new MiddlewareChainImpl(),
+    }
+  }
+
+  async function startAdapter(
+    options: ConstructorParameters<typeof HTTP2Adapter>[2],
+    hostname?: string,
+  ) {
+    const testPort = await getAvailablePort()
+    const { router, middleware } = createServerParts()
+
+    adapter = new HTTP2Adapter(router, middleware, options)
+    await adapter.listen(testPort, hostname)
+
+    return { testPort, router, middleware, adapter }
+  }
+
   afterEach(async () => {
     shutdownCleanup?.()
     shutdownCleanup = undefined
@@ -32,16 +52,13 @@ describe('Server Startup Tests', () => {
 
   describe('Server starts successfully', () => {
     it('should create and start HTTP/2 server without TLS', async () => {
-      const testPort = await getAvailablePort()
-      const router = new RouterImpl()
-      const middleware = new MiddlewareChainImpl()
-
-      adapter = new HTTP2Adapter(router, middleware, {
-        http2: true,
-        tls: undefined,
-      })
-
-      await expect(adapter.listen(testPort, '127.0.0.1')).resolves.toBeUndefined()
+      const { adapter } = await startAdapter(
+        {
+          http2: true,
+          tls: undefined,
+        },
+        '127.0.0.1',
+      )
 
       const server = adapter.getServer()
       expect(server).toBeDefined()
@@ -49,15 +66,12 @@ describe('Server Startup Tests', () => {
     })
 
     it('should create and start HTTP/1.1 server when HTTP/2 is disabled', async () => {
-      const testPort = await getAvailablePort()
-      const router = new RouterImpl()
-      const middleware = new MiddlewareChainImpl()
-
-      adapter = new HTTP2Adapter(router, middleware, {
-        http2: false,
-      })
-
-      await expect(adapter.listen(testPort, '127.0.0.1')).resolves.toBeUndefined()
+      const { adapter } = await startAdapter(
+        {
+          http2: false,
+        },
+        '127.0.0.1',
+      )
 
       const server = adapter.getServer()
       expect(server).toBeDefined()
@@ -66,8 +80,7 @@ describe('Server Startup Tests', () => {
 
     it('should reject startup if port is already in use', async () => {
       const testPort = await getAvailablePort()
-      const router = new RouterImpl()
-      const middleware = new MiddlewareChainImpl()
+      const { router, middleware } = createServerParts()
 
       // Create first server
       adapter = new HTTP2Adapter(router, middleware, {
@@ -97,15 +110,12 @@ describe('Server Startup Tests', () => {
 
   describe('Server binds to configured port', () => {
     it('should bind to specified port', async () => {
-      const testPort = await getAvailablePort()
-      const router = new RouterImpl()
-      const middleware = new MiddlewareChainImpl()
-
-      adapter = new HTTP2Adapter(router, middleware, {
-        http2: false,
-      })
-
-      await adapter.listen(testPort, '127.0.0.1')
+      const { testPort, adapter } = await startAdapter(
+        {
+          http2: false,
+        },
+        '127.0.0.1',
+      )
 
       const server = adapter.getServer()
       const address = server.address()
@@ -118,15 +128,12 @@ describe('Server Startup Tests', () => {
     })
 
     it('should bind to specified hostname', async () => {
-      const testPort = await getAvailablePort()
-      const router = new RouterImpl()
-      const middleware = new MiddlewareChainImpl()
-
-      adapter = new HTTP2Adapter(router, middleware, {
-        http2: false,
-      })
-
-      await adapter.listen(testPort, '127.0.0.1')
+      const { adapter } = await startAdapter(
+        {
+          http2: false,
+        },
+        '127.0.0.1',
+      )
 
       const server = adapter.getServer()
       const address = server.address()
@@ -139,15 +146,9 @@ describe('Server Startup Tests', () => {
     })
 
     it('should bind to 0.0.0.0 by default', async () => {
-      const testPort = await getAvailablePort()
-      const router = new RouterImpl()
-      const middleware = new MiddlewareChainImpl()
-
-      adapter = new HTTP2Adapter(router, middleware, {
+      const { adapter } = await startAdapter({
         http2: false,
       })
-
-      await adapter.listen(testPort) // No hostname specified
 
       const server = adapter.getServer()
       const address = server.address()

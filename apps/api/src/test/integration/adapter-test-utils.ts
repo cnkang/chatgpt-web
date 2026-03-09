@@ -8,6 +8,8 @@ import type {
   TransportResponse,
 } from '../../transport/types.js'
 import { createMockRequest, createMockResponse } from '../test-helpers.js'
+import * as fc from 'fast-check'
+import { vi } from 'vitest'
 
 type AdapterInternals = {
   middleware: MiddlewareChainImpl
@@ -19,6 +21,37 @@ type CapturedResponse = {
   finished: boolean
   headers: Map<string, string | string[]>
   statusCode: number
+}
+
+const originalEnv = process.env
+
+export const PROPERTY_TEST_RUNS = 100
+export const TEST_SECRET_KEY = 'test-secret-key'
+export const TEST_AUTH_HEADERS = {
+  authorization: `Bearer ${TEST_SECRET_KEY}`,
+}
+
+export function setupIntegrationTestEnv() {
+  vi.resetModules()
+  process.env = { ...originalEnv }
+  process.env.AUTH_SECRET_KEY = TEST_SECRET_KEY
+  process.env.OPENAI_API_KEY = 'sk-test-key'
+  process.env.AI_PROVIDER = 'openai'
+  process.env.NODE_ENV = 'test'
+}
+
+export function restoreIntegrationTestEnv() {
+  process.env = originalEnv
+}
+
+export function runConstantProperty(assertion: () => Promise<void>) {
+  return fc.assert(
+    fc.asyncProperty(fc.constant(null), async () => {
+      await assertion()
+      return true
+    }),
+    { numRuns: PROPERTY_TEST_RUNS },
+  )
 }
 
 export function createConfiguredTestAdapter(): HTTP2Adapter {
@@ -40,6 +73,36 @@ export function createIntegrationRequest(
     method,
     path: normalizedPath,
   })
+}
+
+export async function executeIntegrationRequest(
+  method: string,
+  path: string,
+  body?: unknown,
+  headers: Record<string, string> = {},
+) {
+  const adapter = createConfiguredTestAdapter()
+  const request = createIntegrationRequest(method, path, body, headers)
+  return executeAdapterRequest(adapter, request)
+}
+
+export async function executeDualPathRequest(
+  method: string,
+  path: string,
+  body?: unknown,
+  headers: Record<string, string> = {},
+) {
+  const adapter = createConfiguredTestAdapter()
+  const prefixedRequest = createIntegrationRequest(method, `/api${path}`, body, headers)
+  const unprefixedRequest = createIntegrationRequest(method, path, body, headers)
+
+  const prefixedResponse = await executeAdapterRequest(adapter, prefixedRequest)
+  const unprefixedResponse = await executeAdapterRequest(adapter, unprefixedRequest)
+
+  return {
+    prefixedResponse,
+    unprefixedResponse,
+  }
 }
 
 export async function executeAdapterRequest(

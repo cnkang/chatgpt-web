@@ -8,6 +8,8 @@ import type { TransportRequest, TransportResponse } from '../transport/types.js'
 import { AppError } from '../utils/error-handler.js'
 import { createBodyParserMiddleware, createBodyParserWithLimit } from './body-parser.js'
 
+type BodyParserMiddleware = ReturnType<typeof createBodyParserMiddleware>
+
 /**
  * Create mock TransportRequest with native request
  */
@@ -55,21 +57,42 @@ function createMockResponse(): TransportResponse {
   }
 }
 
+async function runMiddleware(
+  middleware: BodyParserMiddleware,
+  req: TransportRequest,
+  res = createMockResponse(),
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    middleware(req, res, (error?: Error) => {
+      if (error) reject(error)
+      else resolve()
+    })
+  })
+}
+
+async function captureMiddlewareError(
+  middleware: BodyParserMiddleware,
+  req: TransportRequest,
+  res = createMockResponse(),
+): Promise<Error | undefined> {
+  let capturedError: Error | undefined
+
+  await new Promise<void>(resolve => {
+    middleware(req, res, (error?: Error) => {
+      capturedError = error
+      resolve()
+    })
+  })
+
+  return capturedError
+}
+
 describe('Body Parser Middleware', () => {
   describe('createBodyParserMiddleware', () => {
     it('should parse JSON body', async () => {
       const jsonData = { message: 'Hello, World!', count: 42 }
       const req = createMockRequest('POST', 'application/json', JSON.stringify(jsonData))
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toEqual(jsonData)
     })
@@ -81,16 +104,7 @@ describe('Body Parser Middleware', () => {
         'application/json; charset=utf-8',
         JSON.stringify(jsonData),
       )
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toEqual(jsonData)
     })
@@ -98,16 +112,7 @@ describe('Body Parser Middleware', () => {
     it('should parse URL-encoded body', async () => {
       const formData = 'key=value&foo=bar&number=123'
       const req = createMockRequest('POST', 'application/x-www-form-urlencoded', formData)
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toEqual({
         key: 'value',
@@ -118,16 +123,7 @@ describe('Body Parser Middleware', () => {
 
     it('should parse empty URL-encoded body', async () => {
       const req = createMockRequest('POST', 'application/x-www-form-urlencoded', '')
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toEqual({})
     })
@@ -135,64 +131,28 @@ describe('Body Parser Middleware', () => {
     it('should return raw body for other content types', async () => {
       const textData = 'Plain text content'
       const req = createMockRequest('POST', 'text/plain', textData)
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toBe(textData)
     })
 
     it('should skip body parsing for GET requests', async () => {
       const req = createMockRequest('GET', 'application/json', '')
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toBeNull()
     })
 
     it('should skip body parsing for HEAD requests', async () => {
       const req = createMockRequest('HEAD', 'application/json', '')
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toBeNull()
     })
 
     it('should skip body parsing for DELETE requests', async () => {
       const req = createMockRequest('DELETE', 'application/json', '')
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toBeNull()
     })
@@ -200,89 +160,44 @@ describe('Body Parser Middleware', () => {
     it('should reject invalid JSON with 400 error', async () => {
       const invalidJson = '{ invalid json }'
       const req = createMockRequest('POST', 'application/json', invalidJson)
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await expect(
-        new Promise<void>((resolve, reject) => {
-          middleware(req, res, (error?: Error) => {
-            if (error) reject(error)
-            else resolve()
-          })
-        }),
-      ).rejects.toThrow('Invalid JSON payload')
+      await expect(runMiddleware(createBodyParserMiddleware(), req)).rejects.toThrow(
+        'Invalid JSON payload',
+      )
     })
 
     it('should reject JSON body exceeding size limit', async () => {
       const largeData = { data: 'x'.repeat(2_000_000) } // ~2MB
       const req = createMockRequest('POST', 'application/json', JSON.stringify(largeData))
-      const res = createMockResponse()
-
       const middleware = createBodyParserMiddleware({
         jsonLimit: 1048576, // 1MB
       })
 
-      await expect(
-        new Promise<void>((resolve, reject) => {
-          middleware(req, res, (error?: Error) => {
-            if (error) reject(error)
-            else resolve()
-          })
-        }),
-      ).rejects.toThrow('Request entity too large')
+      await expect(runMiddleware(middleware, req)).rejects.toThrow('Request entity too large')
     })
 
     it('should reject URL-encoded body exceeding size limit', async () => {
       const largeData = `data=${'x'.repeat(50_000)}` // ~50KB
       const req = createMockRequest('POST', 'application/x-www-form-urlencoded', largeData)
-      const res = createMockResponse()
-
       const middleware = createBodyParserMiddleware({
         urlencodedLimit: 32768, // 32KB
       })
 
-      await expect(
-        new Promise<void>((resolve, reject) => {
-          middleware(req, res, (error?: Error) => {
-            if (error) reject(error)
-            else resolve()
-          })
-        }),
-      ).rejects.toThrow('Request entity too large')
+      await expect(runMiddleware(middleware, req)).rejects.toThrow('Request entity too large')
     })
 
     it('should use default limits when not specified', async () => {
       const jsonData = { message: 'test' }
       const req = createMockRequest('POST', 'application/json', JSON.stringify(jsonData))
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       expect(req.body).toEqual(jsonData)
     })
 
     it('should handle empty JSON body', async () => {
       const req = createMockRequest('POST', 'application/json', '')
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      await expect(
-        new Promise<void>((resolve, reject) => {
-          middleware(req, res, (error?: Error) => {
-            if (error) reject(error)
-            else resolve()
-          })
-        }),
-      ).rejects.toThrow('Invalid JSON payload')
+      await expect(runMiddleware(createBodyParserMiddleware(), req)).rejects.toThrow(
+        'Invalid JSON payload',
+      )
     })
 
     it('should handle request without native request object', async () => {
@@ -297,15 +212,7 @@ describe('Body Parser Middleware', () => {
         getQuery: () => undefined,
       } as TransportRequest
 
-      const res = createMockResponse()
-      const middleware = createBodyParserMiddleware()
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserMiddleware(), req)
 
       // Should skip parsing and leave body as null
       expect(req.body).toBeNull()
@@ -316,16 +223,7 @@ describe('Body Parser Middleware', () => {
     it('should create middleware with specific size limit', async () => {
       const jsonData = { token: 'abc123' }
       const req = createMockRequest('POST', 'application/json', JSON.stringify(jsonData))
-      const res = createMockResponse()
-
-      const middleware = createBodyParserWithLimit(1024) // 1KB limit
-
-      await new Promise<void>((resolve, reject) => {
-        middleware(req, res, (error?: Error) => {
-          if (error) reject(error)
-          else resolve()
-        })
-      })
+      await runMiddleware(createBodyParserWithLimit(1024), req)
 
       expect(req.body).toEqual(jsonData)
     })
@@ -333,18 +231,9 @@ describe('Body Parser Middleware', () => {
     it('should enforce size limit for all content types', async () => {
       const largeData = { data: 'x'.repeat(2000) } // ~2KB
       const req = createMockRequest('POST', 'application/json', JSON.stringify(largeData))
-      const res = createMockResponse()
-
-      const middleware = createBodyParserWithLimit(1024) // 1KB limit
-
-      await expect(
-        new Promise<void>((resolve, reject) => {
-          middleware(req, res, (error?: Error) => {
-            if (error) reject(error)
-            else resolve()
-          })
-        }),
-      ).rejects.toThrow('Request entity too large')
+      await expect(runMiddleware(createBodyParserWithLimit(1024), req)).rejects.toThrow(
+        'Request entity too large',
+      )
     })
   })
 
@@ -352,18 +241,7 @@ describe('Body Parser Middleware', () => {
     it('should pass AppError to next function', async () => {
       const invalidJson = '{ invalid }'
       const req = createMockRequest('POST', 'application/json', invalidJson)
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware()
-
-      let capturedError: Error | undefined
-
-      await new Promise<void>(resolve => {
-        middleware(req, res, (error?: Error) => {
-          capturedError = error
-          resolve()
-        })
-      })
+      const capturedError = await captureMiddlewareError(createBodyParserMiddleware(), req)
 
       expect(capturedError).toBeInstanceOf(AppError)
       expect((capturedError as AppError).statusCode).toBe(400)
@@ -372,18 +250,10 @@ describe('Body Parser Middleware', () => {
     it('should pass size limit error to next function', async () => {
       const largeData = { data: 'x'.repeat(2_000_000) }
       const req = createMockRequest('POST', 'application/json', JSON.stringify(largeData))
-      const res = createMockResponse()
-
-      const middleware = createBodyParserMiddleware({ jsonLimit: 1048576 })
-
-      let capturedError: Error | undefined
-
-      await new Promise<void>(resolve => {
-        middleware(req, res, (error?: Error) => {
-          capturedError = error
-          resolve()
-        })
-      })
+      const capturedError = await captureMiddlewareError(
+        createBodyParserMiddleware({ jsonLimit: 1048576 }),
+        req,
+      )
 
       expect(capturedError).toBeInstanceOf(AppError)
       expect((capturedError as AppError).statusCode).toBe(413)

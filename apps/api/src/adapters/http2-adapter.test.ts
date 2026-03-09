@@ -547,15 +547,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should support method chaining for status', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -565,15 +557,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should set response headers', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -585,15 +569,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should support method chaining for setHeader', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -603,15 +579,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should set array header values', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -624,15 +592,9 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should get response headers', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
+      const mockRes = createMockRes({
         getHeader: vi.fn().mockReturnValue('application/json'),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -643,15 +605,9 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should convert numeric header values to strings', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn().mockReturnValue(1024), // Content-Length can be a number
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes({
+        getHeader: vi.fn().mockReturnValue(1024),
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -663,15 +619,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should send JSON response with correct Content-Type', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -684,15 +632,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should not set status or headers if already sent (json)', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: true,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes({ headersSent: true })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -704,15 +644,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should send text response with text/plain Content-Type', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -724,15 +656,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should send Buffer response with application/octet-stream Content-Type', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -745,15 +669,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should not set status or headers if already sent (send)', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: true,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes({ headersSent: true })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -765,15 +681,9 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should write streaming chunks', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
+      const mockRes = createMockRes({
         write: vi.fn().mockReturnValue(true),
-        end: vi.fn(),
-      }
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -786,15 +696,9 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should write Buffer chunks', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
+      const mockRes = createMockRes({
         write: vi.fn().mockReturnValue(true),
-        end: vi.fn(),
-      }
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -805,15 +709,9 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should return false when write buffer is full (backpressure)', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
+      const mockRes = createMockRes({
         write: vi.fn().mockReturnValue(false),
-        end: vi.fn(),
-      }
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -823,15 +721,9 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should set status code before first write', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
+      const mockRes = createMockRes({
         write: vi.fn().mockReturnValue(true),
-        end: vi.fn(),
-      }
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -842,15 +734,10 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should not set status code if headers already sent (write)', () => {
-      const mockRes = {
-        statusCode: 200,
+      const mockRes = createMockRes({
         headersSent: true,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
         write: vi.fn().mockReturnValue(true),
-        end: vi.fn(),
-      }
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -861,15 +748,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should end response without chunk', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -881,15 +760,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should end response with final chunk', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -901,15 +772,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should end response with Buffer chunk', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -920,15 +783,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should not set status code if headers already sent (end)', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: true,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes({ headersSent: true })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -939,15 +794,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should track headersSent state', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -959,15 +806,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should track finished state', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -979,15 +818,9 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should support streaming workflow', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
+      const mockRes = createMockRes({
         write: vi.fn().mockReturnValue(true),
-        end: vi.fn(),
-      }
+      })
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -1012,15 +845,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should handle default status code of 200', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -1031,15 +856,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should serialize complex JSON objects', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 

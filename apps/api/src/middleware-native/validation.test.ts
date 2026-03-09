@@ -22,6 +22,34 @@ function createValidationResponse() {
   return baseCreateMockResponse()
 }
 
+async function runValidation(schema: z.ZodTypeAny, body: unknown) {
+  const middleware = createValidationMiddleware(schema)
+  const req = createValidationRequest(body)
+  const res = createValidationResponse()
+  const next = vi.fn()
+
+  await middleware(req, res, next)
+
+  return { req, res, next }
+}
+
+function expectValidationFailure(
+  res: ReturnType<typeof createValidationResponse>,
+  detailsMatcher?: unknown,
+) {
+  expect(res._capture.statusCode).toBe(400)
+  expect(res._capture.body).toMatchObject({
+    status: 'Fail',
+    message: 'Validation failed',
+    data: null,
+    error: {
+      code: 'VALIDATION_ERROR',
+      type: 'ValidationError',
+      ...(detailsMatcher === undefined ? {} : { details: detailsMatcher }),
+    },
+  })
+}
+
 describe('sanitizeString', () => {
   it.each([
     ['<script>alert("XSS")</script>', '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;'],
@@ -212,12 +240,7 @@ describe('createValidationMiddleware', () => {
       age: z.number(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({ name: 'John', age: 25 })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
+    const { req, next } = await runValidation(schema, { name: 'John', age: 25 })
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({ name: 'John', age: 25 })
@@ -228,12 +251,9 @@ describe('createValidationMiddleware', () => {
       name: z.string(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({ name: '<script>alert("XSS")</script>' })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
+    const { req, next } = await runValidation(schema, {
+      name: '<script>alert("XSS")</script>',
+    })
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({ name: '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;' })
@@ -245,30 +265,18 @@ describe('createValidationMiddleware', () => {
       age: z.number(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({ name: 'John' }) // Missing age
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
+    const { res, next } = await runValidation(schema, { name: 'John' })
 
     expect(next).not.toHaveBeenCalled()
-    expect(res._capture.statusCode).toBe(400)
-    expect(res._capture.body).toMatchObject({
-      status: 'Fail',
-      message: 'Validation failed',
-      data: null,
-      error: {
-        code: 'VALIDATION_ERROR',
-        type: 'ValidationError',
-        details: expect.arrayContaining([
-          expect.objectContaining({
-            field: 'age',
-            code: 'invalid_type',
-          }),
-        ]),
-      },
-    })
+    expectValidationFailure(
+      res,
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'age',
+          code: 'invalid_type',
+        }),
+      ]),
+    )
   })
 
   it('should return 400 for invalid field types', async () => {
@@ -277,30 +285,21 @@ describe('createValidationMiddleware', () => {
       age: z.number(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({ name: 'John', age: 'twenty-five' }) // Wrong type
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
+    const { res, next } = await runValidation(schema, {
+      name: 'John',
+      age: 'twenty-five',
+    })
 
     expect(next).not.toHaveBeenCalled()
-    expect(res._capture.statusCode).toBe(400)
-    expect(res._capture.body).toMatchObject({
-      status: 'Fail',
-      message: 'Validation failed',
-      data: null,
-      error: {
-        code: 'VALIDATION_ERROR',
-        type: 'ValidationError',
-        details: expect.arrayContaining([
-          expect.objectContaining({
-            field: 'age',
-            code: 'invalid_type',
-          }),
-        ]),
-      },
-    })
+    expectValidationFailure(
+      res,
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'age',
+          code: 'invalid_type',
+        }),
+      ]),
+    )
   })
 
   it('should return 400 for multiple validation errors', async () => {
@@ -310,28 +309,14 @@ describe('createValidationMiddleware', () => {
       email: z.string().email(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({
+    const { res, next } = await runValidation(schema, {
       name: 'Jo', // Too short
       age: 15, // Too young
       email: 'invalid-email', // Invalid format
     })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
 
     expect(next).not.toHaveBeenCalled()
-    expect(res._capture.statusCode).toBe(400)
-    expect(res._capture.body).toMatchObject({
-      status: 'Fail',
-      message: 'Validation failed',
-      data: null,
-      error: {
-        code: 'VALIDATION_ERROR',
-        type: 'ValidationError',
-      },
-    })
+    expectValidationFailure(res)
     const errors = (res._capture.body as { error: { details: unknown[] } }).error.details
     expect(errors).toHaveLength(3)
   })
@@ -341,15 +326,10 @@ describe('createValidationMiddleware', () => {
       name: z.string(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({
+    const { req, next } = await runValidation(schema, {
       name: 'test',
       __proto__: { admin: true },
     })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({ name: 'test' })
@@ -366,8 +346,7 @@ describe('createValidationMiddleware', () => {
       }),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({
+    const { req, next } = await runValidation(schema, {
       user: {
         name: '<script>alert(1)</script>',
         profile: {
@@ -375,10 +354,6 @@ describe('createValidationMiddleware', () => {
         },
       },
     })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({
@@ -398,16 +373,11 @@ describe('createValidationMiddleware', () => {
       regularField: z.string(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({
+    const { req, next } = await runValidation(schema, {
       prompt: 'Write code: <script>alert(1)</script>',
       systemMessage: 'You are <strong>powerful</strong>',
       regularField: '<script>alert(1)</script>',
     })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({
@@ -422,14 +392,9 @@ describe('createValidationMiddleware', () => {
       tags: z.array(z.string()),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({
+    const { req, next } = await runValidation(schema, {
       tags: ['<script>alert(1)</script>', 'normal', '<img src=x>'],
     })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({
@@ -472,12 +437,7 @@ describe('createValidationMiddleware', () => {
       age: z.number().optional(),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({ name: 'John' })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
+    const { req, next } = await runValidation(schema, { name: 'John' })
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({ name: 'John' })
@@ -489,12 +449,7 @@ describe('createValidationMiddleware', () => {
       age: z.number().default(18),
     })
 
-    const middleware = createValidationMiddleware(schema)
-    const req = createValidationRequest({ name: 'John' })
-    const res = createValidationResponse()
-    const next = vi.fn()
-
-    await middleware(req, res, next)
+    const { req, next } = await runValidation(schema, { name: 'John' })
 
     expect(next).toHaveBeenCalledOnce()
     expect(req.body).toEqual({ name: 'John', age: 18 })
