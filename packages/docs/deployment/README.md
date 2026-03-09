@@ -4,6 +4,7 @@ This directory contains deployment guides and configurations for the ChatGPT Web
 
 ## Available Guides
 
+- **[HTTP/2 Deployment](./http2-deployment.md)** - HTTP/2 configuration, TLS setup, and reverse proxy integration
 - **[Docker Deployment](./docker.md)** - Containerized deployment with Docker
 - **[Kubernetes Deployment](./kubernetes.md)** - Kubernetes cluster deployment
 - **[AWS ECR Deployment](./aws-ecr.md)** - AWS container registry deployment
@@ -34,8 +35,9 @@ For production environments:
 All deployment methods require:
 
 - **OpenAI API Key** - Official API access
-- **Node.js 24+** - Runtime environment (for manual deployment)
+- **Node.js 24+** - Runtime environment (required for native HTTP/2 support)
 - **Container Runtime** - Docker or compatible (for containerized deployment)
+- **TLS Certificates** - Required for HTTP/2 in browsers (production)
 
 ## Security Considerations
 

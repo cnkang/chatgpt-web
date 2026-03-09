@@ -3,9 +3,6 @@
  * Provides consistent error response format, retry logic, and circuit breaker pattern
  */
 
-import type { NextFunction, Request, Response } from 'express'
-import { randomUUID } from 'node:crypto'
-
 /**
  * Standard error response interface
  */
@@ -127,62 +124,6 @@ export function createErrorResponse(error: Error | AppError, requestId?: string)
 }
 
 /**
- * Express error handling middleware
- */
-export function errorHandler(
-  error: Error | AppError,
-  req: Request,
-  res: Response,
-  _next: NextFunction,
-) {
-  const normalizedError = normalizeError(error)
-
-  // Generate request ID for tracking
-  const requestId = (req.headers['x-request-id'] as string) || randomUUID()
-
-  const isAppError = normalizedError instanceof AppError
-  const statusCode = isAppError ? normalizedError.statusCode : 500
-
-  // Log error (excluding sensitive information)
-  const logData = {
-    requestId,
-    error: {
-      message: normalizedError.message,
-      type: isAppError ? normalizedError.type : ErrorType.INTERNAL,
-      stack: process.env.NODE_ENV === 'development' ? normalizedError.stack : undefined,
-    },
-    request: {
-      method: req.method,
-      url: req.url,
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-    },
-    timestamp: new Date().toISOString(),
-  }
-
-  if (statusCode >= 500) {
-    console.error('Server Error:', JSON.stringify(logData, null, 2))
-  } else {
-    console.warn('Client Error:', JSON.stringify(logData))
-  }
-
-  // Send error response
-  const errorResponse = createErrorResponse(normalizedError, requestId)
-  res.status(statusCode).json(errorResponse)
-}
-
-/**
- * Async error wrapper for route handlers
- */
-export function asyncHandler<T = unknown>(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<T>,
-) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    Promise.resolve(fn(req, res, next)).catch(next)
-  }
-}
-
-/**
  * Creates specific error types
  */
 export function createValidationError(message: string, details?: unknown) {
@@ -223,14 +164,6 @@ export function createTimeoutError(message: string = 'Request timeout') {
 
 export function createConfigurationError(message: string, details?: unknown) {
   return new AppError(message, ErrorType.CONFIGURATION, 500, false, details)
-}
-
-/**
- * 404 handler for unmatched routes
- */
-export function notFoundHandler(req: Request, _res: Response, next: NextFunction) {
-  const error = createNotFoundError(`Route ${req.method} ${req.path} not found`)
-  next(error)
 }
 
 /**

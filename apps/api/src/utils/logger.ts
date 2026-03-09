@@ -3,9 +3,6 @@
  * Provides structured logging with sensitive data protection
  */
 
-import type { NextFunction, Request, Response } from 'express'
-import { randomUUID } from 'node:crypto'
-
 /**
  * Log levels
  */
@@ -332,48 +329,3 @@ export class Logger {
 
 // Export singleton instance
 export const logger = Logger.getInstance()
-
-/**
- * Express middleware for request logging
- */
-export function requestLogger() {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const start = Date.now()
-    const headerRequestId = req.headers['x-request-id']
-    const requestId =
-      (typeof headerRequestId === 'string' && headerRequestId) ||
-      (Array.isArray(headerRequestId) && headerRequestId[0]) ||
-      randomUUID()
-
-    // Add request ID to request object
-    ;(req as Request & { requestId?: string }).requestId = requestId
-
-    // Log request
-    logger.info(
-      'Request started',
-      {
-        method: req.method,
-        url: req.url,
-        query: sanitizeData(req.query),
-      },
-      {
-        requestId,
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-      },
-    )
-
-    // Log response when finished
-    res.on('finish', () => {
-      const duration = Date.now() - start
-
-      logger.logApiCall(req.method, req.url, res.statusCode, duration, {
-        requestId,
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-      })
-    })
-
-    next()
-  }
-}

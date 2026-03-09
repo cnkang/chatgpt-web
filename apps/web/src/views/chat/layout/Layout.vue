@@ -3,17 +3,36 @@ import { LoadingSpinner } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useAppStore, useAuthStore, useChatStore } from '@/store'
 import { NLayout, NLayoutContent } from 'naive-ui'
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { parseChatRouteUuid, syncChatRoute } from './routeSync'
 import Permission from './Permission.vue'
 import Sider from './sider/index.vue'
 
 const router = useRouter()
+const route = useRoute()
 const appStore = useAppStore()
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 
-router.replace({ name: 'Chat', params: { uuid: chatStore.active } })
+const routeUuid = computed(() => parseChatRouteUuid(route.params.uuid))
+
+watch(
+  routeUuid,
+  async currentUuid => {
+    await syncChatRoute({
+      routeUuid: currentUuid,
+      activeUuid: chatStore.active,
+      replaceRoute: async uuid => {
+        await router.replace({ name: 'Chat', params: { uuid } })
+      },
+      syncActive: uuid => {
+        chatStore.syncActiveFromRoute(uuid)
+      },
+    })
+  },
+  { immediate: true },
+)
 
 const { isMobile } = useBasicLayout()
 

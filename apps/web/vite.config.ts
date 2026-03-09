@@ -1,53 +1,50 @@
 import vue from '@vitejs/plugin-vue'
 import path from 'node:path'
-import type { PluginOption } from 'vite'
+import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 
-function setupPlugins(): PluginOption[] {
-  return [
-    vue({
-      // Optimize Vue compilation for Vue 3.5+ features
-      script: {
-        defineModel: true,
-        propsDestructure: true,
-      },
-      // Enable Vue 3.5+ performance optimizations
-      template: {
-        compilerOptions: {
-          // Enable modern browser optimizations
-          hoistStatic: true,
-          cacheHandlers: true,
-        },
-      },
-    }),
-  ]
+function resolveAssetFileName(name?: string) {
+  if (!name) return 'assets/[name]-[hash].[ext]'
+  if (/\.(?:mp4|webm|ogg|mp3|wav|flac|aac)(?:\?.*)?$/i.test(name)) {
+    return 'media/[name]-[hash].[ext]'
+  }
+  if (/\.(?:png|jpe?g|gif|svg)(?:\?.*)?$/i.test(name)) {
+    return 'img/[name]-[hash].[ext]'
+  }
+  if (/\.(?:woff2?|eot|ttf|otf)(?:\?.*)?$/i.test(name)) {
+    return 'fonts/[name]-[hash].[ext]'
+  }
+  return 'assets/[name]-[hash].[ext]'
 }
 
-type ChunkMatcher = { name: string; match: (id: string) => boolean }
+function normalizeFilePath(filePath: string) {
+  return filePath.replaceAll('\\', '/')
+}
 
-const vendorChunkMatchers: ChunkMatcher[] = [
-  {
-    name: 'vue',
-    match: id => id.includes('vue') && !id.includes('vue-router') && !id.includes('vue-i18n'),
-  },
-  { name: 'vue-router', match: id => id.includes('vue-router') },
-  { name: 'pinia', match: id => id.includes('pinia') },
-  { name: 'vue-i18n', match: id => id.includes('vue-i18n') },
-  { name: 'vueuse', match: id => id.includes('@vueuse') },
-  { name: 'naive-ui', match: id => id.includes('naive-ui') },
-  { name: 'katex', match: id => id.includes('katex') },
-  { name: 'icons', match: id => id.includes('@iconify') },
-  { name: 'html-to-image', match: id => id.includes('html-to-image') },
-]
+function markstreamD2StubPlugin(enableD2: boolean): Plugin {
+  const stubPath = path.resolve(__dirname, 'src/plugins/markstreamD2Disabled.ts')
+  const markstreamExportsFile = '/node_modules/markstream-vue/dist/exports.js'
+  const markstreamD2File = '/node_modules/markstream-vue/dist/index7.js'
 
-function resolveManualChunk(id: string): string | undefined {
-  if (!id.includes('node_modules')) return undefined
+  return {
+    name: 'markstream-d2-stub',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      if (enableD2) return null
 
-  for (const matcher of vendorChunkMatchers) {
-    if (matcher.match(id)) return matcher.name
+      const normalizedSource = normalizeFilePath(source)
+      const normalizedImporter = importer ? normalizeFilePath(importer) : ''
+
+      if (
+        (source === './index7.js' && normalizedImporter.endsWith(markstreamExportsFile)) ||
+        normalizedSource.endsWith(markstreamD2File)
+      ) {
+        return stubPath
+      }
+
+      return null
+    },
   }
-
-  return 'vendor'
 }
 
 export default defineConfig(env => {
@@ -62,6 +59,7 @@ export default defineConfig(env => {
   const packageEnv = loadEnv(env.mode, process.cwd())
   const viteEnv = { ...rootEnv, ...packageEnv } as unknown as ImportMetaEnv
   const isProduction = env.mode === 'production'
+  const enableMarkstreamD2 = viteEnv.VITE_APP_ENABLE_D2 === 'true'
 
   return {
     resolve: {
@@ -69,33 +67,31 @@ export default defineConfig(env => {
         '@': path.resolve(__dirname, 'src'),
       },
     },
-    plugins: setupPlugins(),
+    plugins: [
+      markstreamD2StubPlugin(enableMarkstreamD2),
+      vue({
+        script: {
+          defineModel: true,
+        },
+      }),
+    ],
     server: {
       host: '0.0.0.0',
       port: 1002,
       open: false,
-      // Enhanced HMR for Node.js 24 and cross-package development
       hmr: {
         overlay: true,
-        port: 24678, // Dedicated HMR port to avoid conflicts
+        port: 24678,
       },
-      // Watch for changes in workspace packages
       watch: {
-        // Watch shared package for hot reloading
         ignored: ['!**/node_modules/@chatgpt-web/**'],
         usePolling: false,
         interval: 100,
         binaryInterval: 300,
       },
-      // Optimized for development performance
       fs: {
         strict: false,
-        allow: [
-          // Allow access to workspace packages
-          '../../packages',
-          '../../node_modules',
-          '../..',
-        ],
+        allow: ['../../packages', '../../node_modules', '../..'],
       },
       proxy: {
         '/api': {
@@ -106,43 +102,16 @@ export default defineConfig(env => {
       },
     },
     build: {
-      // Performance optimization for Node.js 24 - ESNext target for latest 2 major versions
-      target: ['esnext', 'chrome131', 'firefox133', 'safari18'], // Latest 2 major versions of mainstream browsers
-      reportCompressedSize: false, // Disable compressed size reporting for faster builds
-      sourcemap: false, // Disable sourcemap in production for performance
-
-      // Code splitting optimization - simplified strategy to avoid circular dependencies
+      target: ['esnext', 'chrome131', 'firefox133', 'safari18'],
+      reportCompressedSize: false,
+      sourcemap: false,
       rollupOptions: {
         output: {
-          // Simplified code splitting strategy, avoiding circular dependencies
-          manualChunks: id => resolveManualChunk(id),
-          // Optimize file names for better caching
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
-          assetFileNames: assetInfo => {
-            if (!assetInfo.name) return 'assets/[name]-[hash].[ext]'
-            const info = assetInfo.name.split('.')
-            let extType = info[info.length - 1]
-            if (/\.(?:mp4|webm|ogg|mp3|wav|flac|aac)(?:\?.*)?$/i.test(assetInfo.name)) {
-              extType = 'media'
-            } else if (/\.(?:png|jpe?g|gif|svg)(?:\?.*)?$/i.test(assetInfo.name)) {
-              extType = 'img'
-            } else if (/\.(?:woff2?|eot|ttf|otf)(?:\?.*)?$/i.test(assetInfo.name)) {
-              extType = 'fonts'
-            }
-            return `${extType}/[name]-[hash].[ext]`
-          },
-        },
-
-        // More aggressive tree-shaking for Node.js 24
-        treeshake: {
-          preset: 'recommended',
-          manualPureFunctions: ['console.log', 'console.info', 'console.debug'],
-          moduleSideEffects: false, // Assume all modules have no side effects for aggressive tree-shaking
+          assetFileNames: assetInfo => resolveAssetFileName(assetInfo.name),
         },
       },
-
-      // Compression optimization - esbuild optimization configuration
       minify: 'esbuild',
       esbuildOptions: {
         drop: isProduction ? ['console', 'debugger'] : [],
@@ -150,58 +119,28 @@ export default defineConfig(env => {
         minifySyntax: true,
         minifyWhitespace: true,
         treeShaking: true,
-        // More aggressive compression
         legalComments: 'none',
-        // Node.js 24 specific optimizations - ESNext target
         target: 'esnext',
         platform: 'browser',
       },
-
-      // Build optimization - optimized for small files
-      chunkSizeWarningLimit: 500, // Lower warning threshold to 500KB
-      assetsInlineLimit: 4096, // Inline resources under 4KB as base64
-
+      chunkSizeWarningLimit: 800,
+      assetsInlineLimit: 4096,
       commonjsOptions: {
         ignoreTryCatch: false,
       },
     },
-
-    // Optimize dependency pre-building for Node.js 24
     optimizeDeps: {
       include: ['vue', 'vue-router', 'pinia', '@vueuse/core', 'vue-i18n'],
-      exclude: [
-        // Exclude large libraries for on-demand loading and splitting
-        'katex',
-        'naive-ui', // Let UI library load on demand
-        'html-to-image',
-      ],
-      // Node.js 24 specific optimizations - ESNext target
       esbuildOptions: {
         target: 'esnext',
       },
     },
-
-    // Enhanced development experience
     css: {
       devSourcemap: true,
     },
-
-    // Enable experimental features for Node.js 24
-    experimental: {
-      // Enable build optimization
-      renderBuiltUrl(filename, { hostType }) {
-        if (hostType === 'js') {
-          return { js: `/${filename}` }
-        } else {
-          return { relative: true }
-        }
-      },
-    },
-
-    // Define global constants for better tree-shaking
     define: {
-      __VUE_OPTIONS_API__: false, // Disable Options API for smaller bundle
-      __VUE_PROD_DEVTOOLS__: false, // Disable devtools in production
+      __VUE_OPTIONS_API__: false,
+      __VUE_PROD_DEVTOOLS__: false,
     },
   }
 })

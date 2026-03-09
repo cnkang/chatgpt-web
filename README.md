@@ -14,7 +14,7 @@
 ChatGPT Web is a modern, monorepo-based web application for OpenAI-compatible APIs and Azure OpenAI:
 
 - Frontend: Vue 3.5+ (`apps/web`)
-- Backend: Express 5 (`apps/api`)
+- Backend: Native Node.js 24+ with HTTP/2 (`apps/api`)
 - Shared types/utilities: `packages/shared`
 - Documentation: `packages/docs`
 
@@ -22,8 +22,45 @@ ChatGPT Web is a modern, monorepo-based web application for OpenAI-compatible AP
 
 - OpenAI/Azure provider support with optional OpenAI-compatible third-party endpoint mode
 - Clean UI with streaming responses
+- Rich assistant rendering with Markdown, KaTeX, and Mermaid by default
+- Native Node.js HTTP/2 routing with Transport Layer abstraction (zero framework dependencies)
 - Monorepo scripts via pnpm + Turborepo
 - Production-ready Dockerfile included
+
+## Architecture
+
+### Backend Architecture
+
+The backend uses a modern, framework-agnostic architecture built on Node.js 24+ native HTTP/2:
+
+- **Transport Layer**: Framework-agnostic abstractions for HTTP operations (request/response interfaces)
+- **HTTP/2 Adapter**: Native Node.js HTTP/2 implementation with HTTP/1.1 fallback
+- **Security Components**: Native middleware for authentication, rate limiting, CORS, sessions, and validation
+- **Zero Framework Dependencies**: No Express, helmet, or other web framework dependencies
+
+### HTTP/2 Deployment
+
+The backend supports HTTP/2 with automatic HTTP/1.1 fallback:
+
+- **With TLS (Recommended)**: Full HTTP/2 support in browsers, requires valid TLS certificates
+- **Without TLS (h2c)**: Limited browser support, suitable for development or behind reverse proxies
+- **Reverse Proxy**: Works seamlessly behind nginx, CloudFlare, AWS ALB (may receive HTTP/1.1)
+
+### Node.js Version Requirement
+
+**Node.js 24.0.0 or higher is required** for:
+
+- Native HTTP/2 support (`node:http2` module)
+- Native fetch API
+- Modern ESM features
+
+### TLS Requirements for HTTP/2
+
+For full HTTP/2 support in browsers:
+
+- **Production**: Use valid TLS certificates (Let's Encrypt, commercial CA)
+- **Development**: HTTP/1.1 mode works without TLS
+- **Behind Reverse Proxy**: Proxy handles TLS, backend can use HTTP/1.1
 
 ## Quick Start (Local Development)
 
@@ -142,6 +179,42 @@ pnpm lint
 pnpm type-check
 pnpm test
 ```
+
+## Frontend Rendering Defaults
+
+- Assistant responses render Markdown, KaTeX, and Mermaid diagrams by default.
+- `markstream-vue`'s D2 diagram support is intentionally disabled in the default build.
+- Set `VITE_APP_ENABLE_D2=true` only if you explicitly want to ship D2 and accept the extra bundle cost.
+
+## Migration Notes
+
+### Express to Native HTTP/2 Migration (Completed)
+
+The backend has been migrated from Express.js to native Node.js HTTP/2:
+
+**Removed Dependencies:**
+
+- `express` - Replaced with native `node:http2` module
+- `express-session` - Replaced with native session management
+- `express-rate-limit` - Replaced with native rate limiter
+- `helmet` - Replaced with native security headers middleware
+- `connect-redis` - Replaced with native `redis` client
+
+**Benefits:**
+
+- Zero framework dependencies
+- Native HTTP/2 support with HTTP/1.1 fallback
+- Framework-agnostic Transport Layer abstraction
+- Improved maintainability and portability
+
+**API Compatibility:**
+
+- All endpoints remain unchanged
+- Response formats are identical
+- Security policies preserved
+- Streaming responses work identically
+
+For technical details, see `.kiro/specs/express-to-native-routing-migration/`
 
 ## Contributing
 

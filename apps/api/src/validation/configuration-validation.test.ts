@@ -138,7 +138,7 @@ describe('configuration Validation Integration', () => {
       const config = ConfigurationValidator.getValidatedConfig()
 
       expect(config.apiKey).toBe('sk-test-key-123')
-      expect(config.model).toBe('gpt-5.2')
+      expect(config.model).toBe('gpt-5.4')
       expect(config.baseUrl).toBeUndefined()
       expect(config.timeout).toBe(100000)
       expect(config.disableDebug).toBe(false)
