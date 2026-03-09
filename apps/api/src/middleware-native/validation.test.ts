@@ -134,7 +134,7 @@ describe('sanitizeObject', () => {
     }
     const result = sanitizeObject(input) as Record<string, unknown>
     expect(result).toEqual({ name: 'test' })
-    expect(result.__proto__).not.toHaveProperty('admin')
+    expect(Object.getPrototypeOf(result)).not.toHaveProperty('admin')
   })
 
   it('should block prototype key', () => {

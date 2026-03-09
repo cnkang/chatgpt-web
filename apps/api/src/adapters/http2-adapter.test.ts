@@ -1143,7 +1143,7 @@ describe('HTTP2Adapter', () => {
   describe('Route Matching and Execution', () => {
     it('should match and execute route handler', async () => {
       const router = new (class {
-        private routes: any[] = []
+        private readonly routes: any[] = []
 
         addRoute(route: any) {
           this.routes.push(route)
@@ -1172,7 +1172,9 @@ describe('HTTP2Adapter', () => {
         use() {
           return this
         }
-        async execute() {}
+        async execute() {
+          return undefined
+        }
       })()
 
       const adapter = new HTTP2Adapter(router as any, middleware as any, {
@@ -1245,7 +1247,9 @@ describe('HTTP2Adapter', () => {
         use() {
           return this
         }
-        async execute() {}
+        async execute() {
+          return undefined
+        }
       })()
 
       const adapter = new HTTP2Adapter(router as any, middleware as any, {
@@ -1294,7 +1298,7 @@ describe('HTTP2Adapter', () => {
       const executionOrder: string[] = []
 
       const router = new (class {
-        private routes: any[] = []
+        private readonly routes: any[] = []
 
         addRoute(route: any) {
           this.routes.push(route)
@@ -1386,7 +1390,7 @@ describe('HTTP2Adapter', () => {
 
     it('should stop execution if middleware sends response', async () => {
       const router = new (class {
-        private routes: any[] = []
+        private readonly routes: any[] = []
 
         addRoute(route: any) {
           this.routes.push(route)
@@ -1425,7 +1429,9 @@ describe('HTTP2Adapter', () => {
         use() {
           return this
         }
-        async execute() {}
+        async execute() {
+          return undefined
+        }
       })()
 
       const adapter = new HTTP2Adapter(router as any, middleware as any, {
@@ -1474,7 +1480,7 @@ describe('HTTP2Adapter', () => {
 
     it('should match routes with different HTTP methods', async () => {
       const router = new (class {
-        private routes: any[] = []
+        private readonly routes: any[] = []
 
         addRoute(route: any) {
           this.routes.push(route)
@@ -1503,7 +1509,9 @@ describe('HTTP2Adapter', () => {
         use() {
           return this
         }
-        async execute() {}
+        async execute() {
+          return undefined
+        }
       })()
 
       const adapter = new HTTP2Adapter(router as any, middleware as any, {

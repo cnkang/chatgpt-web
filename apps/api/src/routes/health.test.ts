@@ -6,16 +6,16 @@ import { describe, expect, it } from 'vitest'
 import { createMockRequest, createMockResponse } from '../test/test-helpers.js'
 import { healthHandler } from './health.js'
 
+async function executeHealthRequest() {
+  const req = createMockRequest({ path: '/api/health' })
+  const res = createMockResponse()
+
+  await healthHandler(req, res)
+
+  return res._capture
+}
+
 describe('Health Route', () => {
-  async function executeHealthRequest() {
-    const req = createMockRequest({ path: '/api/health' })
-    const res = createMockResponse()
-
-    await healthHandler(req, res)
-
-    return res._capture
-  }
-
   it('should return 200 with health data', async () => {
     const response = await executeHealthRequest()
 

@@ -8,6 +8,19 @@ import { verifyHandler } from './verify.js'
 
 const originalEnv = process.env
 
+async function executeVerify(body: unknown) {
+  const req = createMockRequest({
+    method: 'POST',
+    path: '/api/verify',
+    body,
+  })
+  const res = createMockResponse()
+
+  await verifyHandler(req, res)
+
+  return res._capture
+}
+
 describe('Verify Route', () => {
   beforeEach(() => {
     vi.resetModules()
@@ -17,19 +30,6 @@ describe('Verify Route', () => {
   afterEach(() => {
     process.env = originalEnv
   })
-
-  async function executeVerify(body: unknown) {
-    const req = createMockRequest({
-      method: 'POST',
-      path: '/api/verify',
-      body,
-    })
-    const res = createMockResponse()
-
-    await verifyHandler(req, res)
-
-    return res._capture
-  }
 
   it('should return 200 for valid token', async () => {
     process.env.AUTH_SECRET_KEY = 'test-secret-key'

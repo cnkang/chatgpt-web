@@ -10,11 +10,11 @@
 
 import * as fc from 'fast-check'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { HTTP2Adapter } from '../../adapters/http2-adapter.js'
-import { createConfiguredServer } from '../../server.js'
-import type { MiddlewareChainImpl } from '../../transport/middleware-chain.js'
-import type { RouterImpl } from '../../transport/router.js'
-import type { TransportRequest, TransportResponse } from '../../transport/types.js'
+import {
+  createConfiguredTestAdapter,
+  createIntegrationRequest,
+  executeAdapterRequest,
+} from './adapter-test-utils.js'
 
 // ============================================================================
 // Test Configuration
@@ -45,6 +45,46 @@ interface BaseResponse {
 
 const originalEnv = process.env
 
+function validateResponseStructure(body: unknown, endpoint?: string, method?: string): void {
+  expect(body).toBeDefined()
+  expect(typeof body).toBe('object')
+  expect(body).not.toBeNull()
+
+  const response = body as any
+
+  if (endpoint === '/health' && method === 'GET' && response.uptime !== undefined) {
+    expect(response).toHaveProperty('uptime')
+    expect(response).toHaveProperty('message')
+    expect(response).toHaveProperty('timestamp')
+    expect(typeof response.uptime).toBe('number')
+    expect(typeof response.message).toBe('string')
+    expect(typeof response.timestamp).toBe('number')
+    return
+  }
+
+  expect(response).toHaveProperty('status')
+  expect(response).toHaveProperty('message')
+  expect(response).toHaveProperty('data')
+  expect(['Success', 'Fail', 'Error']).toContain(response.status)
+  expect(['string', 'object']).toContain(typeof response.message)
+
+  if (response.message !== null) {
+    expect(typeof response.message).toBe('string')
+  }
+
+  expect('data' in response).toBe(true)
+
+  if (response.error) {
+    expect(typeof response.error).toBe('object')
+    expect(response.error).toHaveProperty('code')
+    expect(response.error).toHaveProperty('type')
+    expect(response.error).toHaveProperty('timestamp')
+    expect(typeof response.error.code).toBe('string')
+    expect(typeof response.error.type).toBe('string')
+    expect(typeof response.error.timestamp).toBe('string')
+  }
+}
+
 describe('Property 2: Response Structure Consistency', () => {
   beforeEach(() => {
     vi.resetModules()
@@ -60,200 +100,6 @@ describe('Property 2: Response Structure Consistency', () => {
     process.env = originalEnv
   })
 
-  /**
-   * Create a test adapter with all routes registered
-   */
-  function createTestAdapter(): HTTP2Adapter {
-    process.env.HTTP2_ENABLED = 'false'
-    return createConfiguredServer().adapter
-  }
-
-  /**
-   * Create a mock request
-   */
-  function createMockRequest(
-    method: string,
-    path: string,
-    body: unknown = null,
-    headers: Record<string, string> = {},
-  ): TransportRequest {
-    const url = new URL(`http://localhost${path}`)
-    const headersObj = new Headers(Object.entries(headers))
-
-    return {
-      method,
-      path,
-      url,
-      headers: headersObj,
-      body,
-      ip: '127.0.0.1',
-      getHeader: (name: string) => headersObj.get(name) || undefined,
-      getQuery: (name: string) => url.searchParams.get(name) || undefined,
-    } as TransportRequest
-  }
-
-  /**
-   * Create a mock response that captures status, headers, and body
-   */
-  function createMockResponse(): {
-    response: TransportResponse
-    captured: {
-      statusCode: number
-      headers: Map<string, string | string[]>
-      body: unknown
-      finished: boolean
-    }
-  } {
-    const captured = {
-      statusCode: 200,
-      headers: new Map<string, string | string[]>(),
-      body: null as unknown,
-      finished: false,
-    }
-
-    const response = {
-      status: vi.fn((code: number) => {
-        captured.statusCode = code
-        return response
-      }),
-      setHeader: vi.fn((name: string, value: string | string[]) => {
-        captured.headers.set(name.toLowerCase(), value)
-        return response
-      }),
-      getHeader: vi.fn((name: string) => captured.headers.get(name.toLowerCase())),
-      json: vi.fn((data: unknown) => {
-        captured.body = data
-        captured.finished = true
-      }),
-      send: vi.fn((data: string | Buffer) => {
-        captured.body = data
-        captured.finished = true
-      }),
-      write: vi.fn(() => true),
-      end: vi.fn(() => {
-        captured.finished = true
-      }),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
-
-    return { response, captured }
-  }
-
-  /**
-   * Execute a request through the router and capture the response
-   */
-  async function executeRequest(
-    adapter: HTTP2Adapter,
-    req: TransportRequest,
-  ): Promise<{
-    statusCode: number
-    headers: Map<string, string | string[]>
-    body: unknown
-  }> {
-    const { response, captured } = createMockResponse()
-
-    // Get the router from the adapter
-    const router = (adapter as any).router as RouterImpl
-    const middlewareChain = (adapter as any).middleware as MiddlewareChainImpl
-
-    // Execute middleware
-    await middlewareChain.execute(req, response)
-
-    // If response not finished, execute route
-    if (!captured.finished) {
-      const route = router.match(req.method, req.path)
-      if (route) {
-        // Execute route middleware
-        for (const mw of route.middleware) {
-          if (captured.finished) break
-          await new Promise<void>((resolve, reject) => {
-            const next = (error?: Error) => {
-              if (error) reject(error)
-              else resolve()
-            }
-            const result = mw(req, response, next)
-            if (result instanceof Promise) {
-              result.then(() => resolve()).catch(reject)
-            }
-          })
-        }
-
-        // Execute handler
-        if (!captured.finished) {
-          await route.handler(req, response)
-        }
-      } else {
-        response.status(404).json({
-          status: 'Fail',
-          message: 'Not Found',
-          data: null,
-        })
-      }
-    }
-
-    return {
-      statusCode: captured.statusCode,
-      headers: captured.headers,
-      body: captured.body,
-    }
-  }
-
-  /**
-   * Validate response structure
-   * Note: Some endpoints have different response structures:
-   * - /health returns {uptime, message, timestamp} (legacy format) - only for GET requests
-   * - Most endpoints return {status, message, data, error?}
-   * - message can be string or null in some cases
-   */
-  function validateResponseStructure(body: unknown, endpoint?: string, method?: string): void {
-    expect(body).toBeDefined()
-    expect(typeof body).toBe('object')
-    expect(body).not.toBeNull()
-
-    const response = body as any
-
-    // Special case: /health endpoint has different structure only for GET requests
-    if (endpoint === '/health' && method === 'GET' && response.uptime !== undefined) {
-      expect(response).toHaveProperty('uptime')
-      expect(response).toHaveProperty('message')
-      expect(response).toHaveProperty('timestamp')
-      expect(typeof response.uptime).toBe('number')
-      expect(typeof response.message).toBe('string')
-      expect(typeof response.timestamp).toBe('number')
-      return
-    }
-
-    // Standard response structure validation
-    // Required fields
-    expect(response).toHaveProperty('status')
-    expect(response).toHaveProperty('message')
-    expect(response).toHaveProperty('data')
-
-    // Status must be one of the valid values
-    expect(['Success', 'Fail', 'Error']).toContain(response.status)
-
-    // Message must be a string or null (some endpoints return null for message)
-    expect(['string', 'object']).toContain(typeof response.message)
-    if (response.message !== null) {
-      expect(typeof response.message).toBe('string')
-    }
-
-    // Data can be any type (including null)
-    expect('data' in response).toBe(true)
-
-    // If error field exists, validate its structure
-    if (response.error) {
-      expect(typeof response.error).toBe('object')
-      expect(response.error).toHaveProperty('code')
-      expect(response.error).toHaveProperty('type')
-      expect(response.error).toHaveProperty('timestamp')
-      expect(typeof response.error.code).toBe('string')
-      expect(typeof response.error.type).toBe('string')
-      expect(typeof response.error.timestamp).toBe('string')
-    }
-  }
-
   // ============================================================================
   // Property Tests - Success Cases
   // ============================================================================
@@ -261,9 +107,9 @@ describe('Property 2: Response Structure Consistency', () => {
   it('Property 2: GET /health returns consistent response structure', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest('GET', '/health')
-        const res = await executeRequest(adapter, req)
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest('GET', '/health')
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBe(200)
         validateResponseStructure(res.body, '/health', 'GET')
@@ -284,9 +130,9 @@ describe('Property 2: Response Structure Consistency', () => {
   it('Property 2: POST /session returns consistent response structure', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest('POST', '/session', {})
-        const res = await executeRequest(adapter, req)
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest('POST', '/session', {})
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBe(200)
         validateResponseStructure(res.body)
@@ -305,9 +151,9 @@ describe('Property 2: Response Structure Consistency', () => {
   it('Property 2: POST /verify with valid token returns consistent response structure', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest('POST', '/verify', { token: 'test-secret-key' })
-        const res = await executeRequest(adapter, req)
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest('POST', '/verify', { token: 'test-secret-key' })
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBe(200)
         validateResponseStructure(res.body)
@@ -326,8 +172,8 @@ describe('Property 2: Response Structure Consistency', () => {
   it('Property 2: POST /config with auth returns consistent response structure', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest(
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest(
           'POST',
           '/config',
           {},
@@ -335,7 +181,7 @@ describe('Property 2: Response Structure Consistency', () => {
             authorization: 'Bearer test-secret-key',
           },
         )
-        const res = await executeRequest(adapter, req)
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBe(200)
         validateResponseStructure(res.body)
@@ -359,9 +205,9 @@ describe('Property 2: Response Structure Consistency', () => {
       fc.asyncProperty(
         fc.string({ minLength: 1 }).filter(s => s !== 'test-secret-key'),
         async invalidToken => {
-          const adapter = createTestAdapter()
-          const req = createMockRequest('POST', '/verify', { token: invalidToken })
-          const res = await executeRequest(adapter, req)
+          const adapter = createConfiguredTestAdapter()
+          const req = createIntegrationRequest('POST', '/verify', { token: invalidToken })
+          const res = await executeAdapterRequest(adapter, req)
 
           const expectsValidationError = invalidToken.trim().length === 0
 
@@ -386,9 +232,9 @@ describe('Property 2: Response Structure Consistency', () => {
   it('Property 2: POST /config without auth returns consistent error structure', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest('POST', '/config', {})
-        const res = await executeRequest(adapter, req)
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest('POST', '/config', {})
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBe(401)
         validateResponseStructure(res.body)
@@ -407,9 +253,9 @@ describe('Property 2: Response Structure Consistency', () => {
   it('Property 2: POST /chat-process without auth returns consistent error structure', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest('POST', '/chat-process', { prompt: 'test' })
-        const res = await executeRequest(adapter, req)
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest('POST', '/chat-process', { prompt: 'test' })
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBe(401)
         validateResponseStructure(res.body)
@@ -431,9 +277,9 @@ describe('Property 2: Response Structure Consistency', () => {
           .string({ minLength: 1, maxLength: 50 })
           .filter(s => !['health', 'session', 'verify', 'config', 'chat-process'].includes(s)),
         async randomPath => {
-          const adapter = createTestAdapter()
-          const req = createMockRequest('GET', `/${randomPath}`)
-          const res = await executeRequest(adapter, req)
+          const adapter = createConfiguredTestAdapter()
+          const req = createIntegrationRequest('GET', `/${randomPath}`)
+          const res = await executeAdapterRequest(adapter, req)
 
           expect(res.statusCode).toBe(404)
           validateResponseStructure(res.body)
@@ -453,9 +299,9 @@ describe('Property 2: Response Structure Consistency', () => {
   it('Property 2: POST /verify with missing token field returns consistent error structure', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest('POST', '/verify', {}) // Missing token field
-        const res = await executeRequest(adapter, req)
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest('POST', '/verify', {}) // Missing token field
+        const res = await executeAdapterRequest(adapter, req)
 
         // Should return 400 for validation error
         expect([400, 401]).toContain(res.statusCode)
@@ -500,14 +346,14 @@ describe('Property 2: Response Structure Consistency', () => {
 
     await fc.assert(
       fc.asyncProperty(fc.constantFrom(...validEndpoints), async endpoint => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest(
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest(
           endpoint.method,
           endpoint.path,
           endpoint.body,
           endpoint.headers,
         )
-        const res = await executeRequest(adapter, req)
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBeGreaterThanOrEqual(200)
         expect(res.statusCode).toBeLessThan(300)
@@ -533,14 +379,14 @@ describe('Property 2: Response Structure Consistency', () => {
 
     await fc.assert(
       fc.asyncProperty(fc.constantFrom(...invalidEndpoints), async endpoint => {
-        const adapter = createTestAdapter()
-        const req = createMockRequest(
+        const adapter = createConfiguredTestAdapter()
+        const req = createIntegrationRequest(
           endpoint.method,
           endpoint.path,
           endpoint.body,
           endpoint.headers,
         )
-        const res = await executeRequest(adapter, req)
+        const res = await executeAdapterRequest(adapter, req)
 
         expect(res.statusCode).toBeGreaterThanOrEqual(400)
         validateResponseStructure(res.body)
@@ -564,9 +410,9 @@ describe('Property 2: Response Structure Consistency', () => {
         fc.constantFrom(...methods),
         fc.constantFrom(...paths),
         async (method, path) => {
-          const adapter = createTestAdapter()
-          const req = createMockRequest(method, path, {})
-          const res = await executeRequest(adapter, req)
+          const adapter = createConfiguredTestAdapter()
+          const req = createIntegrationRequest(method, path, {})
+          const res = await executeAdapterRequest(adapter, req)
 
           // All responses should have consistent structure
           validateResponseStructure(res.body, path, method)
@@ -594,9 +440,9 @@ describe('Property 2: Response Structure Consistency', () => {
           fc.object(),
         ),
         async (path, body) => {
-          const adapter = createTestAdapter()
-          const req = createMockRequest('POST', path, body)
-          const res = await executeRequest(adapter, req)
+          const adapter = createConfiguredTestAdapter()
+          const req = createIntegrationRequest('POST', path, body)
+          const res = await executeAdapterRequest(adapter, req)
 
           // Regardless of input, response structure should be consistent
           validateResponseStructure(res.body)

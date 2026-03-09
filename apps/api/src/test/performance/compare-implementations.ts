@@ -51,6 +51,8 @@ interface ComparisonResult {
   passed: boolean
 }
 
+type ComparisonMetricKey = keyof ComparisonResult['differences']
+
 function getPackageManagerCommand(): { command: string; argsPrefix: string[] } {
   const packageManagerExecPath = process.env.npm_execpath
   if (!packageManagerExecPath) {
@@ -296,46 +298,7 @@ function printComparison(comparisons: ComparisonResult[]): void {
   console.log('='.repeat(80))
 
   for (const comparison of comparisons) {
-    console.log(`\nEndpoint: ${comparison.endpoint} | Concurrency: ${comparison.concurrency}`)
-    console.log('-'.repeat(80))
-
-    console.log('\nThroughput (Requests/sec):')
-    console.log(`  Express:  ${comparison.express.requestsPerSecond.toFixed(2)}`)
-    console.log(`  Native:   ${comparison.native.requestsPerSecond.toFixed(2)}`)
-    console.log(
-      `  Diff:     ${comparison.differences.rps.value >= 0 ? '+' : ''}${comparison.differences.rps.value.toFixed(2)} ` +
-        `(${comparison.differences.rps.percentage >= 0 ? '+' : ''}${comparison.differences.rps.percentage.toFixed(2)}%) ` +
-        `${comparison.differences.rps.withinThreshold ? '✓' : '✗'}`,
-    )
-
-    console.log('\nLatency p50 (ms):')
-    console.log(`  Express:  ${comparison.express.p50.toFixed(2)}`)
-    console.log(`  Native:   ${comparison.native.p50.toFixed(2)}`)
-    console.log(
-      `  Diff:     ${comparison.differences.p50.value >= 0 ? '+' : ''}${comparison.differences.p50.value.toFixed(2)} ` +
-        `(${comparison.differences.p50.percentage >= 0 ? '+' : ''}${comparison.differences.p50.percentage.toFixed(2)}%) ` +
-        `${comparison.differences.p50.withinThreshold ? '✓' : '✗'}`,
-    )
-
-    console.log('\nLatency p95 (ms):')
-    console.log(`  Express:  ${comparison.express.p95.toFixed(2)}`)
-    console.log(`  Native:   ${comparison.native.p95.toFixed(2)}`)
-    console.log(
-      `  Diff:     ${comparison.differences.p95.value >= 0 ? '+' : ''}${comparison.differences.p95.value.toFixed(2)} ` +
-        `(${comparison.differences.p95.percentage >= 0 ? '+' : ''}${comparison.differences.p95.percentage.toFixed(2)}%) ` +
-        `${comparison.differences.p95.withinThreshold ? '✓' : '✗'}`,
-    )
-
-    console.log('\nLatency p99 (ms):')
-    console.log(`  Express:  ${comparison.express.p99.toFixed(2)}`)
-    console.log(`  Native:   ${comparison.native.p99.toFixed(2)}`)
-    console.log(
-      `  Diff:     ${comparison.differences.p99.value >= 0 ? '+' : ''}${comparison.differences.p99.value.toFixed(2)} ` +
-        `(${comparison.differences.p99.percentage >= 0 ? '+' : ''}${comparison.differences.p99.percentage.toFixed(2)}%) ` +
-        `${comparison.differences.p99.withinThreshold ? '✓' : '✗'}`,
-    )
-
-    console.log(`\nResult: ${comparison.passed ? '✓ PASSED' : '✗ FAILED'}`)
+    printComparisonBlock(comparison)
   }
 
   console.log(`\n${'='.repeat(80)}`)
@@ -346,6 +309,59 @@ function printComparison(comparisons: ComparisonResult[]): void {
     `Native implementation performance is ${allPassed ? 'within' : 'NOT within'} 10% of Express baseline`,
   )
   console.log()
+}
+
+function printComparisonBlock(comparison: ComparisonResult): void {
+  console.log(`\nEndpoint: ${comparison.endpoint} | Concurrency: ${comparison.concurrency}`)
+  console.log('-'.repeat(80))
+
+  printMetric(
+    'Throughput (Requests/sec)',
+    comparison.express.requestsPerSecond,
+    comparison.native.requestsPerSecond,
+    comparison.differences.rps,
+  )
+  printMetric(
+    'Latency p50 (ms)',
+    comparison.express.p50,
+    comparison.native.p50,
+    comparison.differences.p50,
+  )
+  printMetric(
+    'Latency p95 (ms)',
+    comparison.express.p95,
+    comparison.native.p95,
+    comparison.differences.p95,
+  )
+  printMetric(
+    'Latency p99 (ms)',
+    comparison.express.p99,
+    comparison.native.p99,
+    comparison.differences.p99,
+  )
+
+  console.log(`\nResult: ${comparison.passed ? '✓ PASSED' : '✗ FAILED'}`)
+}
+
+function printMetric(
+  label: string,
+  expressValue: number,
+  nativeValue: number,
+  difference: ComparisonResult['differences'][ComparisonMetricKey],
+): void {
+  console.log(`\n${label}:`)
+  console.log(`  Express:  ${expressValue.toFixed(2)}`)
+  console.log(`  Native:   ${nativeValue.toFixed(2)}`)
+  console.log(`  Diff:     ${formatDiff(difference)}`)
+}
+
+function formatDiff(difference: ComparisonResult['differences'][ComparisonMetricKey]): string {
+  return `${formatSigned(difference.value)} (${formatSigned(difference.percentage)}%) ${difference.withinThreshold ? '✓' : '✗'}`
+}
+
+function formatSigned(value: number): string {
+  const prefix = value >= 0 ? '+' : ''
+  return `${prefix}${value.toFixed(2)}`
 }
 
 /**

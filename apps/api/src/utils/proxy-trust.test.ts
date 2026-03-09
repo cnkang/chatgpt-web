@@ -6,7 +6,7 @@ import {
   readForwardedClientIp,
 } from './proxy-trust.js'
 
-function createNativeRequest(headers: Record<string, string>, remoteAddress = '10.0.0.2') {
+function createNativeRequest(headers: Record<string, string>, remoteAddress = 'trusted-proxy-hop') {
   return {
     headers,
     socket: {
@@ -49,7 +49,7 @@ describe('proxy trust utilities', () => {
       {
         'x-forwarded-for': '198.51.100.8, 203.0.113.10',
       },
-      '10.0.0.2',
+      'trusted-proxy-hop',
     )
 
     expect(readForwardedClientIp(nativeRequest as never, 1)).toBe('203.0.113.10')
@@ -61,7 +61,7 @@ describe('proxy trust utilities', () => {
       {},
       {
         socket: {
-          remoteAddress: '203.0.113.10',
+          remoteAddress: 'direct-tls-socket',
           encrypted: true,
         },
       },

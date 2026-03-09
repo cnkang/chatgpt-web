@@ -136,7 +136,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
     const middleware = createSecurityHeadersMiddleware(false)
     const req = createSecurityTestRequest()
-    req._nativeRequest = { socket: { remoteAddress: '10.0.0.5', encrypted: true } }
+    req._nativeRequest = { socket: { remoteAddress: 'direct-tls-socket', encrypted: true } }
     const res = createMockResponse()
     const next = vi.fn()
 

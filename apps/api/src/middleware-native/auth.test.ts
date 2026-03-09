@@ -6,63 +6,61 @@ import { describe, expect, it, vi } from 'vitest'
 import type { TransportRequest, TransportResponse } from '../transport/types.js'
 import { createAuthMiddleware } from './auth.js'
 
+function createMockRequest(authHeader?: string): TransportRequest {
+  return {
+    method: 'POST',
+    path: '/api/config',
+    url: new URL('http://localhost:3002/api/config'),
+    headers: new Headers(),
+    body: {},
+    ip: '127.0.0.1',
+    getHeader: (name: string) => {
+      if (name.toLowerCase() === 'authorization') {
+        return authHeader
+      }
+      return undefined
+    },
+    getQuery: () => undefined,
+  }
+}
+
+function createMockResponse() {
+  let statusCode = 200
+  let responseData: unknown = null
+  let headersSentFlag = false
+
+  const res: TransportResponse = {
+    status: (code: number) => {
+      statusCode = code
+      return res
+    },
+    setHeader: () => res,
+    getHeader: () => undefined,
+    json: (data: unknown) => {
+      responseData = data
+      headersSentFlag = true
+    },
+    send: () => {
+      headersSentFlag = true
+    },
+    write: () => true,
+    end: () => {},
+    get headersSent() {
+      return headersSentFlag
+    },
+    get finished() {
+      return headersSentFlag
+    },
+  }
+
+  return {
+    res,
+    getResponseData: () => responseData,
+    getStatusCode: () => statusCode,
+  }
+}
+
 describe('Authentication Middleware', () => {
-  // Helper to create mock request
-  function createMockRequest(authHeader?: string): TransportRequest {
-    return {
-      method: 'POST',
-      path: '/api/config',
-      url: new URL('http://localhost:3002/api/config'),
-      headers: new Headers(),
-      body: {},
-      ip: '127.0.0.1',
-      getHeader: (name: string) => {
-        if (name.toLowerCase() === 'authorization') {
-          return authHeader
-        }
-        return undefined
-      },
-      getQuery: () => undefined,
-    }
-  }
-
-  // Helper to create mock response
-  function createMockResponse() {
-    let statusCode = 200
-    let responseData: unknown = null
-    let headersSentFlag = false
-
-    const res: TransportResponse = {
-      status: (code: number) => {
-        statusCode = code
-        return res
-      },
-      setHeader: () => res,
-      getHeader: () => undefined,
-      json: (data: unknown) => {
-        responseData = data
-        headersSentFlag = true
-      },
-      send: () => {
-        headersSentFlag = true
-      },
-      write: () => true,
-      end: () => {},
-      get headersSent() {
-        return headersSentFlag
-      },
-      get finished() {
-        return headersSentFlag
-      },
-    }
-
-    return {
-      res,
-      getStatusCode: () => statusCode,
-      getResponseData: () => responseData,
-    }
-  }
-
   describe('when AUTH_SECRET_KEY is not configured', () => {
     it('should allow request to proceed without authentication', async () => {
       const middleware = createAuthMiddleware('')

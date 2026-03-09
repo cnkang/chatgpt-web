@@ -7,6 +7,8 @@ import type { TransportRequest, TransportResponse } from '../transport/types.js'
 import * as loggerModule from '../utils/logger.js'
 import { createRequestLoggerMiddleware } from './request-logger.js'
 
+type EndChunk = Buffer | string | undefined
+
 describe('Request Logger Middleware', () => {
   let mockReq: TransportRequest
   let mockRes: TransportResponse
@@ -61,7 +63,7 @@ describe('Request Logger Middleware', () => {
       write: vi.fn(),
       end: vi.fn((...args: unknown[]) => {
         if (endCallback) {
-          endCallback(...(args as [string | Buffer | undefined]))
+          endCallback(...(args as [EndChunk]))
         }
       }),
       headersSent: false,
@@ -73,9 +75,9 @@ describe('Request Logger Middleware', () => {
     const originalEnd = mockRes.end
     mockRes.end = vi.fn((...args: unknown[]) => {
       if (endCallback) {
-        endCallback(...(args as [string | Buffer | undefined]))
+        endCallback(...(args as [EndChunk]))
       }
-      return originalEnd(...(args as [string | Buffer | undefined]))
+      return originalEnd(...(args as [EndChunk]))
     }) as any
 
     next = vi.fn()

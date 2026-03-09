@@ -9,11 +9,11 @@
 
 import * as fc from 'fast-check'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { HTTP2Adapter } from '../../adapters/http2-adapter.js'
-import { createConfiguredServer } from '../../server.js'
-import type { MiddlewareChainImpl } from '../../transport/middleware-chain.js'
-import type { RouterImpl } from '../../transport/router.js'
-import type { TransportRequest, TransportResponse } from '../../transport/types.js'
+import {
+  createConfiguredTestAdapter,
+  createIntegrationRequest,
+  executeAdapterRequest,
+} from './adapter-test-utils.js'
 
 // ============================================================================
 // Test Configuration
@@ -42,146 +42,6 @@ describe('Property 1: Route Path Normalization', () => {
     process.env = originalEnv
   })
 
-  /**
-   * Create a test adapter with all routes registered
-   */
-  function createTestAdapter(): HTTP2Adapter {
-    process.env.HTTP2_ENABLED = 'false'
-    return createConfiguredServer().adapter
-  }
-
-  /**
-   * Create a mock request
-   */
-  function createMockRequest(
-    method: string,
-    path: string,
-    body: unknown = null,
-    headers: Record<string, string> = {},
-  ): TransportRequest {
-    const url = new URL(`http://localhost${path}`)
-    const headersObj = new Headers(Object.entries(headers))
-
-    return {
-      method,
-      path,
-      url,
-      headers: headersObj,
-      body,
-      ip: '127.0.0.1',
-      getHeader: (name: string) => headersObj.get(name) || undefined,
-      getQuery: (name: string) => url.searchParams.get(name) || undefined,
-    } as TransportRequest
-  }
-
-  /**
-   * Create a mock response that captures status, headers, and body
-   */
-  function createMockResponse(): {
-    response: TransportResponse
-    captured: {
-      statusCode: number
-      headers: Map<string, string | string[]>
-      body: unknown
-      finished: boolean
-    }
-  } {
-    const captured = {
-      statusCode: 200,
-      headers: new Map<string, string | string[]>(),
-      body: null as unknown,
-      finished: false,
-    }
-
-    const response = {
-      status: vi.fn((code: number) => {
-        captured.statusCode = code
-        return response
-      }),
-      setHeader: vi.fn((name: string, value: string | string[]) => {
-        captured.headers.set(name.toLowerCase(), value)
-        return response
-      }),
-      getHeader: vi.fn((name: string) => captured.headers.get(name.toLowerCase())),
-      json: vi.fn((data: unknown) => {
-        captured.body = data
-        captured.finished = true
-      }),
-      send: vi.fn((data: string | Buffer) => {
-        captured.body = data
-        captured.finished = true
-      }),
-      write: vi.fn(() => true),
-      end: vi.fn(() => {
-        captured.finished = true
-      }),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
-
-    return { response, captured }
-  }
-
-  /**
-   * Execute a request through the router and capture the response
-   */
-  async function executeRequest(
-    adapter: HTTP2Adapter,
-    req: TransportRequest,
-  ): Promise<{
-    statusCode: number
-    headers: Map<string, string | string[]>
-    body: unknown
-  }> {
-    const { response, captured } = createMockResponse()
-
-    // Get the router from the adapter (we need to access it through the private field)
-    // For testing, we'll manually execute the routing logic
-    const router = (adapter as any).router as RouterImpl
-    const middlewareChain = (adapter as any).middleware as MiddlewareChainImpl
-
-    // Execute middleware
-    await middlewareChain.execute(req, response)
-
-    // If response not finished, execute route
-    if (!captured.finished) {
-      const route = router.match(req.method, req.path)
-      if (route) {
-        // Execute route middleware
-        for (const mw of route.middleware) {
-          if (captured.finished) break
-          await new Promise<void>((resolve, reject) => {
-            const next = (error?: Error) => {
-              if (error) reject(error)
-              else resolve()
-            }
-            const result = mw(req, response, next)
-            if (result instanceof Promise) {
-              result.then(() => resolve()).catch(reject)
-            }
-          })
-        }
-
-        // Execute handler
-        if (!captured.finished) {
-          await route.handler(req, response)
-        }
-      } else {
-        response.status(404).json({
-          status: 'Fail',
-          message: 'Not Found',
-          data: null,
-        })
-      }
-    }
-
-    return {
-      statusCode: captured.statusCode,
-      headers: captured.headers,
-      body: captured.body,
-    }
-  }
-
   // ============================================================================
   // Property Tests
   // ============================================================================
@@ -189,14 +49,14 @@ describe('Property 1: Route Path Normalization', () => {
   it('Property 1: /api/health and /health produce identical responses', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
+        const adapter = createConfiguredTestAdapter()
 
         // Test both paths
-        const req1 = createMockRequest('GET', '/api/health')
-        const req2 = createMockRequest('GET', '/health')
+        const req1 = createIntegrationRequest('GET', '/api/health')
+        const req2 = createIntegrationRequest('GET', '/health')
 
-        const res1 = await executeRequest(adapter, req1)
-        const res2 = await executeRequest(adapter, req2)
+        const res1 = await executeAdapterRequest(adapter, req1)
+        const res2 = await executeAdapterRequest(adapter, req2)
 
         // Verify status codes match
         expect(res1.statusCode).toBe(res2.statusCode)
@@ -223,14 +83,14 @@ describe('Property 1: Route Path Normalization', () => {
   it('Property 1: /api/session and /session produce identical responses', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
+        const adapter = createConfiguredTestAdapter()
 
         // Test both paths
-        const req1 = createMockRequest('POST', '/api/session', {})
-        const req2 = createMockRequest('POST', '/session', {})
+        const req1 = createIntegrationRequest('POST', '/api/session', {})
+        const req2 = createIntegrationRequest('POST', '/session', {})
 
-        const res1 = await executeRequest(adapter, req1)
-        const res2 = await executeRequest(adapter, req2)
+        const res1 = await executeAdapterRequest(adapter, req1)
+        const res2 = await executeAdapterRequest(adapter, req2)
 
         // Verify status codes match
         expect(res1.statusCode).toBe(res2.statusCode)
@@ -263,16 +123,16 @@ describe('Property 1: Route Path Normalization', () => {
   it('Property 1: /api/verify and /verify produce identical responses for valid tokens', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
+        const adapter = createConfiguredTestAdapter()
 
         const validToken = 'test-secret-key'
 
         // Test both paths with valid token
-        const req1 = createMockRequest('POST', '/api/verify', { token: validToken })
-        const req2 = createMockRequest('POST', '/verify', { token: validToken })
+        const req1 = createIntegrationRequest('POST', '/api/verify', { token: validToken })
+        const req2 = createIntegrationRequest('POST', '/verify', { token: validToken })
 
-        const res1 = await executeRequest(adapter, req1)
-        const res2 = await executeRequest(adapter, req2)
+        const res1 = await executeAdapterRequest(adapter, req1)
+        const res2 = await executeAdapterRequest(adapter, req2)
 
         // Verify status codes match
         expect(res1.statusCode).toBe(res2.statusCode)
@@ -299,16 +159,18 @@ describe('Property 1: Route Path Normalization', () => {
   it('Property 1: /api/verify and /verify produce identical responses for invalid tokens', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.string({ minLength: 1 }).filter(s => s !== 'test-secret-key'),
+        fc
+          .string({ minLength: 1 })
+          .filter(s => s.trim().length > 0 && s.trim() !== 'test-secret-key'),
         async randomToken => {
-          const adapter = createTestAdapter()
+          const adapter = createConfiguredTestAdapter()
 
           // Test both paths with invalid token
-          const req1 = createMockRequest('POST', '/api/verify', { token: randomToken })
-          const req2 = createMockRequest('POST', '/verify', { token: randomToken })
+          const req1 = createIntegrationRequest('POST', '/api/verify', { token: randomToken })
+          const req2 = createIntegrationRequest('POST', '/verify', { token: randomToken })
 
-          const res1 = await executeRequest(adapter, req1)
-          const res2 = await executeRequest(adapter, req2)
+          const res1 = await executeAdapterRequest(adapter, req1)
+          const res2 = await executeAdapterRequest(adapter, req2)
 
           // Verify status codes match (both should be 401)
           expect(res1.statusCode).toBe(res2.statusCode)
@@ -346,18 +208,18 @@ describe('Property 1: Route Path Normalization', () => {
   it('Property 1: /api/config and /config produce identical responses with auth', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
+        const adapter = createConfiguredTestAdapter()
 
         const authHeaders = {
           authorization: 'Bearer test-secret-key',
         }
 
         // Test both paths with authentication
-        const req1 = createMockRequest('POST', '/api/config', {}, authHeaders)
-        const req2 = createMockRequest('POST', '/config', {}, authHeaders)
+        const req1 = createIntegrationRequest('POST', '/api/config', {}, authHeaders)
+        const req2 = createIntegrationRequest('POST', '/config', {}, authHeaders)
 
-        const res1 = await executeRequest(adapter, req1)
-        const res2 = await executeRequest(adapter, req2)
+        const res1 = await executeAdapterRequest(adapter, req1)
+        const res2 = await executeAdapterRequest(adapter, req2)
 
         // Verify status codes match
         expect(res1.statusCode).toBe(res2.statusCode)
@@ -384,14 +246,14 @@ describe('Property 1: Route Path Normalization', () => {
   it('Property 1: /api/config and /config produce identical 401 responses without auth', async () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
-        const adapter = createTestAdapter()
+        const adapter = createConfiguredTestAdapter()
 
         // Test both paths without authentication
-        const req1 = createMockRequest('POST', '/api/config', {})
-        const req2 = createMockRequest('POST', '/config', {})
+        const req1 = createIntegrationRequest('POST', '/api/config', {})
+        const req2 = createIntegrationRequest('POST', '/config', {})
 
-        const res1 = await executeRequest(adapter, req1)
-        const res2 = await executeRequest(adapter, req2)
+        const res1 = await executeAdapterRequest(adapter, req1)
+        const res2 = await executeAdapterRequest(adapter, req2)
 
         // Verify status codes match
         expect(res1.statusCode).toBe(res2.statusCode)
@@ -432,10 +294,10 @@ describe('Property 1: Route Path Normalization', () => {
 
     await fc.assert(
       fc.asyncProperty(fc.constantFrom(...endpoints), async endpoint => {
-        const adapter = createTestAdapter()
+        const adapter = createConfiguredTestAdapter()
 
         // Test with /api prefix
-        const req1 = createMockRequest(
+        const req1 = createIntegrationRequest(
           endpoint.method,
           `/api${endpoint.path}`,
           endpoint.body,
@@ -443,15 +305,15 @@ describe('Property 1: Route Path Normalization', () => {
         )
 
         // Test without /api prefix
-        const req2 = createMockRequest(
+        const req2 = createIntegrationRequest(
           endpoint.method,
           endpoint.path,
           endpoint.body,
           endpoint.headers || {},
         )
 
-        const res1 = await executeRequest(adapter, req1)
-        const res2 = await executeRequest(adapter, req2)
+        const res1 = await executeAdapterRequest(adapter, req1)
+        const res2 = await executeAdapterRequest(adapter, req2)
 
         // Verify status codes match
         expect(res1.statusCode).toBe(res2.statusCode)

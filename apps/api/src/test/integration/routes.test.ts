@@ -12,19 +12,19 @@ import { createMockRequest, createMockResponse } from '../test-helpers.js'
 // Mock environment variables
 const originalEnv = process.env
 
+async function executeHandler(
+  handler: typeof healthHandler | typeof sessionHandler | typeof verifyHandler,
+  requestOverrides: Parameters<typeof createMockRequest>[0],
+) {
+  const req = createMockRequest(requestOverrides)
+  const res = createMockResponse()
+
+  await handler(req, res)
+
+  return res._capture
+}
+
 describe('Route Integration Tests', () => {
-  async function executeHandler(
-    handler: typeof healthHandler | typeof sessionHandler | typeof verifyHandler,
-    requestOverrides: Parameters<typeof createMockRequest>[0],
-  ) {
-    const req = createMockRequest(requestOverrides)
-    const res = createMockResponse()
-
-    await handler(req, res)
-
-    return res._capture
-  }
-
   beforeEach(() => {
     vi.resetModules()
     process.env = { ...originalEnv }

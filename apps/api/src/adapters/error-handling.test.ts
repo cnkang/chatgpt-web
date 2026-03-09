@@ -12,72 +12,72 @@ import { MiddlewareChainImpl, RouterImpl } from '../transport/index.js'
 import { AppError, ErrorType } from '../utils/error-handler.js'
 import { HTTP2Adapter } from './http2-adapter.js'
 
+function createAdapter() {
+  const router = new RouterImpl()
+  const middleware = new MiddlewareChainImpl()
+  const adapter = new HTTP2Adapter(router, middleware, {
+    http2: false, // Use HTTP/1.1 for easier testing
+  })
+  return { adapter, router, middleware }
+}
+
+async function makeRequest(
+  server: HttpServer,
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<{ statusCode: number; body: any; headers: any }> {
+  return new Promise((resolve, reject) => {
+    const address = server.address()
+    if (!address || typeof address === 'string') {
+      reject(new Error('Server not listening'))
+      return
+    }
+
+    const http = require('node:http')
+    const req = http.request(
+      {
+        hostname: 'localhost',
+        port: address.port,
+        path,
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+      (res: any) => {
+        let data = ''
+        res.on('data', (chunk: Buffer) => {
+          data += chunk.toString()
+        })
+        res.on('end', () => {
+          try {
+            resolve({
+              statusCode: res.statusCode,
+              body: JSON.parse(data),
+              headers: res.headers,
+            })
+          } catch {
+            resolve({
+              statusCode: res.statusCode,
+              body: data,
+              headers: res.headers,
+            })
+          }
+        })
+      },
+    )
+
+    req.on('error', reject)
+
+    if (body) {
+      req.write(JSON.stringify(body))
+    }
+    req.end()
+  })
+}
+
 describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
-  function createAdapter() {
-    const router = new RouterImpl()
-    const middleware = new MiddlewareChainImpl()
-    const adapter = new HTTP2Adapter(router, middleware, {
-      http2: false, // Use HTTP/1.1 for easier testing
-    })
-    return { adapter, router, middleware }
-  }
-
-  async function makeRequest(
-    server: HttpServer,
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<{ statusCode: number; body: any; headers: any }> {
-    return new Promise((resolve, reject) => {
-      const address = server.address()
-      if (!address || typeof address === 'string') {
-        reject(new Error('Server not listening'))
-        return
-      }
-
-      const http = require('node:http')
-      const req = http.request(
-        {
-          hostname: 'localhost',
-          port: address.port,
-          path,
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        (res: any) => {
-          let data = ''
-          res.on('data', (chunk: Buffer) => {
-            data += chunk.toString()
-          })
-          res.on('end', () => {
-            try {
-              resolve({
-                statusCode: res.statusCode,
-                body: JSON.parse(data),
-                headers: res.headers,
-              })
-            } catch {
-              resolve({
-                statusCode: res.statusCode,
-                body: data,
-                headers: res.headers,
-              })
-            }
-          })
-        },
-      )
-
-      req.on('error', reject)
-
-      if (body) {
-        req.write(JSON.stringify(body))
-      }
-      req.end()
-    })
-  }
-
   describe('Error Response Structure', () => {
     it('should return 400 for validation errors with correct structure', async () => {
       const { adapter, router } = createAdapter()
@@ -483,7 +483,7 @@ describe('HTTP2Adapter Error Handling (Task 2.6)', () => {
       const server = adapter.getServer() as HttpServer
 
       try {
-        const response = await makeRequest(server, 'GET', '/nonexistent', undefined)
+        const response = await makeRequest(server, 'GET', '/nonexistent')
 
         expect(response.statusCode).toBe(404)
         expect(response.body).toMatchObject({

@@ -11,11 +11,73 @@ import type {
   MiddlewareHandler,
   NextFunction,
   Route,
+  RouteHandler,
   Router,
   SessionData,
   TransportRequest,
   TransportResponse,
 } from './types.js'
+
+function createMockChain(handlers: MiddlewareHandler[]): MiddlewareChain {
+  const chain: MiddlewareChain = {
+    use(handler: MiddlewareHandler) {
+      handlers.push(handler)
+      return chain
+    },
+    async execute(req: TransportRequest, res: TransportResponse) {
+      await executeMockHandlers(handlers, req, res)
+    },
+  }
+
+  return chain
+}
+
+async function executeMockHandlers(
+  handlers: MiddlewareHandler[],
+  req: TransportRequest,
+  res: TransportResponse,
+): Promise<void> {
+  for (const handler of handlers) {
+    let nextCalled = false
+    await new Promise<void>((resolve, reject) => {
+      const next: NextFunction = (error?: Error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        nextCalled = true
+        resolve()
+      }
+
+      try {
+        Promise.resolve(handler(req, res, next))
+          .then(() => {
+            if (!nextCalled) {
+              resolve()
+            }
+          })
+          .catch(reject)
+      } catch (error) {
+        reject(error)
+      }
+    })
+
+    if (!nextCalled) {
+      return
+    }
+  }
+}
+
+function splitRouteHandlers(handlers: Array<MiddlewareHandler | RouteHandler>): {
+  handler: RouteHandler
+  middleware: MiddlewareHandler[]
+} {
+  return {
+    handler: handlers.at(-1) as RouteHandler,
+    middleware: handlers.slice(0, -1) as MiddlewareHandler[],
+  }
+}
 
 describe('transport layer interfaces', () => {
   describe('TransportRequest', () => {
@@ -303,58 +365,6 @@ describe('transport layer interfaces', () => {
     let mockResponse: TransportResponse
     let executionOrder: string[]
 
-    // Helper to create a mock middleware chain
-    const createMockChain = (handlers: MiddlewareHandler[]): MiddlewareChain => {
-      return {
-        use(handler: MiddlewareHandler) {
-          handlers.push(handler)
-          return this
-        },
-        async execute(req: TransportRequest, res: TransportResponse) {
-          return new Promise<void>((resolve, reject) => {
-            let index = 0
-            let completed = false
-            const next: NextFunction = (error?: Error) => {
-              if (completed) return
-              if (error) {
-                completed = true
-                reject(error)
-                return
-              }
-              if (index < handlers.length) {
-                const handler = handlers[index++]
-                try {
-                  const result = handler(req, res, next)
-                  if (result instanceof Promise) {
-                    result
-                      .then(() => {
-                        // If middleware completes without calling next, resolve after a delay
-                        if (!completed && index > 0) {
-                          setTimeout(() => {
-                            if (!completed) {
-                              completed = true
-                              resolve()
-                            }
-                          }, 10)
-                        }
-                      })
-                      .catch(reject)
-                  }
-                } catch (err) {
-                  completed = true
-                  reject(err)
-                }
-              } else {
-                completed = true
-                resolve()
-              }
-            }
-            next()
-          })
-        },
-      }
-    }
-
     beforeEach(() => {
       executionOrder = []
 
@@ -515,27 +525,23 @@ describe('transport layer interfaces', () => {
           routes.push(route)
           return this
         },
-        get(path: string, ...handlers: (MiddlewareHandler | any)[]) {
-          const middleware = handlers.slice(0, -1) as MiddlewareHandler[]
-          const handler = handlers[handlers.length - 1]
+        get(path: string, ...handlers: Array<MiddlewareHandler | RouteHandler>) {
+          const { handler, middleware } = splitRouteHandlers(handlers)
           routes.push({ method: 'GET', path, middleware, handler })
           return this
         },
-        post(path: string, ...handlers: (MiddlewareHandler | any)[]) {
-          const middleware = handlers.slice(0, -1) as MiddlewareHandler[]
-          const handler = handlers[handlers.length - 1]
+        post(path: string, ...handlers: Array<MiddlewareHandler | RouteHandler>) {
+          const { handler, middleware } = splitRouteHandlers(handlers)
           routes.push({ method: 'POST', path, middleware, handler })
           return this
         },
-        put(path: string, ...handlers: (MiddlewareHandler | any)[]) {
-          const middleware = handlers.slice(0, -1) as MiddlewareHandler[]
-          const handler = handlers[handlers.length - 1]
+        put(path: string, ...handlers: Array<MiddlewareHandler | RouteHandler>) {
+          const { handler, middleware } = splitRouteHandlers(handlers)
           routes.push({ method: 'PUT', path, middleware, handler })
           return this
         },
-        delete(path: string, ...handlers: (MiddlewareHandler | any)[]) {
-          const middleware = handlers.slice(0, -1) as MiddlewareHandler[]
-          const handler = handlers[handlers.length - 1]
+        delete(path: string, ...handlers: Array<MiddlewareHandler | RouteHandler>) {
+          const { handler, middleware } = splitRouteHandlers(handlers)
           routes.push({ method: 'DELETE', path, middleware, handler })
           return this
         },
