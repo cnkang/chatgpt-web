@@ -38,6 +38,7 @@ When working on this codebase, always prioritize:
 - Markdown rendering with syntax highlighting (highlight.js)
 - Math formulas via KaTeX
 - Diagrams via Mermaid
+- D2 diagram rendering is deployment-level opt-in, not a default product feature
 - Preserve formatting across sessions
 
 ## Feature Boundaries

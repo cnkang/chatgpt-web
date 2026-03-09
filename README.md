@@ -22,6 +22,7 @@ ChatGPT Web is a modern, monorepo-based web application for OpenAI-compatible AP
 
 - OpenAI/Azure provider support with optional OpenAI-compatible third-party endpoint mode
 - Clean UI with streaming responses
+- Rich assistant rendering with Markdown, KaTeX, and Mermaid by default
 - Native Node.js HTTP/2 routing with Transport Layer abstraction (zero framework dependencies)
 - Monorepo scripts via pnpm + Turborepo
 - Production-ready Dockerfile included
@@ -178,6 +179,12 @@ pnpm lint
 pnpm type-check
 pnpm test
 ```
+
+## Frontend Rendering Defaults
+
+- Assistant responses render Markdown, KaTeX, and Mermaid diagrams by default.
+- `markstream-vue`'s D2 diagram support is intentionally disabled in the default build.
+- Set `VITE_APP_ENABLE_D2=true` only if you explicitly want to ship D2 and accept the extra bundle cost.
 
 ## Migration Notes
 
