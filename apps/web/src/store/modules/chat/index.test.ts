@@ -132,4 +132,32 @@ describe('chat store persistence throttling', () => {
     vi.runAllTimers()
     expect(setLocalStateMock).toHaveBeenCalledTimes(1)
   })
+
+  it('syncs an explicit route without triggering navigation', async () => {
+    const { store } = await setupStore()
+
+    store.syncActiveFromRoute(4004)
+
+    expect(store.active).toBe(4004)
+    expect(store.history[0]).toMatchObject({ uuid: 4004, title: 'chat.newChatTitle' })
+    expect(store.chat[0]).toMatchObject({ uuid: 4004, data: [] })
+    expect(routerPushMock).not.toHaveBeenCalled()
+    expect(setLocalStateMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('resets to the default conversation and updates the route when clearing history', async () => {
+    const { store } = await setupStore()
+
+    store.syncActiveFromRoute(4004)
+    routerPushMock.mockClear()
+    setLocalStateMock.mockClear()
+
+    store.clearHistory()
+
+    expect(store.active).toBe(1002)
+    expect(store.history).toHaveLength(1)
+    expect(store.history[0]).toMatchObject({ uuid: 1002 })
+    expect(routerPushMock).toHaveBeenCalledWith({ name: 'Chat', params: { uuid: 1002 } })
+    expect(setLocalStateMock).toHaveBeenCalledTimes(1)
+  })
 })

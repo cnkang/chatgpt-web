@@ -1,6 +1,12 @@
+// @env browser
 import { darkTheme, lightTheme } from 'naive-ui'
 
+const SCROLLBAR_STYLE_ATTR = 'data-chatgpt-web-scrollbar-style'
+
 function setupScrollbarStyle() {
+  if (typeof document === 'undefined') return
+  if (document.head.querySelector(`[${SCROLLBAR_STYLE_ATTR}]`)) return
+
   const style = document.createElement('style')
   const styleContent = `
     ::-webkit-scrollbar {
@@ -21,7 +27,8 @@ function setupScrollbarStyle() {
     }
   `
 
-  style.innerHTML = styleContent
+  style.setAttribute(SCROLLBAR_STYLE_ATTR, 'true')
+  style.textContent = styleContent
   document.head.appendChild(style)
 }
 

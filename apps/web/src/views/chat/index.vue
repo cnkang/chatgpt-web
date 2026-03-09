@@ -4,7 +4,6 @@ import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 import { useChatStore } from '@/store'
 import type { Chat } from '@chatgpt-web/shared'
-import { toPng } from 'html-to-image'
 import { NButton, NInput, useDialog, useMessage } from 'naive-ui'
 import type { InputInst } from 'naive-ui'
 import { computed, onMounted, onUnmounted, useTemplateRef } from 'vue'
@@ -15,6 +14,7 @@ import { useChat } from './hooks/useChat'
 import { useChatConversationFlow } from './hooks/useChatConversationFlow'
 import { useScroll } from './hooks/useScroll'
 import { useUsingContext } from './hooks/useUsingContext'
+import { parseChatRouteUuid } from './layout/routeSync'
 
 const route = useRoute()
 const dialog = useDialog()
@@ -27,9 +27,9 @@ const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
 const { scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
 
-const { uuid } = route.params as { uuid: string }
+const routeUuid = computed(() => parseChatRouteUuid(route.params.uuid) ?? 0)
 
-const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
+const dataSources = computed(() => chatStore.getChatByUuid(routeUuid.value))
 const conversationList = computed(() =>
   dataSources.value.filter((item: Chat) => !item.inversion && !!item.conversationOptions),
 )
@@ -37,7 +37,7 @@ const conversationList = computed(() =>
 const inputRef = useTemplateRef<InputInst>('inputRef')
 const { prompt, loading, handleSubmit, onRegenerate, handleEnter, handleStop, cleanup } =
   useChatConversationFlow({
-    uuid: +uuid,
+    uuid: routeUuid.value,
     isMobile,
     usingContext,
     dataSources,
@@ -62,6 +62,8 @@ function handleExport() {
       try {
         d.loading = true
         const ele = document.getElementById('image-wrapper')
+        if (!ele) throw new Error('image-wrapper not found')
+        const { toPng } = await import('html-to-image')
         const imgUrl = await toPng(ele as HTMLDivElement)
         const tempLink = document.createElement('a')
         tempLink.style.display = 'none'
@@ -92,7 +94,7 @@ function handleDelete(index: number) {
     positiveText: t('common.yes'),
     negativeText: t('common.no'),
     onPositiveClick: () => {
-      chatStore.deleteChatByUuid(+uuid, index)
+      chatStore.deleteChatByUuid(routeUuid.value, index)
     },
   })
 }
@@ -106,7 +108,7 @@ function handleClear() {
     positiveText: t('common.yes'),
     negativeText: t('common.no'),
     onPositiveClick: () => {
-      chatStore.clearChatByUuid(+uuid)
+      chatStore.clearChatByUuid(routeUuid.value)
     },
   })
 }

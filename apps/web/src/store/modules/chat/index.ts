@@ -67,6 +67,19 @@ function getChatGroupByExplicitUuid(state: ChatState, uuid: number): ChatGroup |
   return state.chat[index]
 }
 
+function createEmptyHistory(uuid: number): History {
+  return { uuid, title: t('chat.newChatTitle'), isEdit: false }
+}
+
+function ensureChatGroup(state: ChatState, uuid: number) {
+  const index = findExplicitChatGroupIndex(state.chat, uuid)
+  if (index !== -1) return false
+
+  state.history.unshift(createEmptyHistory(uuid))
+  state.chat.unshift({ uuid, data: [] })
+  return true
+}
+
 export const useChatStore = defineStore('chat-store', {
   state: (): ChatState => getLocalState(),
 
@@ -129,6 +142,14 @@ export const useChatStore = defineStore('chat-store', {
     async setActive(uuid: number) {
       this.active = uuid
       return await this.reloadRoute(uuid)
+    },
+
+    syncActiveFromRoute(uuid: number) {
+      const created = ensureChatGroup(this.$state, uuid)
+      if (this.active === uuid && !created) return
+
+      this.active = uuid
+      this.recordState(created)
     },
 
     getChatByUuidAndIndex(uuid: number, index: number) {
@@ -198,7 +219,7 @@ export const useChatStore = defineStore('chat-store', {
 
     clearHistory() {
       this.$state = { ...defaultState() }
-      this.recordState()
+      void this.reloadRoute(this.active ?? undefined)
     },
 
     async reloadRoute(uuid?: number) {

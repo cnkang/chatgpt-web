@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useBasicLayout } from '@/hooks/useBasicLayout'
-import MarkdownRender from 'markstream-vue'
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 
 interface Props {
   inversion?: boolean
@@ -13,6 +12,10 @@ interface Props {
 
 const props = defineProps<Props>()
 const { isMobile } = useBasicLayout()
+const MarkdownContent = defineAsyncComponent({
+  loader: async () => await import('./MarkdownContent.vue'),
+  suspensible: false,
+})
 
 const wrapClass = computed(() => {
   return [
@@ -32,13 +35,7 @@ const wrapClass = computed(() => {
   <div class="text-black" :class="wrapClass">
     <div class="leading-relaxed break-words">
       <div v-if="asRawText" class="whitespace-pre-wrap" v-text="text" />
-      <MarkdownRender
-        v-else
-        class="markdown-body"
-        :class="{ 'markdown-body-generate': loading }"
-        :content="text || ''"
-        :final="!loading"
-      />
+      <MarkdownContent v-else :content="text || ''" :final="!loading" :loading="loading" />
     </div>
   </div>
 </template>
