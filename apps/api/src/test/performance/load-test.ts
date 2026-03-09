@@ -1,4 +1,4 @@
-export {}
+export const __loadTestModule = true
 
 /**
  * Load Testing Script for Express vs Native Implementation

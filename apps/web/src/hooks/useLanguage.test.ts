@@ -38,7 +38,7 @@ describe('useLanguage', () => {
     expect(setLocaleMock).toHaveBeenCalledTimes(1)
     expect(setLocaleMock).toHaveBeenCalledWith(store.language)
 
-    language.value
+    expect(language.value).toBeDefined()
     expect(setLocaleMock).toHaveBeenCalledTimes(1)
 
     const nextLanguage = store.language === 'en-US' ? 'zh-CN' : 'en-US'

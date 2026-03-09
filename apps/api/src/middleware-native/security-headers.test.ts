@@ -6,15 +6,15 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildHttpOrigin, createMockRequest, createMockResponse } from '../test/test-helpers.js'
 import { createSecurityHeadersMiddleware } from './security-headers.js'
 
+function createSecurityTestRequest() {
+  const req = createMockRequest({ path: '/api/health' })
+  req._nativeRequest = { socket: { remoteAddress: '127.0.0.1' } }
+  return req
+}
+
 describe('createSecurityHeadersMiddleware', () => {
   const localhostConnectSource = `${buildHttpOrigin('localhost')}:*`
   const localhostWebSocketSource = 'ws://localhost:*'
-
-  function createSecurityTestRequest() {
-    const req = createMockRequest({ path: '/api/health' })
-    req._nativeRequest = { socket: { remoteAddress: '127.0.0.1' } }
-    return req
-  }
 
   it('should set Content-Security-Policy header', async () => {
     const middleware = createSecurityHeadersMiddleware()
@@ -116,6 +116,27 @@ describe('createSecurityHeadersMiddleware', () => {
     const middleware = createSecurityHeadersMiddleware(true)
     const req = createSecurityTestRequest()
     req.headers.set('x-forwarded-proto', 'https')
+    const res = createMockResponse()
+    const next = vi.fn()
+
+    await middleware(req, res, next)
+
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload',
+    )
+    expect(next).toHaveBeenCalled()
+
+    process.env.NODE_ENV = originalEnv
+  })
+
+  it('should set Strict-Transport-Security for direct TLS production requests', async () => {
+    const originalEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+
+    const middleware = createSecurityHeadersMiddleware(false)
+    const req = createSecurityTestRequest()
+    req._nativeRequest = { socket: { remoteAddress: '10.0.0.5', encrypted: true } }
     const res = createMockResponse()
     const next = vi.fn()
 

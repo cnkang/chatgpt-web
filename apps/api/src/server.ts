@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { z } from 'zod'
 import { HTTP2Adapter, type TLSConfig } from './adapters/http2-adapter.js'
@@ -34,6 +35,8 @@ const DEFAULT_FORM_BODY_LIMIT = 32_768
 const DEFAULT_CHAT_BODY_LIMIT = 1_048_576
 const DEFAULT_VERIFY_BODY_LIMIT = 1_024
 const DEFAULT_SESSION_MAX_AGE = 24 * 60 * 60 * 1000
+let developmentSessionSecret: string | undefined
+let hasWarnedAboutDevelopmentSessionSecret = false
 
 const chatRequestSchema = z.object({
   prompt: z.string().trim().min(1),
@@ -115,13 +118,24 @@ function resolveTlsConfig(): TLSConfig | undefined {
 function resolveSessionSecret(): string {
   const secret = process.env.SESSION_SECRET || process.env.AUTH_SECRET_KEY
 
-  if (!secret) {
-    throw new Error(
-      'SESSION_SECRET or AUTH_SECRET_KEY must be configured for secure session management',
-    )
+  if (secret) {
+    return secret
   }
 
-  return secret
+  if (process.env.NODE_ENV !== 'production') {
+    developmentSessionSecret ??= randomBytes(32).toString('hex')
+    if (!hasWarnedAboutDevelopmentSessionSecret) {
+      hasWarnedAboutDevelopmentSessionSecret = true
+      console.warn(
+        'Warning: SESSION_SECRET/AUTH_SECRET_KEY not configured. Using an ephemeral development session secret.',
+      )
+    }
+    return developmentSessionSecret
+  }
+
+  throw new Error(
+    'SESSION_SECRET or AUTH_SECRET_KEY must be configured for secure session management',
+  )
 }
 
 function createSessionStore(): SessionStore {

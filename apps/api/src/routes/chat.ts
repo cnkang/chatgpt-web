@@ -5,8 +5,7 @@
 
 import type { RequestOptions } from '@chatgpt-web/shared'
 import { chatReplyProcess } from '../chatgpt/provider-adapter.js'
-import type { RouteHandler } from '../transport/types.js'
-import type { TransportResponse } from '../transport/types.js'
+import type { RouteHandler, TransportResponse } from '../transport/types.js'
 import { logger } from '../utils/logger.js'
 
 interface ChatProcessBody {

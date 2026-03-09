@@ -2,7 +2,7 @@ import type { IncomingMessage } from 'node:http'
 import type { Http2ServerRequest } from 'node:http2'
 import type { TransportRequest } from '../transport/types.js'
 
-export type TrustedProxyConfig = boolean | string[]
+export type TrustedProxyConfig = boolean | number | string[]
 
 const LOOPBACK_ADDRESSES = new Set(['127.0.0.1', '::1'])
 
@@ -14,6 +14,10 @@ export function parseTrustedProxyConfig(value: string | undefined): TrustedProxy
   const normalizedValue = value.toLowerCase()
   if (normalizedValue === 'true' || normalizedValue === 'loopback') {
     return true
+  }
+
+  if (/^\d+$/.test(value.trim())) {
+    return Number.parseInt(value, 10)
   }
 
   return value
@@ -47,6 +51,10 @@ export function isTrustedProxyAddress(
     return LOOPBACK_ADDRESSES.has(normalizedRemoteAddress)
   }
 
+  if (typeof trustedProxy === 'number') {
+    return trustedProxy > 0
+  }
+
   if (Array.isArray(trustedProxy)) {
     return trustedProxy.includes(normalizedRemoteAddress)
   }
@@ -65,9 +73,18 @@ export function readForwardedClientIp(
   const forwarded = req.headers['x-forwarded-for']
   if (forwarded) {
     const value = Array.isArray(forwarded) ? forwarded[0] : forwarded
-    const firstForwardedIp = value.split(',')[0]?.trim()
-    if (firstForwardedIp) {
-      return normalizeIpAddress(firstForwardedIp)
+    const forwardedIps = value
+      .split(',')
+      .map(entry => normalizeIpAddress(entry.trim()))
+      .filter(Boolean)
+
+    if (forwardedIps.length > 0) {
+      if (typeof trustedProxy === 'number') {
+        const clientIndex = Math.max(0, forwardedIps.length - trustedProxy)
+        return forwardedIps[clientIndex]
+      }
+
+      return forwardedIps[0]
     }
   }
 
@@ -84,15 +101,23 @@ export function isTrustedForwardedHttps(
   req: TransportRequest,
   trustedProxy: TrustedProxyConfig,
 ): boolean {
+  const nativeRequest = req._nativeRequest as (IncomingMessage | Http2ServerRequest) | undefined
+  if (isDirectHttpsRequest(nativeRequest)) {
+    return true
+  }
+
   if (trustedProxy === false) {
     return false
   }
-
-  const nativeRequest = req._nativeRequest as (IncomingMessage | Http2ServerRequest) | undefined
 
   if (!isTrustedProxyAddress(nativeRequest?.socket?.remoteAddress, trustedProxy)) {
     return false
   }
 
-  return req.getHeader('x-forwarded-proto') === 'https'
+  const forwardedProto = req.getHeader('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase()
+  return forwardedProto === 'https'
+}
+
+function isDirectHttpsRequest(req: (IncomingMessage | Http2ServerRequest) | undefined): boolean {
+  return Boolean(req?.socket && 'encrypted' in req.socket && req.socket.encrypted)
 }
