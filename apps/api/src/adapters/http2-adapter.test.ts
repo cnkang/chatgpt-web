@@ -506,6 +506,26 @@ describe('HTTP2Adapter', () => {
     })
   })
 
+  // Helper to create mock response object
+  function createMockRes(overrides: Partial<ReturnType<typeof createBaseMockRes>> = {}) {
+    return {
+      ...createBaseMockRes(),
+      ...overrides,
+    }
+  }
+
+  function createBaseMockRes() {
+    return {
+      statusCode: 200,
+      headersSent: false,
+      writableEnded: false,
+      setHeader: vi.fn(),
+      getHeader: vi.fn(),
+      write: vi.fn(),
+      end: vi.fn(),
+    }
+  }
+
   describe('Response Wrapping', () => {
     let adapter: HTTP2Adapter
 
@@ -516,15 +536,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should set status code', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
+      const mockRes = createMockRes()
 
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
@@ -1051,16 +1063,7 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should handle null and undefined in JSON', () => {
-      const mockRes = {
-        statusCode: 200,
-        headersSent: false,
-        writableEnded: false,
-        setHeader: vi.fn(),
-        getHeader: vi.fn(),
-        write: vi.fn(),
-        end: vi.fn(),
-      }
-
+      const mockRes = createMockRes()
       const transportRes = (adapter as any).wrapResponse(mockRes)
 
       transportRes.json({ value: null, missing: undefined })

@@ -19,18 +19,32 @@ const allowedLocalhostOrigin = buildHttpOrigin('localhost:1002')
 const allowedLoopbackOrigin = buildHttpOrigin('127.0.0.1:1002')
 const blockedOrigin = buildHttpOrigin('evil.com')
 
-async function runCors(options: CorsContextOptions = {}) {
+function setupEnvironment(options: CorsContextOptions) {
   const originalEnv = process.env.NODE_ENV
   const originalAllowedOrigins = process.env.ALLOWED_ORIGINS
 
   if (options.environment !== undefined) {
     process.env.NODE_ENV = options.environment
   }
-  if (options.allowedOrigins !== undefined) {
-    process.env.ALLOWED_ORIGINS = options.allowedOrigins
-  } else {
+
+  if (options.allowedOrigins === undefined) {
     delete process.env.ALLOWED_ORIGINS
+  } else {
+    process.env.ALLOWED_ORIGINS = options.allowedOrigins
   }
+
+  return () => {
+    process.env.NODE_ENV = originalEnv
+    if (originalAllowedOrigins === undefined) {
+      delete process.env.ALLOWED_ORIGINS
+    } else {
+      process.env.ALLOWED_ORIGINS = originalAllowedOrigins
+    }
+  }
+}
+
+async function runCors(options: CorsContextOptions = {}) {
+  const restoreEnv = setupEnvironment(options)
 
   try {
     const req = createMockRequest({
@@ -45,12 +59,7 @@ async function runCors(options: CorsContextOptions = {}) {
 
     return { req, res, next }
   } finally {
-    process.env.NODE_ENV = originalEnv
-    if (originalAllowedOrigins === undefined) {
-      delete process.env.ALLOWED_ORIGINS
-    } else {
-      process.env.ALLOWED_ORIGINS = originalAllowedOrigins
-    }
+    restoreEnv()
   }
 }
 

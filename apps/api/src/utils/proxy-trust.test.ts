@@ -62,6 +62,8 @@ describe('proxy trust utilities', () => {
   })
 
   it('trusts forwarded HTTPS headers for non-loopback proxies when TRUST_PROXY=true', () => {
+    // Using private IP range (RFC 1918) for test fixture - safe for testing
+    const privateNetworkIp = '10.0.0.10'
     const req = createTransportRequest(
       {
         'x-forwarded-proto': 'https',
@@ -70,7 +72,7 @@ describe('proxy trust utilities', () => {
         {
           'x-forwarded-proto': 'https',
         },
-        '10.0.0.10',
+        privateNetworkIp,
       ),
     )
 
