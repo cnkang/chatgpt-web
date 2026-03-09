@@ -23,6 +23,11 @@ import type {
   TransportRequest,
   TransportResponse,
 } from '../transport/index.js'
+import {
+  normalizeIpAddress,
+  readForwardedClientIp,
+  type TrustedProxyConfig,
+} from '../utils/proxy-trust.js'
 import { logger } from '../utils/logger.js'
 
 /**
@@ -55,6 +60,9 @@ export interface AdapterOptions {
 
   /** Static file directory (optional) */
   staticDir?: string
+
+  /** Trusted proxy configuration for forwarded headers */
+  trustProxy?: TrustedProxyConfig
 }
 
 /**
@@ -70,6 +78,7 @@ export class HTTP2Adapter {
   private options: Required<Omit<AdapterOptions, 'tls' | 'staticDir'>> & {
     tls?: TLSConfig
     staticDir?: string
+    trustProxy: TrustedProxyConfig
   }
 
   /**
@@ -92,6 +101,7 @@ export class HTTP2Adapter {
         urlencoded: options.bodyLimit?.urlencoded ?? 32768, // 32KB default
       },
       staticDir: options.staticDir,
+      trustProxy: options.trustProxy ?? false,
     }
 
     // Create server based on configuration
@@ -208,7 +218,14 @@ export class HTTP2Adapter {
 
       // Execute middleware
       await new Promise<void>((resolve, reject) => {
+        let nextCalled = false
+
         const next = (error?: Error) => {
+          if (nextCalled) {
+            return
+          }
+          nextCalled = true
+
           if (error) {
             reject(error)
           } else {
@@ -216,13 +233,36 @@ export class HTTP2Adapter {
           }
         }
 
-        const result = mw(req, res, next)
+        try {
+          const result = mw(req, res, next)
 
-        // Handle async middleware
-        if (result instanceof Promise) {
-          result.then(() => resolve()).catch(reject)
+          if (result instanceof Promise) {
+            result
+              .then(() => {
+                if (!nextCalled) {
+                  nextCalled = true
+                  resolve()
+                }
+              })
+              .catch(reject)
+          } else {
+            setImmediate(() => {
+              if (!nextCalled) {
+                nextCalled = true
+                resolve()
+              }
+            })
+          }
+        } catch (error) {
+          reject(error)
         }
       })
+
+      if (!res.finished && !res.headersSent) {
+        continue
+      }
+
+      return
     }
   }
 
@@ -281,21 +321,13 @@ export class HTTP2Adapter {
    * @returns Client IP address
    */
   private extractIP(req: IncomingMessage | Http2ServerRequest): string {
-    // Check X-Forwarded-For header (proxy/load balancer)
-    const forwarded = req.headers['x-forwarded-for']
-    if (forwarded) {
-      const ips = Array.isArray(forwarded) ? forwarded[0] : forwarded
-      return ips.split(',')[0].trim()
-    }
-
-    // Check X-Real-IP header
-    const realIP = req.headers['x-real-ip']
-    if (realIP) {
-      return Array.isArray(realIP) ? realIP[0] : realIP
+    const forwardedClientIp = readForwardedClientIp(req, this.options.trustProxy)
+    if (forwardedClientIp) {
+      return forwardedClientIp
     }
 
     // Fall back to socket address
-    return req.socket.remoteAddress || '0.0.0.0'
+    return normalizeIpAddress(req.socket.remoteAddress) || '0.0.0.0'
   }
 
   /**

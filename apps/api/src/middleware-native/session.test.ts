@@ -2,9 +2,9 @@
  * Session Middleware Tests
  */
 
-import { randomBytes } from 'node:crypto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { TransportRequest, TransportResponse } from '../transport/types.js'
+import { createMockRequest, createMockResponse } from '../test/test-helpers.js'
+import { signValue } from '../utils/constant-time.js'
 import {
   MemorySessionStore,
   RedisSessionStore,
@@ -74,43 +74,15 @@ describe('RedisSessionStore', () => {
 })
 
 describe('createSessionMiddleware', () => {
-  let mockReq: TransportRequest
-  let mockRes: TransportResponse
+  let mockReq: ReturnType<typeof createMockRequest>
+  let mockRes: ReturnType<typeof createMockResponse>
   let nextFn: (error?: Error) => void
   let store: SessionStore
 
   beforeEach(() => {
     store = new MemorySessionStore()
-
-    mockReq = {
-      method: 'GET',
-      path: '/test',
-      url: new URL('http://localhost/test'),
-      headers: new Headers(),
-      body: null,
-      ip: '127.0.0.1',
-      getHeader: vi.fn((name: string) => {
-        if (name === 'cookie') return ''
-        return undefined
-      }),
-      getQuery: vi.fn(),
-    }
-
-    const headers = new Map<string, string | string[]>()
-    mockRes = {
-      status: vi.fn().mockReturnThis(),
-      setHeader: vi.fn((name: string, value: string | string[]) => {
-        headers.set(name, value)
-        return mockRes
-      }),
-      getHeader: vi.fn((name: string) => headers.get(name)),
-      json: vi.fn(),
-      send: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      headersSent: false,
-      finished: false,
-    }
+    mockReq = createMockRequest({ path: '/test' })
+    mockRes = createMockResponse()
 
     nextFn = vi.fn()
   })
@@ -136,7 +108,7 @@ describe('createSessionMiddleware', () => {
 
   it('should load existing session from cookie', async () => {
     // Create a session in the store
-    const sessionId = randomBytes(32).toString('hex')
+    const sessionId = 'existing-session-id'
     const existingSession = {
       id: sessionId,
       data: { userId: '123' },
@@ -145,10 +117,7 @@ describe('createSessionMiddleware', () => {
     await store.set(sessionId, existingSession)
 
     // Mock cookie header with session ID
-    mockReq.getHeader = vi.fn((name: string) => {
-      if (name === 'cookie') return `sessionId=${sessionId}`
-      return undefined
-    })
+    mockReq.headers.set('cookie', `sessionId=${sessionId}.${signValue(sessionId, 'test-secret')}`)
 
     const middleware = createSessionMiddleware({
       secret: 'test-secret',
@@ -281,6 +250,31 @@ describe('createSessionMiddleware', () => {
     expect(savedSession?.id).toBe(sessionId)
   })
 
+  it('should not set a session cookie after headers are sent', async () => {
+    const middleware = createSessionMiddleware({
+      secret: 'test-secret',
+      name: 'sessionId',
+      maxAge: 1000,
+      secure: false,
+      httpOnly: true,
+      sameSite: 'strict',
+      store,
+    })
+
+    await middleware(mockReq, mockRes, nextFn)
+
+    Object.defineProperty(mockRes, 'headersSent', {
+      configurable: true,
+      value: true,
+    })
+    mockRes.end()
+
+    expect(mockRes.setHeader).not.toHaveBeenCalledWith(
+      'Set-Cookie',
+      expect.stringContaining('sessionId='),
+    )
+  })
+
   it('should handle errors gracefully', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -308,5 +302,31 @@ describe('createSessionMiddleware', () => {
     expect(nextFn).toHaveBeenCalled()
 
     consoleErrorSpy.mockRestore()
+  })
+
+  it('should ignore tampered session cookies and create a new session', async () => {
+    const originalSessionId = 'persisted-session-id'
+    await store.set(originalSessionId, {
+      id: originalSessionId,
+      data: { userId: '123' },
+      expires: Date.now() + 10000,
+    })
+
+    mockReq.headers.set('cookie', `sessionId=${originalSessionId}.tampered-signature`)
+
+    const middleware = createSessionMiddleware({
+      secret: 'test-secret',
+      name: 'sessionId',
+      maxAge: 1000,
+      secure: false,
+      httpOnly: true,
+      sameSite: 'strict',
+      store,
+    })
+
+    await middleware(mockReq, mockRes, nextFn)
+
+    expect(mockReq.session?.id).not.toBe(originalSessionId)
+    expect(nextFn).toHaveBeenCalled()
   })
 })

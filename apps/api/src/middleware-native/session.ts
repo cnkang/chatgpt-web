@@ -13,6 +13,8 @@ import type {
   TransportRequest,
   TransportResponse,
 } from '../transport/types.js'
+import { constantTimeEqual, signValue } from '../utils/constant-time.js'
+import { isTrustedForwardedHttps, type TrustedProxyConfig } from '../utils/proxy-trust.js'
 
 /**
  * Session store interface
@@ -80,6 +82,9 @@ export class MemorySessionStore implements SessionStore {
  */
 export class RedisSessionStore implements SessionStore {
   private client: ReturnType<typeof createClient>
+  private readonly fallbackStore = new MemorySessionStore()
+  private readonly connectPromise: Promise<void>
+  private connectionFailed = false
 
   /**
    * Create Redis session store
@@ -94,17 +99,26 @@ export class RedisSessionStore implements SessionStore {
     })
 
     // Connect to Redis
-    this.client.connect().catch(error => {
-      console.error('Redis connection error:', error)
-    })
+    this.connectPromise = this.client
+      .connect()
+      .then(() => undefined)
+      .catch(error => {
+        this.connectionFailed = true
+        console.error('Redis connection error, falling back to in-memory sessions:', error)
+      })
 
     // Handle Redis errors
     this.client.on('error', error => {
-      console.error('Redis client error:', error)
+      this.connectionFailed = true
+      console.error('Redis client error, falling back to in-memory sessions:', error)
     })
   }
 
   async get(id: string): Promise<SessionData | null> {
+    if (!(await this.isClientReady())) {
+      return await this.fallbackStore.get(id)
+    }
+
     try {
       const data = await this.client.get(`session:${id}`)
       return data ? JSON.parse(data) : null
@@ -115,6 +129,11 @@ export class RedisSessionStore implements SessionStore {
   }
 
   async set(id: string, session: SessionData): Promise<void> {
+    if (!(await this.isClientReady())) {
+      await this.fallbackStore.set(id, session)
+      return
+    }
+
     try {
       // Calculate TTL in seconds
       const ttl = Math.ceil((session.expires - Date.now()) / 1000)
@@ -129,6 +148,11 @@ export class RedisSessionStore implements SessionStore {
   }
 
   async destroy(id: string): Promise<void> {
+    if (!(await this.isClientReady())) {
+      await this.fallbackStore.destroy(id)
+      return
+    }
+
     try {
       await this.client.del(`session:${id}`)
     } catch (error) {
@@ -140,7 +164,15 @@ export class RedisSessionStore implements SessionStore {
    * Close Redis connection
    */
   async close(): Promise<void> {
-    await this.client.quit()
+    await this.connectPromise
+    if (this.client.isOpen) {
+      await this.client.quit()
+    }
+  }
+
+  private async isClientReady(): Promise<boolean> {
+    await this.connectPromise
+    return this.client.isReady && !this.connectionFailed
   }
 }
 
@@ -148,7 +180,7 @@ export class RedisSessionStore implements SessionStore {
  * Session middleware options
  */
 export interface SessionOptions {
-  /** Secret key for signing session cookies (not used in current implementation) */
+  /** Secret key for signing session cookies */
   secret: string
 
   /** Session cookie name */
@@ -168,6 +200,9 @@ export interface SessionOptions {
 
   /** Session store backend (defaults to MemorySessionStore) */
   store?: SessionStore
+
+  /** Trusted proxy configuration for forwarded HTTPS detection */
+  trustProxy?: TrustedProxyConfig
 }
 
 /**
@@ -210,7 +245,7 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
     try {
       // Parse session cookie from Cookie header
       const cookies = parseCookies(req.getHeader('cookie') || '')
-      const sessionId = cookies[options.name]
+      const sessionId = verifySignedSessionId(cookies[options.name], options.secret)
 
       // Try to load existing session
       if (sessionId) {
@@ -241,15 +276,18 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
             console.error('Failed to save session:', error)
           })
 
-          // Set session cookie
-          const cookieValue = serializeCookie(options.name, req.session.id, {
-            maxAge: options.maxAge,
-            secure: shouldSetSecureCookie(req, options.secure),
-            httpOnly: options.httpOnly,
-            sameSite: options.sameSite,
-            path: '/',
-          })
-          res.setHeader('Set-Cookie', cookieValue)
+          // Avoid mutating headers after streaming responses have already flushed them.
+          if (!res.headersSent && !res.finished) {
+            const cookieValue = serializeCookie(options.name, req.session.id, {
+              secret: options.secret,
+              maxAge: options.maxAge,
+              secure: shouldSetSecureCookie(req, options.secure, options.trustProxy ?? false),
+              httpOnly: options.httpOnly,
+              sameSite: options.sameSite,
+              path: '/',
+            })
+            res.setHeader('Set-Cookie', cookieValue)
+          }
         }
 
         // Call original end method
@@ -294,6 +332,7 @@ function serializeCookie(
   name: string,
   value: string,
   options: {
+    secret: string
     maxAge: number
     secure: boolean
     httpOnly: boolean
@@ -301,7 +340,8 @@ function serializeCookie(
     path: string
   },
 ): string {
-  const parts = [`${name}=${value}`]
+  const signedValue = `${value}.${signValue(value, options.secret)}`
+  const parts = [`${name}=${signedValue}`]
 
   // Max-Age in seconds
   parts.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`)
@@ -325,10 +365,34 @@ function serializeCookie(
   return parts.join('; ')
 }
 
-function shouldSetSecureCookie(req: TransportRequest, secureOption: boolean | 'auto'): boolean {
+function shouldSetSecureCookie(
+  req: TransportRequest,
+  secureOption: boolean | 'auto',
+  trustProxy: TrustedProxyConfig,
+): boolean {
   if (secureOption === true || secureOption === false) {
     return secureOption
   }
 
-  return req.getHeader('x-forwarded-proto') === 'https'
+  return isTrustedForwardedHttps(req, trustProxy)
+}
+
+function verifySignedSessionId(
+  cookieValue: string | undefined,
+  secret: string,
+): string | undefined {
+  if (!cookieValue) {
+    return undefined
+  }
+
+  const separatorIndex = cookieValue.lastIndexOf('.')
+  if (separatorIndex <= 0) {
+    return undefined
+  }
+
+  const sessionId = cookieValue.slice(0, separatorIndex)
+  const signature = cookieValue.slice(separatorIndex + 1)
+  const expectedSignature = signValue(sessionId, secret)
+
+  return constantTimeEqual(signature, expectedSignature) ? sessionId : undefined
 }

@@ -14,12 +14,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { HTTP2Adapter } from '../adapters/http2-adapter.js'
 import { createConfiguredServer } from '../server.js'
+import { buildHttpOrigin } from './test-helpers.js'
 
 describe('Security Policies Tests', () => {
   let adapter: HTTP2Adapter
   let baseUrl: string
   const TEST_PORT = 13003 // Use different port to avoid conflicts
   const TEST_AUTH_TOKEN = 'test-secret-key-12345'
+  const allowedLocalhostOrigin = buildHttpOrigin('localhost:1002')
+  const allowedLoopbackOrigin = buildHttpOrigin('127.0.0.1:1002')
+  const blockedOrigin = buildHttpOrigin('evil.com')
 
   beforeAll(async () => {
     // Set up test environment
@@ -28,15 +32,16 @@ describe('Security Policies Tests', () => {
     process.env.OPENAI_API_KEY = 'sk-test-key'
     process.env.AI_PROVIDER = 'openai'
     process.env.MAX_REQUEST_PER_HOUR = '100'
-    process.env.ALLOWED_ORIGINS = 'http://localhost:1002,http://127.0.0.1:1002'
+    process.env.ALLOWED_ORIGINS = `${allowedLocalhostOrigin},${allowedLoopbackOrigin}`
     process.env.PORT = String(TEST_PORT)
     process.env.HOST = '127.0.0.1'
     process.env.HTTP2_ENABLED = 'false'
+    process.env.TRUST_PROXY = 'true'
 
     const configuredServer = createConfiguredServer()
     adapter = configuredServer.adapter
     await adapter.listen(TEST_PORT, '127.0.0.1')
-    baseUrl = `http://${configuredServer.runtime.host}:${configuredServer.runtime.port}`
+    baseUrl = buildHttpOrigin(`${configuredServer.runtime.host}:${configuredServer.runtime.port}`)
   })
 
   afterAll(async () => {
@@ -200,17 +205,25 @@ describe('Security Policies Tests', () => {
   })
 
   describe('Rate Limiting (Requirements 6.1-6.6)', () => {
-    describe('General limit: 100 requests/hour per IP', () => {
+    describe('General limit: 100 requests/hour per IP on user routes', () => {
       it('should allow requests under the limit', async () => {
         // Make a few requests (well under 100)
         for (let i = 0; i < 5; i++) {
-          const response = await fetch(`${baseUrl}/health`)
+          const response = await fetch(`${baseUrl}/session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          })
           expect(response.status).toBe(200)
         }
       })
 
       it('should set X-RateLimit-* headers', async () => {
-        const response = await fetch(`${baseUrl}/health`)
+        const response = await fetch(`${baseUrl}/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
 
         expect(response.headers.has('x-ratelimit-limit')).toBe(true)
         expect(response.headers.has('x-ratelimit-remaining')).toBe(true)
@@ -221,14 +234,39 @@ describe('Security Policies Tests', () => {
       })
 
       it('should decrement remaining count with each request', async () => {
-        const response1 = await fetch(`${baseUrl}/health`)
+        const response1 = await fetch(`${baseUrl}/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
         const remaining1 = parseInt(response1.headers.get('x-ratelimit-remaining') || '0', 10)
 
-        const response2 = await fetch(`${baseUrl}/health`)
+        const response2 = await fetch(`${baseUrl}/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
         const remaining2 = parseInt(response2.headers.get('x-ratelimit-remaining') || '0', 10)
 
         // Remaining should decrease (or stay same if at 0)
         expect(remaining2).toBeLessThanOrEqual(remaining1)
+      })
+    })
+
+    describe('Health checks are exempt from user-facing rate limits', () => {
+      it('should not set X-RateLimit-* headers on /health', async () => {
+        const response = await fetch(`${baseUrl}/health`)
+
+        expect(response.headers.has('x-ratelimit-limit')).toBe(false)
+        expect(response.headers.has('x-ratelimit-remaining')).toBe(false)
+        expect(response.headers.has('x-ratelimit-reset')).toBe(false)
+      })
+
+      it('should continue serving /health after repeated probe traffic', async () => {
+        for (let i = 0; i < 105; i++) {
+          const response = await fetch(`${baseUrl}/health`)
+          expect(response.status).toBe(200)
+        }
       })
     })
 
@@ -270,7 +308,11 @@ describe('Security Policies Tests', () => {
 
         // We can test the error structure by checking a 429 response
         // if we get one during testing
-        const response = await fetch(`${baseUrl}/health`)
+        const response = await fetch(`${baseUrl}/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
         if (response.status === 429) {
           const data = (await response.json()) as Record<string, unknown>
           expect(data).toHaveProperty('status', 'Fail')
@@ -480,11 +522,11 @@ describe('Security Policies Tests', () => {
       it('should set CORS headers for allowed origin', async () => {
         const response = await fetch(`${baseUrl}/health`, {
           headers: {
-            Origin: 'http://localhost:1002',
+            Origin: allowedLocalhostOrigin,
           },
         })
 
-        expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:1002')
+        expect(response.headers.get('access-control-allow-origin')).toBe(allowedLocalhostOrigin)
         expect(response.headers.get('access-control-allow-credentials')).toBe('true')
         expect(response.headers.get('vary')).toContain('Origin')
       })
@@ -492,11 +534,11 @@ describe('Security Policies Tests', () => {
       it('should set CORS headers for another allowed origin', async () => {
         const response = await fetch(`${baseUrl}/health`, {
           headers: {
-            Origin: 'http://127.0.0.1:1002',
+            Origin: allowedLoopbackOrigin,
           },
         })
 
-        expect(response.headers.get('access-control-allow-origin')).toBe('http://127.0.0.1:1002')
+        expect(response.headers.get('access-control-allow-origin')).toBe(allowedLoopbackOrigin)
         expect(response.headers.get('access-control-allow-credentials')).toBe('true')
       })
     })
@@ -505,7 +547,7 @@ describe('Security Policies Tests', () => {
       it('should not set CORS headers for disallowed origin', async () => {
         const response = await fetch(`${baseUrl}/health`, {
           headers: {
-            Origin: 'http://evil.com',
+            Origin: blockedOrigin,
           },
         })
 
@@ -536,12 +578,12 @@ describe('Security Policies Tests', () => {
         const response = await fetch(`${baseUrl}/health`, {
           method: 'OPTIONS',
           headers: {
-            Origin: 'http://localhost:1002',
+            Origin: allowedLocalhostOrigin,
           },
         })
 
         expect(response.status).toBe(200)
-        expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:1002')
+        expect(response.headers.get('access-control-allow-origin')).toBe(allowedLocalhostOrigin)
         expect(response.headers.get('access-control-allow-methods')).toContain('GET')
         expect(response.headers.get('access-control-allow-methods')).toContain('POST')
       })
@@ -550,7 +592,7 @@ describe('Security Policies Tests', () => {
         const response = await fetch(`${baseUrl}/health`, {
           method: 'OPTIONS',
           headers: {
-            Origin: 'http://evil.com',
+            Origin: blockedOrigin,
           },
         })
 
@@ -561,7 +603,7 @@ describe('Security Policies Tests', () => {
         const response = await fetch(`${baseUrl}/health`, {
           method: 'OPTIONS',
           headers: {
-            Origin: 'http://localhost:1002',
+            Origin: allowedLocalhostOrigin,
           },
         })
 
@@ -573,7 +615,7 @@ describe('Security Policies Tests', () => {
       it('should set Vary header for CORS requests', async () => {
         const response = await fetch(`${baseUrl}/health`, {
           headers: {
-            Origin: 'http://localhost:1002',
+            Origin: allowedLocalhostOrigin,
           },
         })
 

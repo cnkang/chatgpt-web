@@ -27,6 +27,7 @@ import {
 import { MiddlewareChainImpl } from './transport/middleware-chain.js'
 import { RouterImpl } from './transport/router.js'
 import { asyncHandler } from './utils/async-handler.js'
+import { parseTrustedProxyConfig } from './utils/proxy-trust.js'
 
 const DEFAULT_JSON_BODY_LIMIT = 1_048_576
 const DEFAULT_FORM_BODY_LIMIT = 32_768
@@ -97,10 +98,30 @@ function resolveTlsConfig(): TLSConfig | undefined {
     throw new Error('TLS_KEY_PATH and TLS_CERT_PATH must both be configured to enable TLS')
   }
 
-  return {
-    key: readFileSync(keyPath),
-    cert: readFileSync(certPath),
+  try {
+    return {
+      key: readFileSync(keyPath),
+      cert: readFileSync(certPath),
+    }
+  } catch (error) {
+    throw new Error(
+      `Failed to read TLS certificate files: ${
+        error instanceof Error ? error.message : String(error)
+      }. Ensure TLS_KEY_PATH="${keyPath}" and TLS_CERT_PATH="${certPath}" are valid readable files.`,
+    )
   }
+}
+
+function resolveSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET || process.env.AUTH_SECRET_KEY
+
+  if (!secret) {
+    throw new Error(
+      'SESSION_SECRET or AUTH_SECRET_KEY must be configured for secure session management',
+    )
+  }
+
+  return secret
 }
 
 function createSessionStore(): SessionStore {
@@ -122,6 +143,7 @@ export function createConfiguredServer(): ConfiguredServer {
   const verifyBodyLimit = parseIntegerEnv('VERIFY_BODY_LIMIT', DEFAULT_VERIFY_BODY_LIMIT)
   const generalRateLimit = parseIntegerEnv('MAX_REQUEST_PER_HOUR', 100)
   const sessionMaxAge = parseIntegerEnv('SESSION_MAX_AGE_MS', DEFAULT_SESSION_MAX_AGE)
+  const trustedProxy = parseTrustedProxyConfig(process.env.TRUST_PROXY)
   const sessionStore = createSessionStore()
 
   const router = new RouterImpl()
@@ -131,7 +153,7 @@ export function createConfiguredServer(): ConfiguredServer {
   const generalRateLimiter = createGeneralRateLimiter(generalRateLimit)
   const authRateLimiter = createAuthRateLimiter()
   const corsMiddleware = createCorsMiddleware()
-  const securityHeadersMiddleware = createSecurityHeadersMiddleware()
+  const securityHeadersMiddleware = createSecurityHeadersMiddleware(trustedProxy)
   const requestLoggerMiddleware = createRequestLoggerMiddleware()
   const defaultBodyParser = createBodyParserMiddleware({
     jsonLimit: jsonBodyLimit,
@@ -140,13 +162,14 @@ export function createConfiguredServer(): ConfiguredServer {
   const chatBodyParser = createBodyParserWithLimit(chatBodyLimit)
   const verifyBodyParser = createBodyParserWithLimit(verifyBodyLimit)
   const sessionMiddleware = createSessionMiddleware({
-    secret: process.env.SESSION_SECRET || process.env.AUTH_SECRET_KEY || 'chatgpt-web-session',
+    secret: resolveSessionSecret(),
     name: process.env.SESSION_COOKIE_NAME || 'sessionId',
     maxAge: sessionMaxAge,
     secure: tls ? true : 'auto',
     httpOnly: true,
     sameSite: parseSameSite(process.env.SESSION_SAME_SITE),
     store: sessionStore,
+    trustProxy: trustedProxy,
   })
   const staticMiddleware = createStaticFileMiddleware('public')
 
@@ -155,7 +178,7 @@ export function createConfiguredServer(): ConfiguredServer {
   middleware.use(securityHeadersMiddleware)
   middleware.use(staticMiddleware)
 
-  router.get('/health', generalRateLimiter.middleware(), asyncHandler(healthHandler))
+  router.get('/health', asyncHandler(healthHandler))
   router.post(
     '/chat-process',
     sessionMiddleware,
@@ -197,6 +220,7 @@ export function createConfiguredServer(): ConfiguredServer {
       urlencoded: urlencodedBodyLimit,
     },
     staticDir: 'public',
+    trustProxy: trustedProxy,
   })
 
   return {

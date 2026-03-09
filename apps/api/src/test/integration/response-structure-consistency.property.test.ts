@@ -363,14 +363,18 @@ describe('Property 2: Response Structure Consistency', () => {
           const req = createMockRequest('POST', '/verify', { token: invalidToken })
           const res = await executeRequest(adapter, req)
 
-          expect(res.statusCode).toBe(401)
+          const expectsValidationError = invalidToken.trim().length === 0
+
+          expect(res.statusCode).toBe(expectsValidationError ? 400 : 401)
           validateResponseStructure(res.body)
 
           const body = res.body as BaseResponse
           expect(body.status).toBe('Fail')
           expect(body.data).toBeNull()
           expect(body.error).toBeDefined()
-          expect(body.error?.code).toBe('AUTHENTICATION_ERROR')
+          expect(body.error?.code).toBe(
+            expectsValidationError ? 'VALIDATION_ERROR' : 'AUTHENTICATION_ERROR',
+          )
 
           return true
         },

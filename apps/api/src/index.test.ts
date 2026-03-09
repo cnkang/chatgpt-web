@@ -8,6 +8,7 @@
 import * as http from 'node:http'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HTTP2Adapter } from './adapters/http2-adapter.js'
+import { getAvailablePort } from './test/test-helpers.js'
 import { MiddlewareChainImpl } from './transport/middleware-chain.js'
 import { RouterImpl } from './transport/router.js'
 import { setupGracefulShutdown } from './utils/graceful-shutdown.js'
@@ -15,7 +16,6 @@ import { setupGracefulShutdown } from './utils/graceful-shutdown.js'
 describe('Server Startup Tests', () => {
   let adapter: HTTP2Adapter | undefined
   let shutdownCleanup: (() => void) | undefined
-  const testPort = 30000 + Math.floor(Math.random() * 10000)
 
   afterEach(async () => {
     shutdownCleanup?.()
@@ -32,6 +32,7 @@ describe('Server Startup Tests', () => {
 
   describe('Server starts successfully', () => {
     it('should create and start HTTP/2 server without TLS', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -48,6 +49,7 @@ describe('Server Startup Tests', () => {
     })
 
     it('should create and start HTTP/1.1 server when HTTP/2 is disabled', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -63,6 +65,7 @@ describe('Server Startup Tests', () => {
     })
 
     it('should reject startup if port is already in use', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -94,6 +97,7 @@ describe('Server Startup Tests', () => {
 
   describe('Server binds to configured port', () => {
     it('should bind to specified port', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -114,6 +118,7 @@ describe('Server Startup Tests', () => {
     })
 
     it('should bind to specified hostname', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -134,6 +139,7 @@ describe('Server Startup Tests', () => {
     })
 
     it('should bind to 0.0.0.0 by default', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -223,6 +229,7 @@ describe('Server Startup Tests', () => {
 
   describe('Server accepts HTTP/1.1 connections', () => {
     it('should accept HTTP/1.1 connections when HTTP/2 is disabled', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -257,6 +264,7 @@ describe('Server Startup Tests', () => {
     })
 
     it('should handle HTTP/1.1 POST requests', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -296,6 +304,7 @@ describe('Server Startup Tests', () => {
 
   describe('Graceful shutdown completes in-flight requests', () => {
     it('should wait for in-flight requests to complete before closing', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -352,6 +361,7 @@ describe('Server Startup Tests', () => {
     }, 10000) // Increase timeout for this test
 
     it('should setup shutdown callbacks without errors', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -387,6 +397,7 @@ describe('Server Startup Tests', () => {
     })
 
     it('should support graceful shutdown configuration', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
@@ -421,10 +432,11 @@ describe('Server Startup Tests', () => {
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
-      new HTTP2Adapter(router, middleware, {
+      const testAdapter = new HTTP2Adapter(router, middleware, {
         http2: true,
         tls: undefined,
       })
+      expect(testAdapter.getServer()).toBeDefined()
 
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining('HTTP/2 without TLS (h2c) has limited browser support'),
@@ -442,9 +454,10 @@ describe('Server Startup Tests', () => {
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
-      new HTTP2Adapter(router, middleware, {
+      const testAdapter = new HTTP2Adapter(router, middleware, {
         http2: false,
       })
+      expect(testAdapter.getServer()).toBeDefined()
 
       expect(warnSpy).not.toHaveBeenCalled()
 
@@ -460,13 +473,14 @@ describe('Server Startup Tests', () => {
       // This will throw due to invalid certs, but we can check the warning wasn't called
       // before the error
       try {
-        new HTTP2Adapter(router, middleware, {
+        const testAdapter = new HTTP2Adapter(router, middleware, {
           http2: true,
           tls: {
             key: Buffer.from('test-key'),
             cert: Buffer.from('test-cert'),
           },
         })
+        expect(testAdapter).toBeDefined()
       } catch {
         // Expected to throw
       }
@@ -485,9 +499,10 @@ describe('Server Startup Tests', () => {
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 
-      new HTTP2Adapter(router, middleware, {
+      const testAdapter = new HTTP2Adapter(router, middleware, {
         http2: true,
       })
+      expect(testAdapter.getServer()).toBeDefined()
 
       const expectedMessage =
         'Warning: HTTP/2 without TLS (h2c) has limited browser support. ' +
@@ -561,6 +576,7 @@ describe('Server Startup Tests', () => {
 
   describe('Server error handling', () => {
     it('should reject listen promise on error', async () => {
+      const testPort = await getAvailablePort()
       const router = new RouterImpl()
       const middleware = new MiddlewareChainImpl()
 

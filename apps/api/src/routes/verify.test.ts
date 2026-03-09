@@ -3,7 +3,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { TransportRequest, TransportResponse } from '../transport/types.js'
+import { createMockRequest, createMockResponse } from '../test/test-helpers.js'
 import { verifyHandler } from './verify.js'
 
 const originalEnv = process.env
@@ -18,44 +18,25 @@ describe('Verify Route', () => {
     process.env = originalEnv
   })
 
-  it('should return 200 for valid token', async () => {
-    process.env.AUTH_SECRET_KEY = 'test-secret-key'
-
-    const mockReq = {
+  async function executeVerify(body: unknown) {
+    const req = createMockRequest({
       method: 'POST',
       path: '/api/verify',
-      url: new URL('http://localhost/api/verify'),
-      headers: new Headers(),
-      body: { token: 'test-secret-key' },
-      ip: '127.0.0.1',
-      getHeader: () => undefined,
-      getQuery: () => undefined,
-    } as TransportRequest
+      body,
+    })
+    const res = createMockResponse()
 
-    let statusCode = 200
-    let responseData: unknown = null
+    await verifyHandler(req, res)
 
-    const mockRes = {
-      status: vi.fn((code: number) => {
-        statusCode = code
-        return mockRes
-      }),
-      setHeader: vi.fn(),
-      getHeader: vi.fn(),
-      json: vi.fn((data: unknown) => {
-        responseData = data
-      }),
-      send: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
+    return res._capture
+  }
 
-    await verifyHandler(mockReq, mockRes)
+  it('should return 200 for valid token', async () => {
+    process.env.AUTH_SECRET_KEY = 'test-secret-key'
+    const response = await executeVerify({ token: 'test-secret-key' })
 
-    expect(statusCode).toBe(200)
-    expect(responseData).toMatchObject({
+    expect(response.statusCode).toBe(200)
+    expect(response.body).toMatchObject({
       status: 'Success',
       message: 'Verify successfully',
       data: null,
@@ -64,42 +45,10 @@ describe('Verify Route', () => {
 
   it('should return 401 for invalid token', async () => {
     process.env.AUTH_SECRET_KEY = 'test-secret-key'
+    const response = await executeVerify({ token: 'wrong-token' })
 
-    const mockReq = {
-      method: 'POST',
-      path: '/api/verify',
-      url: new URL('http://localhost/api/verify'),
-      headers: new Headers(),
-      body: { token: 'wrong-token' },
-      ip: '127.0.0.1',
-      getHeader: () => undefined,
-      getQuery: () => undefined,
-    } as TransportRequest
-
-    let statusCode = 200
-    let responseData: unknown = null
-
-    const mockRes = {
-      status: vi.fn((code: number) => {
-        statusCode = code
-        return mockRes
-      }),
-      setHeader: vi.fn(),
-      getHeader: vi.fn(),
-      json: vi.fn((data: unknown) => {
-        responseData = data
-      }),
-      send: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
-
-    await verifyHandler(mockReq, mockRes)
-
-    expect(statusCode).toBe(401)
-    expect(responseData).toMatchObject({
+    expect(response.statusCode).toBe(401)
+    expect(response.body).toMatchObject({
       status: 'Fail',
       message: 'Invalid authentication token',
       data: null,
@@ -113,42 +62,10 @@ describe('Verify Route', () => {
 
   it('should return 400 for missing token', async () => {
     process.env.AUTH_SECRET_KEY = 'test-secret-key'
+    const response = await executeVerify({})
 
-    const mockReq = {
-      method: 'POST',
-      path: '/api/verify',
-      url: new URL('http://localhost/api/verify'),
-      headers: new Headers(),
-      body: {},
-      ip: '127.0.0.1',
-      getHeader: () => undefined,
-      getQuery: () => undefined,
-    } as TransportRequest
-
-    let statusCode = 200
-    let responseData: unknown = null
-
-    const mockRes = {
-      status: vi.fn((code: number) => {
-        statusCode = code
-        return mockRes
-      }),
-      setHeader: vi.fn(),
-      getHeader: vi.fn(),
-      json: vi.fn((data: unknown) => {
-        responseData = data
-      }),
-      send: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
-
-    await verifyHandler(mockReq, mockRes)
-
-    expect(statusCode).toBe(400)
-    expect(responseData).toMatchObject({
+    expect(response.statusCode).toBe(400)
+    expect(response.body).toMatchObject({
       status: 'Fail',
       message: 'Validation error: token is required',
       data: null,
@@ -162,38 +79,8 @@ describe('Verify Route', () => {
 
   it('should use constant-time comparison for tokens', async () => {
     process.env.AUTH_SECRET_KEY = 'secret123'
+    const response = await executeVerify({ token: 'short' })
 
-    // Test with tokens of different lengths
-    const mockReq = {
-      method: 'POST',
-      path: '/api/verify',
-      url: new URL('http://localhost/api/verify'),
-      headers: new Headers(),
-      body: { token: 'short' },
-      ip: '127.0.0.1',
-      getHeader: () => undefined,
-      getQuery: () => undefined,
-    } as TransportRequest
-
-    let statusCode = 200
-
-    const mockRes = {
-      status: vi.fn((code: number) => {
-        statusCode = code
-        return mockRes
-      }),
-      setHeader: vi.fn(),
-      getHeader: vi.fn(),
-      json: vi.fn(),
-      send: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
-
-    await verifyHandler(mockReq, mockRes)
-
-    expect(statusCode).toBe(401)
+    expect(response.statusCode).toBe(401)
   })
 })

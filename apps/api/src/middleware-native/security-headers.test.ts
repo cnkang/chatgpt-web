@@ -3,41 +3,22 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import type { TransportRequest, TransportResponse } from '../transport/types.js'
+import { buildHttpOrigin, createMockRequest, createMockResponse } from '../test/test-helpers.js'
 import { createSecurityHeadersMiddleware } from './security-headers.js'
 
 describe('createSecurityHeadersMiddleware', () => {
-  const createMockRequest = (): TransportRequest => ({
-    method: 'GET',
-    path: '/api/health',
-    url: new URL('http://localhost:3002/api/health'),
-    headers: new Headers(),
-    body: null,
-    ip: '127.0.0.1',
-    getHeader: vi.fn(),
-    getQuery: vi.fn(),
-  })
+  const localhostConnectSource = `${buildHttpOrigin('localhost')}:*`
+  const localhostWebSocketSource = 'ws://localhost:*'
 
-  const createMockResponse = (): TransportResponse => {
-    const headers = new Map<string, string | string[]>()
-    return {
-      status: vi.fn().mockReturnThis(),
-      setHeader: vi.fn((name: string, value: string | string[]) => {
-        headers.set(name, value)
-      }),
-      getHeader: vi.fn((name: string) => headers.get(name)),
-      json: vi.fn(),
-      send: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      headersSent: false,
-      finished: false,
-    } as unknown as TransportResponse
+  function createSecurityTestRequest() {
+    const req = createMockRequest({ path: '/api/health' })
+    req._nativeRequest = { socket: { remoteAddress: '127.0.0.1' } }
+    return req
   }
 
   it('should set Content-Security-Policy header', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -52,7 +33,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should include unsafe-eval for Mermaid in script-src', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -67,7 +48,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should include unsafe-inline for Naive UI in style-src', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -82,7 +63,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should set X-Content-Type-Options: nosniff', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -94,7 +75,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should set X-Frame-Options: DENY', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -106,7 +87,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should set Referrer-Policy: strict-origin-when-cross-origin', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -118,7 +99,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should set X-Permitted-Cross-Domain-Policies: none', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -132,9 +113,9 @@ describe('createSecurityHeadersMiddleware', () => {
     const originalEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'production'
 
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
-    req.getHeader = vi.fn((name: string) => (name === 'x-forwarded-proto' ? 'https' : undefined))
+    const middleware = createSecurityHeadersMiddleware(true)
+    const req = createSecurityTestRequest()
+    req.headers.set('x-forwarded-proto', 'https')
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -153,8 +134,8 @@ describe('createSecurityHeadersMiddleware', () => {
     const originalEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'production'
 
-    const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const middleware = createSecurityHeadersMiddleware(true)
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -174,7 +155,7 @@ describe('createSecurityHeadersMiddleware', () => {
     process.env.NODE_ENV = 'development'
 
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -194,7 +175,7 @@ describe('createSecurityHeadersMiddleware', () => {
     process.env.NODE_ENV = 'production'
 
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -215,7 +196,7 @@ describe('createSecurityHeadersMiddleware', () => {
     process.env.NODE_ENV = 'development'
 
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -236,7 +217,7 @@ describe('createSecurityHeadersMiddleware', () => {
     process.env.NODE_ENV = 'development'
 
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -246,8 +227,8 @@ describe('createSecurityHeadersMiddleware', () => {
       call => call[0] === 'Content-Security-Policy',
     )
     expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).toContain('http://localhost:*')
-    expect(cspCall?.[1]).toContain('ws://localhost:*')
+    expect(cspCall?.[1]).toContain(localhostConnectSource)
+    expect(cspCall?.[1]).toContain(localhostWebSocketSource)
     expect(next).toHaveBeenCalled()
 
     process.env.NODE_ENV = originalEnv
@@ -258,7 +239,7 @@ describe('createSecurityHeadersMiddleware', () => {
     process.env.NODE_ENV = 'production'
 
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -268,8 +249,8 @@ describe('createSecurityHeadersMiddleware', () => {
       call => call[0] === 'Content-Security-Policy',
     )
     expect(cspCall).toBeDefined()
-    expect(cspCall?.[1]).not.toContain('http://localhost:*')
-    expect(cspCall?.[1]).not.toContain('ws://localhost:*')
+    expect(cspCall?.[1]).not.toContain(localhostConnectSource)
+    expect(cspCall?.[1]).not.toContain(localhostWebSocketSource)
     expect(next).toHaveBeenCalled()
 
     process.env.NODE_ENV = originalEnv
@@ -277,7 +258,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should call next() to continue middleware chain', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 
@@ -289,7 +270,7 @@ describe('createSecurityHeadersMiddleware', () => {
 
   it('should set all required security headers in a single request', async () => {
     const middleware = createSecurityHeadersMiddleware()
-    const req = createMockRequest()
+    const req = createSecurityTestRequest()
     const res = createMockResponse()
     const next = vi.fn()
 

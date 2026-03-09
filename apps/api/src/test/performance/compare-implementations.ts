@@ -51,6 +51,20 @@ interface ComparisonResult {
   passed: boolean
 }
 
+function getPackageManagerCommand(): { command: string; argsPrefix: string[] } {
+  const packageManagerExecPath = process.env.npm_execpath
+  if (!packageManagerExecPath) {
+    throw new Error(
+      'Unable to resolve pnpm executable. Run this script through pnpm so npm_execpath is available.',
+    )
+  }
+
+  return {
+    command: process.execPath,
+    argsPrefix: [packageManagerExecPath],
+  }
+}
+
 /**
  * Start a server process
  */
@@ -61,18 +75,23 @@ function startServer(implementation: 'express' | 'native'): Promise<{
   return new Promise((resolve, reject) => {
     const port = 3002
     const script = implementation === 'express' ? 'src/index.ts' : 'src/index-native.ts'
+    const packageManager = getPackageManagerCommand()
 
     console.log(`Starting ${implementation} server on port ${port}...`)
 
-    const serverProcess = spawn('pnpm', ['esno', script], {
-      cwd: process.cwd(),
-      env: {
-        ...process.env,
-        PORT: String(port),
-        NODE_ENV: 'test',
+    const serverProcess = spawn(
+      packageManager.command,
+      [...packageManager.argsPrefix, 'esno', script],
+      {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          PORT: String(port),
+          NODE_ENV: 'test',
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
       },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
+    )
 
     let output = ''
 
@@ -143,10 +162,17 @@ function stopServer(serverProcess: ReturnType<typeof spawn>): Promise<void> {
 function runLoadTest(implementation: 'express' | 'native', endpoint: string): Promise<TestResults> {
   return new Promise((resolve, reject) => {
     console.log(`\nRunning load test: ${implementation} - ${endpoint}`)
+    const packageManager = getPackageManagerCommand()
 
     const testProcess = spawn(
-      'pnpm',
-      ['tsx', 'src/test/performance/load-test.ts', implementation, endpoint],
+      packageManager.command,
+      [
+        ...packageManager.argsPrefix,
+        'tsx',
+        'src/test/performance/load-test.ts',
+        implementation,
+        endpoint,
+      ],
       {
         cwd: process.cwd(),
         env: process.env,

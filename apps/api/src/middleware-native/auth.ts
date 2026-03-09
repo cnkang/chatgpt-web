@@ -5,8 +5,8 @@
  * to prevent timing attacks.
  */
 
-import { timingSafeEqual } from 'node:crypto'
 import type { MiddlewareHandler, TransportRequest, TransportResponse } from '../transport/types.js'
+import { constantTimeEqual } from '../utils/constant-time.js'
 
 /**
  * Creates authentication middleware that validates Bearer tokens
@@ -50,7 +50,7 @@ export function createAuthMiddleware(secretKey: string): MiddlewareHandler {
       const token = authorization.replace('Bearer ', '').trim()
 
       // Validate token using constant-time comparison
-      if (!safeEqual(token, secretKey.trim())) {
+      if (!constantTimeEqual(token, secretKey.trim())) {
         res.status(401).json({
           status: 'Fail',
           message: 'Error: No access rights',
@@ -78,33 +78,7 @@ export function createAuthMiddleware(secretKey: string): MiddlewareHandler {
           timestamp: new Date().toISOString(),
         },
       })
+      return
     }
   }
-}
-
-/**
- * Constant-time string comparison to prevent timing attacks
- *
- * Uses Node.js crypto.timingSafeEqual for constant-time comparison.
- * If lengths differ, still performs a constant-time comparison to avoid
- * leaking length information through timing.
- *
- * @param a - First string to compare
- * @param b - Second string to compare
- * @returns true if strings are equal, false otherwise
- */
-function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a)
-  const bufB = Buffer.from(b)
-
-  // If lengths differ, perform constant-time comparison anyway
-  // to avoid leaking length information through timing
-  if (bufA.length !== bufB.length) {
-    // Compare bufA with itself to maintain constant time for length of bufA
-    timingSafeEqual(bufA, bufA)
-    return false
-  }
-
-  // Lengths are equal, perform actual constant-time comparison
-  return timingSafeEqual(bufA, bufB)
 }

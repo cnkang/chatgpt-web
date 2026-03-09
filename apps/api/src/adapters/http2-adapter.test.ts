@@ -5,10 +5,13 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildIpv4Address, getAvailablePort } from '../test/test-helpers.js'
 import type { MiddlewareChain, Router } from '../transport/index.js'
 import { HTTP2Adapter } from './http2-adapter.js'
 
 describe('HTTP2Adapter', () => {
+  const testClientIp = buildIpv4Address(198, 51, 100, 10)
+
   // Mock router
   const mockRouter: Router = {
     addRoute: vi.fn().mockReturnThis(),
@@ -29,7 +32,7 @@ describe('HTTP2Adapter', () => {
     it('should attempt to create HTTP/2 secure server when TLS is configured', () => {
       // Note: This test verifies the code path is taken, but will fail with invalid certs
       // In a real scenario, valid TLS certificates would be provided
-      expect(() => {
+      const createSecureAdapter = () =>
         new HTTP2Adapter(mockRouter, mockMiddleware, {
           http2: true,
           tls: {
@@ -37,7 +40,8 @@ describe('HTTP2Adapter', () => {
             cert: Buffer.from('test-cert'),
           },
         })
-      }).toThrow() // Will throw due to invalid certificates
+
+      expect(createSecureAdapter).toThrow() // Will throw due to invalid certificates
     })
 
     it('should create HTTP/2 cleartext server when TLS is not configured', () => {
@@ -99,8 +103,7 @@ describe('HTTP2Adapter', () => {
         http2: false, // Use HTTP/1.1 for simpler testing
       })
 
-      // Use a random high port to avoid conflicts
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
 
       await expect(adapter.listen(port, '127.0.0.1')).resolves.toBeUndefined()
 
@@ -112,7 +115,7 @@ describe('HTTP2Adapter', () => {
         http2: false,
       })
 
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
       await adapter.listen(port, '127.0.0.1')
 
       await expect(adapter.close()).resolves.toBeUndefined()
@@ -142,12 +145,13 @@ describe('HTTP2Adapter', () => {
         cert: '-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----',
       }
 
-      expect(() => {
+      const createTlsAdapter = () =>
         new HTTP2Adapter(mockRouter, mockMiddleware, {
           http2: true,
           tls: tlsConfig,
         })
-      }).toThrow() // Will throw due to invalid certificates
+
+      expect(createTlsAdapter).toThrow() // Will throw due to invalid certificates
     })
   })
 
@@ -250,6 +254,10 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should extract client IP from X-Forwarded-For header', () => {
+      const trustedProxyAdapter = new HTTP2Adapter(mockRouter, mockMiddleware, {
+        http2: false,
+        trustProxy: true,
+      })
       const mockReq = {
         method: 'GET',
         url: '/api/health',
@@ -260,12 +268,16 @@ describe('HTTP2Adapter', () => {
         socket: { remoteAddress: '127.0.0.1' },
       }
 
-      const transportReq = (adapter as any).wrapRequest(mockReq)
+      const transportReq = (trustedProxyAdapter as any).wrapRequest(mockReq)
 
       expect(transportReq.ip).toBe('203.0.113.1')
     })
 
     it('should extract client IP from X-Real-IP header when X-Forwarded-For is missing', () => {
+      const trustedProxyAdapter = new HTTP2Adapter(mockRouter, mockMiddleware, {
+        http2: false,
+        trustProxy: true,
+      })
       const mockReq = {
         method: 'GET',
         url: '/api/health',
@@ -276,7 +288,7 @@ describe('HTTP2Adapter', () => {
         socket: { remoteAddress: '127.0.0.1' },
       }
 
-      const transportReq = (adapter as any).wrapRequest(mockReq)
+      const transportReq = (trustedProxyAdapter as any).wrapRequest(mockReq)
 
       expect(transportReq.ip).toBe('203.0.113.1')
     })
@@ -286,12 +298,12 @@ describe('HTTP2Adapter', () => {
         method: 'GET',
         url: '/api/health',
         headers: { host: 'localhost:3000' },
-        socket: { remoteAddress: '192.168.1.100' },
+        socket: { remoteAddress: testClientIp },
       }
 
       const transportReq = (adapter as any).wrapRequest(mockReq)
 
-      expect(transportReq.ip).toBe('192.168.1.100')
+      expect(transportReq.ip).toBe(testClientIp)
     })
 
     it('should default to 0.0.0.0 when no IP information is available', () => {
@@ -393,22 +405,30 @@ describe('HTTP2Adapter', () => {
     })
 
     it('should handle X-Forwarded-For with array values', () => {
+      const trustedProxyAdapter = new HTTP2Adapter(mockRouter, mockMiddleware, {
+        http2: false,
+        trustProxy: true,
+      })
       const mockReq = {
         method: 'GET',
         url: '/api/health',
         headers: {
           host: 'localhost:3000',
-          'x-forwarded-for': ['203.0.113.1, 198.51.100.1', '192.168.1.1'],
+          'x-forwarded-for': ['203.0.113.1, 198.51.100.1', testClientIp],
         },
         socket: { remoteAddress: '127.0.0.1' },
       }
 
-      const transportReq = (adapter as any).wrapRequest(mockReq)
+      const transportReq = (trustedProxyAdapter as any).wrapRequest(mockReq)
 
       expect(transportReq.ip).toBe('203.0.113.1')
     })
 
     it('should handle X-Real-IP with array values', () => {
+      const trustedProxyAdapter = new HTTP2Adapter(mockRouter, mockMiddleware, {
+        http2: false,
+        trustProxy: true,
+      })
       const mockReq = {
         method: 'GET',
         url: '/api/health',
@@ -419,9 +439,25 @@ describe('HTTP2Adapter', () => {
         socket: { remoteAddress: '127.0.0.1' },
       }
 
-      const transportReq = (adapter as any).wrapRequest(mockReq)
+      const transportReq = (trustedProxyAdapter as any).wrapRequest(mockReq)
 
       expect(transportReq.ip).toBe('203.0.113.1')
+    })
+
+    it('should ignore forwarded headers from untrusted proxies', () => {
+      const mockReq = {
+        method: 'GET',
+        url: '/api/health',
+        headers: {
+          host: 'localhost:3000',
+          'x-forwarded-for': '203.0.113.1, 198.51.100.1',
+        },
+        socket: { remoteAddress: testClientIp },
+      }
+
+      const transportReq = (adapter as any).wrapRequest(mockReq)
+
+      expect(transportReq.ip).toBe(testClientIp)
     })
 
     it('should handle missing URL by defaulting to root path', () => {
@@ -1037,7 +1073,7 @@ describe('HTTP2Adapter', () => {
         http2: false, // Explicitly disable HTTP/2
       })
 
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
       await adapter.listen(port, '127.0.0.1')
 
       const server = adapter.getServer()
@@ -1073,9 +1109,10 @@ describe('HTTP2Adapter', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       // HTTP/2 without TLS should warn
-      new HTTP2Adapter(mockRouter, mockMiddleware, {
+      const adapter = new HTTP2Adapter(mockRouter, mockMiddleware, {
         http2: true,
       })
+      expect(adapter.getServer()).toBeDefined()
       expect(warnSpy).toHaveBeenCalled()
 
       warnSpy.mockRestore()
@@ -1127,7 +1164,7 @@ describe('HTTP2Adapter', () => {
         res.status(200).json({ message: 'success' })
       })
 
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
       await adapter.listen(port, '127.0.0.1')
 
       try {
@@ -1194,7 +1231,7 @@ describe('HTTP2Adapter', () => {
         http2: false,
       })
 
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
       await adapter.listen(port, '127.0.0.1')
 
       try {
@@ -1293,7 +1330,7 @@ describe('HTTP2Adapter', () => {
         res.status(200).json({ message: 'success' })
       })
 
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
       await adapter.listen(port, '127.0.0.1')
 
       try {
@@ -1380,7 +1417,7 @@ describe('HTTP2Adapter', () => {
         res.status(200).json({ message: 'success' })
       })
 
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
       await adapter.listen(port, '127.0.0.1')
 
       try {
@@ -1460,7 +1497,7 @@ describe('HTTP2Adapter', () => {
         res.status(200).json({ method: 'POST' })
       })
 
-      const port = 30000 + Math.floor(Math.random() * 10000)
+      const port = await getAvailablePort()
       await adapter.listen(port, '127.0.0.1')
 
       try {

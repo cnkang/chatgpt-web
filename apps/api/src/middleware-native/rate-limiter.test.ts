@@ -6,6 +6,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NextFunction, TransportRequest, TransportResponse } from '../transport/types.js'
+import { buildIpv4Address } from '../test/test-helpers.js'
 import { RateLimiter, createAuthRateLimiter, createGeneralRateLimiter } from './rate-limiter.js'
 
 /**
@@ -81,6 +82,8 @@ function createMockResponse(): TransportResponse & {
 }
 
 describe('RateLimiter', () => {
+  const testIpOne = buildIpv4Address(198, 51, 100, 1)
+  const testIpTwo = buildIpv4Address(198, 51, 100, 2)
   let limiter: RateLimiter
   let mockNext: NextFunction
 
@@ -161,7 +164,7 @@ describe('RateLimiter', () => {
       const middleware = limiter.middleware()
 
       // IP 1: Make 2 requests (should succeed)
-      const req1 = createMockRequest('192.168.1.1')
+      const req1 = createMockRequest(testIpOne)
       for (let i = 0; i < 2; i++) {
         const res = createMockResponse()
         await middleware(req1, res, mockNext)
@@ -169,7 +172,7 @@ describe('RateLimiter', () => {
       }
 
       // IP 2: Make 2 requests (should also succeed)
-      const req2 = createMockRequest('192.168.1.2')
+      const req2 = createMockRequest(testIpTwo)
       for (let i = 0; i < 2; i++) {
         const res = createMockResponse()
         await middleware(req2, res, mockNext)
@@ -315,8 +318,8 @@ describe('RateLimiter', () => {
         message: 'Too many requests',
       })
 
-      const req1 = createMockRequest('192.168.1.1')
-      const req2 = createMockRequest('192.168.1.2')
+      const req1 = createMockRequest(testIpOne)
+      const req2 = createMockRequest(testIpTwo)
       const middleware = limiter.middleware()
 
       // Make requests from two IPs

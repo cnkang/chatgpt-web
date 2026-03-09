@@ -4,6 +4,7 @@
  */
 
 import type { MiddlewareHandler } from '../transport/types.js'
+import { isTrustedForwardedHttps, type TrustedProxyConfig } from '../utils/proxy-trust.js'
 
 /**
  * Creates security headers middleware with environment-aware CSP configuration.
@@ -18,7 +19,9 @@ import type { MiddlewareHandler } from '../transport/types.js'
  * - unsafe-inline in style-src: Required by Naive UI component library which
  *   injects dynamic inline styles for component rendering.
  */
-export function createSecurityHeadersMiddleware(): MiddlewareHandler {
+export function createSecurityHeadersMiddleware(
+  trustProxy: TrustedProxyConfig = false,
+): MiddlewareHandler {
   const isDevelopment = process.env.NODE_ENV === 'development'
   const isProduction = process.env.NODE_ENV === 'production'
 
@@ -61,7 +64,7 @@ export function createSecurityHeadersMiddleware(): MiddlewareHandler {
     res.setHeader('X-Permitted-Cross-Domain-Policies', 'none')
 
     // Strict-Transport-Security: only emit when the request is effectively HTTPS.
-    const isHttpsRequest = req.getHeader('x-forwarded-proto') === 'https'
+    const isHttpsRequest = isTrustedForwardedHttps(req, trustProxy)
     if (isProduction && isHttpsRequest) {
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
     }

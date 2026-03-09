@@ -3,21 +3,8 @@
  * POST /api/verify - Verify authentication credentials
  */
 
-import { timingSafeEqual } from 'node:crypto'
 import type { RouteHandler } from '../transport/types.js'
-
-/**
- * Constant-time comparison to prevent timing attacks
- */
-function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a)
-  const bufB = Buffer.from(b)
-  if (bufA.length !== bufB.length) {
-    timingSafeEqual(bufA, bufA) // Constant time for length of bufA
-    return false
-  }
-  return timingSafeEqual(bufA, bufB)
-}
+import { constantTimeEqual } from '../utils/constant-time.js'
 
 /**
  * Verify endpoint
@@ -66,7 +53,7 @@ export const verifyHandler: RouteHandler = async (req, res) => {
     }
 
     // Verify token using constant-time comparison
-    const isValid = safeEqual(body.token.trim(), secretKey.trim())
+    const isValid = constantTimeEqual(body.token.trim(), secretKey.trim())
 
     if (!isValid) {
       res.status(401).json({

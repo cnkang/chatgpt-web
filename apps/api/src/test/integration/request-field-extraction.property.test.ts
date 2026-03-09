@@ -31,6 +31,7 @@ const PROPERTY_TEST_RUNS = 100
 function createTestAdapter() {
   return new HTTP2Adapter(new RouterImpl(), new MiddlewareChainImpl(), {
     bodyLimit: { json: 1048576, urlencoded: 32768 },
+    trustProxy: true,
   })
 }
 
@@ -360,7 +361,7 @@ describe('Property 3: Request Field Extraction', () => {
           path: urlPathGenerator,
           query: fc.constant({}),
           forwardedIp: ipAddressGenerator,
-          socketIp: ipAddressGenerator,
+          socketIp: fc.constant('127.0.0.1'),
           host: fc.constant('localhost'),
         }),
         async config => {
@@ -397,7 +398,7 @@ describe('Property 3: Request Field Extraction', () => {
           path: urlPathGenerator,
           query: fc.constant({}),
           realIp: ipAddressGenerator,
-          socketIp: ipAddressGenerator,
+          socketIp: fc.constant('127.0.0.1'),
           host: fc.constant('localhost'),
         }),
         async config => {

@@ -6,9 +6,14 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TransportRequest, TransportResponse } from '../transport/types.js'
+import { buildHttpOrigin } from '../test/test-helpers.js'
 import { createCorsMiddleware } from './cors.js'
 
 describe('CORS Middleware', () => {
+  const allowedLocalhostOrigin = buildHttpOrigin('localhost:1002')
+  const allowedLoopbackOrigin = buildHttpOrigin('127.0.0.1:1002')
+  const blockedOrigin = buildHttpOrigin('evil.com')
+
   let mockReq: TransportRequest
   let mockRes: TransportResponse
   let nextFn: (error?: Error) => void
@@ -53,14 +58,14 @@ describe('CORS Middleware', () => {
     })
 
     it('should allow localhost:1002 by default in development', async () => {
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Access-Control-Allow-Origin',
-        'http://localhost:1002',
+        allowedLocalhostOrigin,
       )
       expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
       expect(mockRes.setHeader).toHaveBeenCalledWith('Vary', 'Origin')
@@ -68,21 +73,21 @@ describe('CORS Middleware', () => {
     })
 
     it('should allow 127.0.0.1:1002 by default in development', async () => {
-      mockReq.headers.set('origin', 'http://127.0.0.1:1002')
+      mockReq.headers.set('origin', allowedLoopbackOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Access-Control-Allow-Origin',
-        'http://127.0.0.1:1002',
+        allowedLoopbackOrigin,
       )
       expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
       expect(nextFn).toHaveBeenCalled()
     })
 
     it('should not set CORS headers for disallowed origins in development', async () => {
-      mockReq.headers.set('origin', 'http://evil.com')
+      mockReq.headers.set('origin', blockedOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -106,7 +111,7 @@ describe('CORS Middleware', () => {
     })
 
     it('should not allow any origins by default in production', async () => {
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -120,7 +125,7 @@ describe('CORS Middleware', () => {
 
     it('should block wildcard (*) origins in production', async () => {
       vi.stubEnv('ALLOWED_ORIGINS', '*')
-      mockReq.headers.set('origin', 'http://example.com')
+      mockReq.headers.set('origin', buildHttpOrigin('example.com'))
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -248,7 +253,7 @@ describe('CORS Middleware', () => {
     })
 
     it('should return 200 for allowed origins', async () => {
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -259,7 +264,7 @@ describe('CORS Middleware', () => {
     })
 
     it('should return 403 for disallowed origins', async () => {
-      mockReq.headers.set('origin', 'http://evil.com')
+      mockReq.headers.set('origin', blockedOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -281,7 +286,7 @@ describe('CORS Middleware', () => {
     })
 
     it('should set Access-Control-Allow-Headers', async () => {
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -293,7 +298,7 @@ describe('CORS Middleware', () => {
     })
 
     it('should set Access-Control-Allow-Methods', async () => {
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -305,7 +310,7 @@ describe('CORS Middleware', () => {
     })
 
     it('should set Access-Control-Max-Age', async () => {
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -322,7 +327,7 @@ describe('CORS Middleware', () => {
 
     it('should call next() for GET requests', async () => {
       mockReq.method = 'GET'
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -333,7 +338,7 @@ describe('CORS Middleware', () => {
 
     it('should call next() for POST requests', async () => {
       mockReq.method = 'POST'
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
@@ -344,14 +349,14 @@ describe('CORS Middleware', () => {
 
     it('should set CORS headers for allowed origins on non-OPTIONS requests', async () => {
       mockReq.method = 'POST'
-      mockReq.headers.set('origin', 'http://localhost:1002')
+      mockReq.headers.set('origin', allowedLocalhostOrigin)
 
       const middleware = createCorsMiddleware()
       await middleware(mockReq, mockRes, nextFn)
 
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         'Access-Control-Allow-Origin',
-        'http://localhost:1002',
+        allowedLocalhostOrigin,
       )
       expect(mockRes.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true')
       expect(mockRes.setHeader).toHaveBeenCalledWith('Vary', 'Origin')

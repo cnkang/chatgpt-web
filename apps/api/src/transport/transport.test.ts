@@ -5,6 +5,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildIpv4Address } from '../test/test-helpers.js'
 import type {
   MiddlewareChain,
   MiddlewareHandler,
@@ -19,6 +20,7 @@ import type {
 describe('transport layer interfaces', () => {
   describe('TransportRequest', () => {
     let mockRequest: TransportRequest
+    const testClientIp = buildIpv4Address(198, 51, 100, 20)
 
     beforeEach(() => {
       const url = new URL('http://localhost:3002/api/health?foo=bar&baz=qux')
@@ -34,7 +36,7 @@ describe('transport layer interfaces', () => {
         url,
         headers,
         body: { message: 'test' },
-        ip: '192.168.1.100',
+        ip: testClientIp,
         session: {
           id: 'session-123',
           data: { userId: 'user-456' },
@@ -76,7 +78,7 @@ describe('transport layer interfaces', () => {
     })
 
     it('should extract client IP address', () => {
-      expect(mockRequest.ip).toBe('192.168.1.100')
+      expect(mockRequest.ip).toBe(testClientIp)
     })
 
     it('should provide session data when available', () => {
