@@ -218,6 +218,26 @@ describe('HTTP2Adapter', () => {
       expect(transportReq.url.searchParams.get('limit')).toBe('10')
     })
 
+    it('should ignore HTTP/2 pseudo-headers when building request headers', () => {
+      const mockReq = {
+        method: 'GET',
+        url: '/api/health',
+        headers: {
+          ':method': 'GET',
+          ':path': '/api/health',
+          host: 'localhost:3000',
+          authorization: 'Bearer token',
+        },
+        socket: { remoteAddress: '127.0.0.1' },
+      }
+
+      const transportReq = (adapter as any).wrapRequest(mockReq)
+
+      expect([...transportReq.headers.keys()]).not.toContain(':method')
+      expect([...transportReq.headers.keys()]).not.toContain(':path')
+      expect(transportReq.getHeader('authorization')).toBe('Bearer token')
+    })
+
     it('should convert headers to Headers object', () => {
       const mockReq = {
         method: 'GET',
@@ -1057,15 +1077,16 @@ describe('HTTP2Adapter', () => {
     it('should create HTTP/2 secure server with allowHTTP1 flag when TLS is configured', () => {
       // This test verifies the configuration is set up for HTTP/1.1 fallback
       // In production, the server would negotiate protocol via ALPN
-      expect(() => {
-        new HTTP2Adapter(mockRouter, mockMiddleware, {
-          http2: true,
-          tls: {
-            key: Buffer.from('test-key'),
-            cert: Buffer.from('test-cert'),
-          },
-        })
-      }).toThrow() // Will throw due to invalid certificates, but config path is tested
+      expect(
+        () =>
+          new HTTP2Adapter(mockRouter, mockMiddleware, {
+            http2: true,
+            tls: {
+              key: Buffer.from('test-key'),
+              cert: Buffer.from('test-cert'),
+            },
+          }),
+      ).toThrow() // Will throw due to invalid certificates, but config path is tested
     })
 
     it('should accept HTTP/1.1 connections when HTTP/2 is disabled', async () => {

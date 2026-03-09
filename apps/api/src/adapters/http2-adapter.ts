@@ -65,6 +65,17 @@ export interface AdapterOptions {
   trustProxy?: TrustedProxyConfig
 }
 
+type NativeServer = Http2SecureServer | Http2Server | HttpServer
+type NativeResponse = ServerResponse | Http2ServerResponse
+
+interface AdapterErrorContext {
+  details?: unknown
+  errorCode: string
+  errorType: string
+  message: string
+  statusCode: number
+}
+
 /**
  * HTTP/2 Adapter
  *
@@ -72,10 +83,10 @@ export interface AdapterOptions {
  * Supports HTTP/2 with TLS (recommended), HTTP/2 cleartext (h2c), and HTTP/1.1 fallback.
  */
 export class HTTP2Adapter {
-  private server: Http2SecureServer | Http2Server | HttpServer
-  private router: Router
-  private middleware: MiddlewareChain
-  private options: Required<Omit<AdapterOptions, 'tls' | 'staticDir'>> & {
+  private readonly server: NativeServer
+  private readonly router: Router
+  private readonly middleware: MiddlewareChain
+  private readonly options: Required<Omit<AdapterOptions, 'tls' | 'staticDir'>> & {
     tls?: TLSConfig
     staticDir?: string
     trustProxy: TrustedProxyConfig
@@ -121,7 +132,7 @@ export class HTTP2Adapter {
    *
    * @returns HTTP server instance
    */
-  private createServer(): Http2SecureServer | Http2Server | HttpServer {
+  private createServer(): NativeServer {
     if (this.options.http2 && this.options.tls) {
       // HTTP/2 with TLS (HTTPS) - recommended for production
       // Supports HTTP/1.1 fallback via ALPN negotiation
@@ -279,9 +290,9 @@ export class HTTP2Adapter {
     // Convert headers to Headers object
     const headers = new Headers()
     for (const [key, value] of Object.entries(req.headers)) {
-      if (value !== undefined) {
+      if (!key.startsWith(':') && value !== undefined) {
         // Handle both string and string[] header values
-        const headerValue = Array.isArray(value) ? value.join(', ') : String(value)
+        const headerValue = Array.isArray(value) ? value.join(', ') : value
         headers.set(key, headerValue)
       }
     }
@@ -336,7 +347,7 @@ export class HTTP2Adapter {
    * @param res - Native HTTP response
    * @returns Transport response
    */
-  private wrapResponse(res: ServerResponse | Http2ServerResponse): TransportResponse {
+  private wrapResponse(res: NativeResponse): TransportResponse {
     let statusCode = 200
 
     const wrapped: TransportResponse = {
@@ -391,12 +402,13 @@ export class HTTP2Adapter {
         if (!res.headersSent) {
           res.statusCode = statusCode
         }
-        if (chunk !== undefined) {
-          // biome-ignore lint/suspicious/noExplicitAny: Node.js http2 response.end() accepts Buffer but types are restrictive
-          res.end(chunk as any)
-        } else {
+        if (chunk === undefined) {
           res.end()
+          return
         }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Node.js http2 response.end() accepts Buffer but types are restrictive
+        res.end(chunk as any)
       },
 
       get headersSent() {
@@ -439,105 +451,140 @@ export class HTTP2Adapter {
       return
     }
 
-    // Default error values
-    let statusCode = 500
-    let errorCode = 'INTERNAL_ERROR'
-    let message = 'Internal server error'
-    let details: unknown
-    let errorType = 'Error'
-
-    // Extract error information
-    if (error instanceof Error) {
-      errorType = error.constructor.name
-
-      // Check for AppError with specific error types
-      // biome-ignore lint/suspicious/noExplicitAny: Type narrowing for AppError properties
-      const appError = error as any
-      if (appError.type && appError.statusCode) {
-        statusCode = appError.statusCode
-        errorCode = appError.type
-        details = appError.details
-
-        // Map error types to public messages for 5xx errors
-        if (statusCode >= 500) {
-          if (appError.type === 'TIMEOUT_ERROR') {
-            message = 'Request timeout'
-          } else if (appError.type === 'EXTERNAL_API_ERROR' || appError.type === 'NETWORK_ERROR') {
-            message = 'Upstream service request failed'
-          } else {
-            message = 'Internal server error'
-          }
-        } else {
-          // For 4xx errors, use the original message
-          message = error.message
-        }
-      } else {
-        // Map error messages to status codes
-        const errorMessage = error.message.toLowerCase()
-
-        if (
-          errorMessage.includes('request entity too large') ||
-          errorMessage.includes('payload too large')
-        ) {
-          statusCode = 413
-          errorCode = 'PAYLOAD_TOO_LARGE_ERROR'
-          message = 'Request entity too large'
-        } else if (errorMessage.includes('invalid json')) {
-          statusCode = 400
-          errorCode = 'VALIDATION_ERROR'
-          message = 'Invalid JSON payload'
-        } else if (errorMessage.includes('validation')) {
-          statusCode = 400
-          errorCode = 'VALIDATION_ERROR'
-          message = error.message
-        } else if (
-          errorMessage.includes('authentication') ||
-          errorMessage.includes('no access rights')
-        ) {
-          statusCode = 401
-          errorCode = 'AUTHENTICATION_ERROR'
-          message = error.message
-        } else if (errorMessage.includes('rate limit')) {
-          statusCode = 429
-          errorCode = 'RATE_LIMIT_ERROR'
-          message = 'Rate limit exceeded'
-        } else if (errorMessage.includes('upstream') || errorMessage.includes('external api')) {
-          statusCode = 502
-          errorCode = 'EXTERNAL_API_ERROR'
-          message = 'Upstream service request failed'
-        } else if (errorMessage.includes('timeout')) {
-          statusCode = 504
-          errorCode = 'TIMEOUT_ERROR'
-          message = 'Request timeout'
-        }
-      }
-    }
+    const errorContext = this.buildErrorContext(error)
 
     // Log error with structured data using logger
     logger.error('Request error', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      statusCode,
-      errorCode,
+      statusCode: errorContext.statusCode,
+      errorCode: errorContext.errorCode,
     })
 
     // Build error response following the standard structure
     const errorResponse = {
-      status: statusCode < 500 ? 'Fail' : 'Error',
-      message,
+      status: errorContext.statusCode < 500 ? 'Fail' : 'Error',
+      message: errorContext.message,
       data: null,
       error: {
-        code: errorCode,
-        type: errorType,
-        details: statusCode < 500 ? details : undefined, // Only include details for 4xx errors
+        code: errorContext.errorCode,
+        type: errorContext.errorType,
+        details: errorContext.statusCode < 500 ? errorContext.details : undefined,
         timestamp: new Date().toISOString(),
       },
     }
 
     // Send error response
-    res.statusCode = statusCode
+    res.statusCode = errorContext.statusCode
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(errorResponse))
+  }
+
+  private buildErrorContext(error: unknown): AdapterErrorContext {
+    const defaultContext: AdapterErrorContext = {
+      errorCode: 'INTERNAL_ERROR',
+      errorType: 'Error',
+      message: 'Internal server error',
+      statusCode: 500,
+    }
+
+    if (!(error instanceof Error)) {
+      return defaultContext
+    }
+
+    const appErrorContext = this.readAppErrorContext(error)
+    if (appErrorContext) {
+      return appErrorContext
+    }
+
+    return this.readGenericErrorContext(error)
+  }
+
+  private readAppErrorContext(error: Error): AdapterErrorContext | null {
+    // biome-ignore lint/suspicious/noExplicitAny: Type narrowing for AppError properties
+    const appError = error as any
+    if (!appError.type || !appError.statusCode) {
+      return null
+    }
+
+    return {
+      details: appError.details,
+      errorCode: appError.type,
+      errorType: error.constructor.name,
+      message: this.getAppErrorMessage(error.message, appError.type, appError.statusCode),
+      statusCode: appError.statusCode,
+    }
+  }
+
+  private getAppErrorMessage(message: string, type: string, statusCode: number): string {
+    if (statusCode < 500) {
+      return message
+    }
+
+    if (type === 'TIMEOUT_ERROR') {
+      return 'Request timeout'
+    }
+
+    if (type === 'EXTERNAL_API_ERROR' || type === 'NETWORK_ERROR') {
+      return 'Upstream service request failed'
+    }
+
+    return 'Internal server error'
+  }
+
+  private readGenericErrorContext(error: Error): AdapterErrorContext {
+    const errorMessage = error.message.toLowerCase()
+
+    if (
+      errorMessage.includes('request entity too large') ||
+      errorMessage.includes('payload too large')
+    ) {
+      return this.createErrorContext(413, 'PAYLOAD_TOO_LARGE_ERROR', 'Request entity too large')
+    }
+
+    if (errorMessage.includes('invalid json')) {
+      return this.createErrorContext(400, 'VALIDATION_ERROR', 'Invalid JSON payload')
+    }
+
+    if (errorMessage.includes('validation')) {
+      return this.createErrorContext(400, 'VALIDATION_ERROR', error.message)
+    }
+
+    if (errorMessage.includes('authentication') || errorMessage.includes('no access rights')) {
+      return this.createErrorContext(401, 'AUTHENTICATION_ERROR', error.message)
+    }
+
+    if (errorMessage.includes('rate limit')) {
+      return this.createErrorContext(429, 'RATE_LIMIT_ERROR', 'Rate limit exceeded')
+    }
+
+    if (errorMessage.includes('upstream') || errorMessage.includes('external api')) {
+      return this.createErrorContext(502, 'EXTERNAL_API_ERROR', 'Upstream service request failed')
+    }
+
+    if (errorMessage.includes('timeout')) {
+      return this.createErrorContext(504, 'TIMEOUT_ERROR', 'Request timeout')
+    }
+
+    return {
+      errorCode: 'INTERNAL_ERROR',
+      errorType: error.constructor.name,
+      message: 'Internal server error',
+      statusCode: 500,
+    }
+  }
+
+  private createErrorContext(
+    statusCode: number,
+    errorCode: string,
+    message: string,
+  ): AdapterErrorContext {
+    return {
+      errorCode,
+      errorType: 'Error',
+      message,
+      statusCode,
+    }
   }
 
   /**

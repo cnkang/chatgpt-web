@@ -234,7 +234,7 @@ describe('async handler', () => {
 
   it('should handle non-Error objects', async () => {
     const handler = vi.fn(async () => {
-      throw 'String error'
+      throw new Error('String error')
     })
 
     const wrapped = asyncHandler(handler)

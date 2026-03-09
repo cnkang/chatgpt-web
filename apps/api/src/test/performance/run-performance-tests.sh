@@ -19,18 +19,18 @@ set -e
 IMPLEMENTATION=$1
 ENDPOINTS=("health" "session")
 
-if [ -z "$IMPLEMENTATION" ]; then
+if [[ -z "$IMPLEMENTATION" ]]; then
   echo "Usage: $0 <express|native|compare>"
   exit 1
 fi
 
-if [ "$IMPLEMENTATION" = "compare" ]; then
+if [[ "$IMPLEMENTATION" = "compare" ]]; then
   echo "Comparing results..."
   pnpm tsx src/test/performance/analyze-results.ts
   exit 0
 fi
 
-if [ "$IMPLEMENTATION" != "express" ] && [ "$IMPLEMENTATION" != "native" ]; then
+if [[ "$IMPLEMENTATION" != "express" ]] && [[ "$IMPLEMENTATION" != "native" ]]; then
   echo "Invalid implementation. Must be 'express', 'native', or 'compare'"
   exit 1
 fi
@@ -40,9 +40,9 @@ echo ""
 
 # Check if server is running
 if ! curl -s http://localhost:3002/api/health > /dev/null; then
-  echo "Error: Server is not running on port 3002"
+  echo "Error: Server is not running on port 3002" >&2
   echo "Please start the server first:"
-  if [ "$IMPLEMENTATION" = "express" ]; then
+  if [[ "$IMPLEMENTATION" = "express" ]]; then
     echo "  pnpm dev"
   else
     echo "  pnpm esno src/index-native.ts"

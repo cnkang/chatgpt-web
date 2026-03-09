@@ -44,7 +44,7 @@ const chatRequestSchema = z.object({
 })
 
 const verifyRequestSchema = z.object({
-  token: z.string().trim().min(1),
+  token: z.string().min(1),
 })
 
 export interface NativeServerRuntimeConfig {

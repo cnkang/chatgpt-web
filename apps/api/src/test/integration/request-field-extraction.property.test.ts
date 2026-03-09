@@ -248,7 +248,7 @@ describe('Property 3: Request Field Extraction', () => {
           // Handle both string and string[] values
           // Headers API trims leading/trailing whitespace
           if (Array.isArray(value)) {
-            const joined = value.map(v => String(v)).join(', ')
+            const joined = value.map(String).join(', ')
             const expected = joined.trim()
             expect(headerValue).toBe(expected)
           } else {
@@ -612,7 +612,7 @@ describe('Property 3: Request Field Extraction', () => {
           const transportReq = (adapter as any).wrapRequest(mockReq)
 
           // Headers API trims leading/trailing whitespace from the entire value
-          const joined = config.headerValues.map(v => String(v)).join(', ')
+          const joined = config.headerValues.map(String).join(', ')
           const expected = joined.trim()
           expect(transportReq.getHeader('accept')).toBe(expected)
         },

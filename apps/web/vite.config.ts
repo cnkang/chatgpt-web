@@ -18,13 +18,13 @@ function resolveAssetFileName(name?: string) {
 }
 
 function normalizeFilePath(filePath: string) {
-  return filePath.replace(/\\/g, '/')
+  return filePath.replaceAll('\\', '/')
 }
 
 function markstreamD2StubPlugin(enableD2: boolean): Plugin {
   const stubPath = path.resolve(__dirname, 'src/plugins/markstreamD2Disabled.ts')
-  const markstreamExportsPattern = /\/node_modules\/markstream-vue\/dist\/exports\.js$/
-  const markstreamD2Pattern = /\/node_modules\/markstream-vue\/dist\/index7\.js$/
+  const markstreamExportsFile = '/node_modules/markstream-vue/dist/exports.js'
+  const markstreamD2File = '/node_modules/markstream-vue/dist/index7.js'
 
   return {
     name: 'markstream-d2-stub',
@@ -36,8 +36,8 @@ function markstreamD2StubPlugin(enableD2: boolean): Plugin {
       const normalizedImporter = importer ? normalizeFilePath(importer) : ''
 
       if (
-        (source === './index7.js' && markstreamExportsPattern.test(normalizedImporter)) ||
-        markstreamD2Pattern.test(normalizedSource)
+        (source === './index7.js' && normalizedImporter.endsWith(markstreamExportsFile)) ||
+        normalizedSource.endsWith(markstreamD2File)
       ) {
         return stubPath
       }

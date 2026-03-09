@@ -99,7 +99,7 @@ export function setupGracefulShutdown(
     process.exit(1)
   }
   const unhandledRejectionHandler = (reason: unknown, promise: Promise<unknown>) => {
-    logger.error('Unhandled Rejection', { promise: String(promise), reason })
+    logger.error('Unhandled Rejection', { promiseType: promise.constructor.name, reason })
     process.exit(1)
   }
 

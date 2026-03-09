@@ -229,7 +229,7 @@ function printComparisons(comparisons: EndpointComparison[]): void {
  */
 function generateSummary(comparisons: EndpointComparison[]): void {
   const resultsDir = 'performance-results'
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')
   const filename = path.join(resultsDir, `summary-${timestamp}.json`)
 
   const allPassed = comparisons.every(c => c.overallPass)
@@ -332,8 +332,9 @@ async function main() {
   process.exit(allPassed ? 0 : 1)
 }
 
-// Run the analysis
-main().catch(error => {
+try {
+  await main()
+} catch (error) {
   console.error('Analysis failed:', error)
   process.exit(1)
-})
+}

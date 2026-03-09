@@ -37,8 +37,8 @@ interface RateLimitConfig {
  * Automatically cleans up expired entries every minute.
  */
 export class RateLimiter {
-  private requests = new Map<string, RateLimitRecord>()
-  private cleanupInterval: NodeJS.Timeout
+  private readonly requests = new Map<string, RateLimitRecord>()
+  private readonly cleanupInterval: NodeJS.Timeout
 
   /**
    * Creates a new rate limiter
@@ -54,7 +54,7 @@ export class RateLimiter {
    * })
    * ```
    */
-  constructor(private config: RateLimitConfig) {
+  constructor(private readonly config: RateLimitConfig) {
     // Clean up expired entries every minute
     this.cleanupInterval = setInterval(() => this.cleanup(), 60000)
   }

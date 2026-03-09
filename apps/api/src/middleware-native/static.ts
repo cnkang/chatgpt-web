@@ -81,34 +81,41 @@ export function createStaticFileMiddleware(rootDir: string): MiddlewareHandler {
 
       // Stream file to response
       const stream = createReadStream(filePath)
-
-      stream.on('data', chunk => {
-        res.write(chunk)
-      })
-
-      stream.on('end', () => {
-        res.end()
-      })
-
-      stream.on('error', error => {
-        logger.error('Error streaming static file', {
-          filePath,
-          error: error.message,
+      await new Promise<void>(resolveStream => {
+        stream.on('data', chunk => {
+          res.write(chunk)
         })
 
-        if (!res.headersSent) {
-          res.status(500).json({
-            status: 'Fail',
-            message: 'Error reading file',
-            data: null,
-            error: {
-              code: 'INTERNAL_ERROR',
-              type: 'FileReadError',
-              timestamp: new Date().toISOString(),
-            },
+        stream.on('end', () => {
+          res.end()
+          resolveStream()
+        })
+
+        stream.on('error', error => {
+          logger.error('Error streaming static file', {
+            filePath,
+            error: error.message,
           })
-        }
+
+          if (!res.headersSent) {
+            res.status(500).json({
+              status: 'Fail',
+              message: 'Error reading file',
+              data: null,
+              error: {
+                code: 'INTERNAL_ERROR',
+                type: 'FileReadError',
+                timestamp: new Date().toISOString(),
+              },
+            })
+          } else if (!res.finished) {
+            res.end()
+          }
+
+          resolveStream()
+        })
       })
+      return
     } catch (error) {
       logger.error('Static file middleware error', {
         path: req.path,

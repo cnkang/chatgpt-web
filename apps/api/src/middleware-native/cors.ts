@@ -29,11 +29,10 @@ export function createCorsMiddleware(): MiddlewareHandler {
     .filter(origin => origin !== '*') // Block wildcard (*) origins in production
 
   // Default to localhost:1002 in development, no defaults in production
-  const allowedOrigins = configuredOrigins?.length
-    ? configuredOrigins
-    : isProduction
-      ? [] // No default origins in production
-      : ['http://localhost:1002', 'http://127.0.0.1:1002']
+  let allowedOrigins = configuredOrigins ?? []
+  if (allowedOrigins.length === 0 && !isProduction) {
+    allowedOrigins = ['http://localhost:1002', 'http://127.0.0.1:1002']
+  }
 
   return async (req: TransportRequest, res: TransportResponse, next) => {
     // Get Origin header from request

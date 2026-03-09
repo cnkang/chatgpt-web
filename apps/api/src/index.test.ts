@@ -167,21 +167,16 @@ describe('Server Startup Tests', () => {
 
       // Note: This will throw due to invalid certificates, but we verify
       // the code path attempts to create an HTTP/2 secure server
-      let threwError = false
-      try {
-        new HTTP2Adapter(router, middleware, {
-          http2: true,
-          tls: {
-            key: Buffer.from('-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----'),
-            cert: Buffer.from('-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----'),
-          },
-        })
-      } catch (_error) {
-        threwError = true
-      }
-
-      // Should throw due to invalid certificates
-      expect(threwError).toBe(true)
+      expect(
+        () =>
+          new HTTP2Adapter(router, middleware, {
+            http2: true,
+            tls: {
+              key: Buffer.from('-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----'),
+              cert: Buffer.from('-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----'),
+            },
+          }),
+      ).toThrow()
     })
 
     it('should create HTTP/2 cleartext server when TLS is not configured', () => {
@@ -209,21 +204,16 @@ describe('Server Startup Tests', () => {
       const middleware = new MiddlewareChainImpl()
 
       // This will throw due to invalid certs, but we're testing the configuration
-      let threwError = false
-      try {
-        new HTTP2Adapter(router, middleware, {
-          http2: true,
-          tls: {
-            key: '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----',
-            cert: '-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----',
-          },
-        })
-      } catch (_error) {
-        threwError = true
-      }
-
-      // Should throw due to invalid certificates
-      expect(threwError).toBe(true)
+      expect(
+        () =>
+          new HTTP2Adapter(router, middleware, {
+            http2: true,
+            tls: {
+              key: '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----',
+              cert: '-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----',
+            },
+          }),
+      ).toThrow()
     })
   })
 

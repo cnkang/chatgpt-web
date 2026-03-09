@@ -239,14 +239,20 @@ describe('Security Policies Tests', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
         })
-        const remaining1 = parseInt(response1.headers.get('x-ratelimit-remaining') || '0', 10)
+        const remaining1 = Number.parseInt(
+          response1.headers.get('x-ratelimit-remaining') || '0',
+          10,
+        )
 
         const response2 = await fetch(`${baseUrl}/session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
         })
-        const remaining2 = parseInt(response2.headers.get('x-ratelimit-remaining') || '0', 10)
+        const remaining2 = Number.parseInt(
+          response2.headers.get('x-ratelimit-remaining') || '0',
+          10,
+        )
 
         // Remaining should decrease (or stay same if at 0)
         expect(remaining2).toBeLessThanOrEqual(remaining1)

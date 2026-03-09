@@ -1,3 +1,5 @@
+export {}
+
 /**
  * Load Testing Script for Express vs Native Implementation
  *
@@ -133,7 +135,7 @@ async function runLoadTest(config: LoadTestConfig): Promise<LoadTestResult> {
     p95: percentile(latencies, 95),
     p99: percentile(latencies, 99),
     minLatency: latencies[0] || 0,
-    maxLatency: latencies[latencies.length - 1] || 0,
+    maxLatency: latencies.at(-1) || 0,
     avgLatency: latencies.reduce((sum, l) => sum + l, 0) / latencies.length || 0,
   }
 }
@@ -256,7 +258,7 @@ async function main() {
     })
 
     // Wait a bit between tests to let the server recover
-    if (testConfig !== testConfigs[testConfigs.length - 1]) {
+    if (testConfig !== testConfigs.at(-1)) {
       console.log('\nWaiting 5 seconds before next test...')
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
@@ -291,7 +293,7 @@ async function main() {
     fs.mkdirSync(resultsDir, { recursive: true })
   }
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')
   const filename = path.join(resultsDir, `${implementation}-${endpoint}-${timestamp}.json`)
 
   fs.writeFileSync(
@@ -311,8 +313,9 @@ async function main() {
   console.log(`Results saved to: ${filename}`)
 }
 
-// Run the load test
-main().catch(error => {
+try {
+  await main()
+} catch (error) {
   console.error('Load test failed:', error)
   process.exit(1)
-})
+}

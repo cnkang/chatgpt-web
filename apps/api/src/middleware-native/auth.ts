@@ -29,10 +29,10 @@ export function createAuthMiddleware(secretKey: string): MiddlewareHandler {
 
     try {
       // Extract Authorization header
-      const authorization = req.getHeader('authorization')
+      const authorization = req.getHeader('authorization')?.trim()
 
       // Check if Authorization header is present and has Bearer prefix
-      if (!authorization || !authorization.startsWith('Bearer ')) {
+      if (!authorization?.startsWith('Bearer ')) {
         res.status(401).json({
           status: 'Fail',
           message: 'Error: No access rights',
@@ -47,7 +47,7 @@ export function createAuthMiddleware(secretKey: string): MiddlewareHandler {
       }
 
       // Extract Bearer token
-      const token = authorization.replace('Bearer ', '').trim()
+      const token = authorization.slice('Bearer '.length).trim()
 
       // Validate token using constant-time comparison
       if (!constantTimeEqual(token, secretKey.trim())) {

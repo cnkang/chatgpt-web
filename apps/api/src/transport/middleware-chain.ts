@@ -19,7 +19,7 @@ import type {
  * Executes middleware handlers in sequence until one sends a response or an error occurs.
  */
 export class MiddlewareChainImpl implements MiddlewareChain {
-  private handlers: MiddlewareHandler[] = []
+  private readonly handlers: MiddlewareHandler[] = []
 
   /**
    * Add middleware to the chain

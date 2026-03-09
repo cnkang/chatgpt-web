@@ -393,7 +393,7 @@ async function main() {
     }
 
     // Wait between endpoints
-    if (endpoint !== endpoints[endpoints.length - 1]) {
+    if (endpoint !== endpoints.at(-1)) {
       console.log('\nWaiting 10 seconds before next endpoint...')
       await new Promise(resolve => setTimeout(resolve, 10000))
     }
@@ -408,7 +408,7 @@ async function main() {
     fs.mkdirSync(resultsDir, { recursive: true })
   }
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')
   const filename = path.join(resultsDir, `comparison-${timestamp}.json`)
 
   fs.writeFileSync(
@@ -431,8 +431,9 @@ async function main() {
   process.exit(allPassed ? 0 : 1)
 }
 
-// Run the comparison
-main().catch(error => {
+try {
+  await main()
+} catch (error) {
   console.error('Comparison failed:', error)
   process.exit(1)
-})
+}

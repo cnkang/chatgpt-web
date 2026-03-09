@@ -46,41 +46,17 @@ export function asyncHandler(handler: RouteHandler): RouteHandler {
       const requestId = req.getHeader('x-request-id') || crypto.randomUUID()
 
       // Create standardized error response
-      const errorResponse = createErrorResponse(
-        error instanceof Error ? error : new Error(String(error)),
-        requestId,
-      )
-
-      // Determine status code from error response
-      const statusCode =
-        errorResponse.error?.code.includes('VALIDATION') ||
-        errorResponse.error?.code.includes('AUTHENTICATION') ||
-        errorResponse.error?.code.includes('PAYLOAD_TOO_LARGE') ||
-        errorResponse.error?.code.includes('RATE_LIMIT')
-          ? errorResponse.error.code.includes('AUTHENTICATION')
-            ? 401
-            : errorResponse.error.code.includes('PAYLOAD_TOO_LARGE')
-              ? 413
-              : errorResponse.error.code.includes('RATE_LIMIT')
-                ? 429
-                : 400
-          : errorResponse.error?.code.includes('TIMEOUT')
-            ? 504
-            : errorResponse.error?.code.includes('EXTERNAL_API') ||
-                errorResponse.error?.code.includes('NETWORK')
-              ? 502
-              : 500
+      const normalizedError = toError(error)
+      const errorResponse = createErrorResponse(normalizedError, requestId)
+      const statusCode = getStatusCode(errorResponse.error?.code)
 
       // Log error with context
       const logData = {
         requestId,
         error: {
-          message: error instanceof Error ? error.message : String(error),
+          message: normalizedError.message,
           type: errorResponse.error?.code,
-          stack:
-            process.env.NODE_ENV === 'development' && error instanceof Error
-              ? error.stack
-              : undefined,
+          stack: process.env.NODE_ENV === 'development' ? normalizedError.stack : undefined,
         },
         request: {
           method: req.method,
@@ -100,4 +76,40 @@ export function asyncHandler(handler: RouteHandler): RouteHandler {
       res.status(statusCode).json(errorResponse)
     }
   }
+}
+
+function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error))
+}
+
+function getStatusCode(errorCode?: string): number {
+  if (!errorCode) {
+    return 500
+  }
+
+  if (errorCode.includes('AUTHENTICATION')) {
+    return 401
+  }
+
+  if (errorCode.includes('PAYLOAD_TOO_LARGE')) {
+    return 413
+  }
+
+  if (errorCode.includes('RATE_LIMIT')) {
+    return 429
+  }
+
+  if (errorCode.includes('VALIDATION')) {
+    return 400
+  }
+
+  if (errorCode.includes('TIMEOUT')) {
+    return 504
+  }
+
+  if (errorCode.includes('EXTERNAL_API') || errorCode.includes('NETWORK')) {
+    return 502
+  }
+
+  return 500
 }

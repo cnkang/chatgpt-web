@@ -84,7 +84,7 @@ For production deployment with direct TLS termination, configure TLS certificate
 
 #### Generate TLS Certificates
 
-**Option A: Let's Encrypt (Recommended)**
+##### Option A: Let's Encrypt (Recommended)
 
 ```bash
 # Install Certbot
@@ -100,7 +100,7 @@ sudo certbot certonly --standalone \
 # /etc/letsencrypt/live/your-domain.com/privkey.pem
 ```
 
-**Option B: Self-Signed (Development/Testing)**
+##### Option B: Self-Signed (Development/Testing)
 
 ```bash
 # Generate self-signed certificate

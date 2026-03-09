@@ -50,7 +50,7 @@ export interface SessionStore {
  * Sessions are lost on server restart.
  */
 export class MemorySessionStore implements SessionStore {
-  private sessions = new Map<string, SessionData>()
+  private readonly sessions = new Map<string, SessionData>()
 
   async get(id: string): Promise<SessionData | null> {
     const session = this.sessions.get(id)
@@ -81,7 +81,7 @@ export class MemorySessionStore implements SessionStore {
  * Suitable for production and multi-instance deployments.
  */
 export class RedisSessionStore implements SessionStore {
-  private client: ReturnType<typeof createClient>
+  private readonly client: ReturnType<typeof createClient>
   private readonly fallbackStore = new MemorySessionStore()
   private readonly connectPromise: Promise<void>
   private connectionFailed = false
@@ -256,12 +256,10 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
       }
 
       // Create new session if none exists
-      if (!req.session) {
-        req.session = {
-          id: randomBytes(32).toString('hex'),
-          data: {},
-          expires: Date.now() + options.maxAge,
-        }
+      req.session ??= {
+        id: randomBytes(32).toString('hex'),
+        data: {},
+        expires: Date.now() + options.maxAge,
       }
 
       // Wrap res.end() to save session and set cookie
@@ -341,28 +339,18 @@ function serializeCookie(
   },
 ): string {
   const signedValue = `${value}.${signValue(value, options.secret)}`
-  const parts = [`${name}=${signedValue}`]
+  const optionalAttributes = [
+    options.secure ? 'Secure' : null,
+    options.httpOnly ? 'HttpOnly' : null,
+  ].filter((part): part is string => part !== null)
 
-  // Max-Age in seconds
-  parts.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`)
-
-  // Path
-  parts.push(`Path=${options.path}`)
-
-  // Secure flag (requires HTTPS)
-  if (options.secure) {
-    parts.push('Secure')
-  }
-
-  // HttpOnly flag (prevents JavaScript access)
-  if (options.httpOnly) {
-    parts.push('HttpOnly')
-  }
-
-  // SameSite attribute (CSRF protection)
-  parts.push(`SameSite=${options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1)}`)
-
-  return parts.join('; ')
+  return [
+    `${name}=${signedValue}`,
+    `Max-Age=${Math.floor(options.maxAge / 1000)}`,
+    `Path=${options.path}`,
+    ...optionalAttributes,
+    `SameSite=${options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1)}`,
+  ].join('; ')
 }
 
 function shouldSetSecureCookie(

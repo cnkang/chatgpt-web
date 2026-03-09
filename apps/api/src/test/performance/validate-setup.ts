@@ -167,7 +167,9 @@ async function main() {
   }
 }
 
-main().catch(error => {
+try {
+  await main()
+} catch (error) {
   console.error('Validation failed:', error)
   process.exit(1)
-})
+}

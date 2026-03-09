@@ -24,7 +24,7 @@ describe('graceful shutdown', () => {
     // Spy on process methods
     processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
     processOnSpy = vi.spyOn(process, 'on')
-    setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
   })
 
   afterEach(() => {

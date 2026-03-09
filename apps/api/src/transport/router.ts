@@ -16,7 +16,7 @@ import type { MiddlewareHandler, Route, RouteHandler, Router } from './types.js'
  * Supports path normalization for dual path compatibility.
  */
 export class RouterImpl implements Router {
-  private routes: Route[] = []
+  private readonly routes: Route[] = []
 
   /**
    * Register a route
@@ -91,7 +91,7 @@ export class RouterImpl implements Router {
     }
 
     // Last handler is the route handler, rest are middleware
-    const handler = handlers[handlers.length - 1] as RouteHandler
+    const handler = handlers.at(-1) as RouteHandler
     const middleware = handlers.slice(0, -1) as MiddlewareHandler[]
 
     return this.addRoute({
