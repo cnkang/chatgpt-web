@@ -1,3 +1,5 @@
+import { getCommonLabels } from './commonLabels'
+
 export default {
   common: {
     add: '추가',
@@ -26,14 +28,7 @@ export default {
     failed: '실패',
     verify: '검증',
     unauthorizedTips: '인증되지 않았습니다. 먼저 확인하십시오.',
-    workspaceAccess: '워크스페이스 접근',
-    accessToken: '액세스 토큰',
-    enterWorkspaceToken: '워크스페이스 토큰을 입력하세요',
-    openSidebar: '사이드바 열기',
-    closeSidebar: '사이드바 닫기',
-    saveChatTitle: '채팅 제목 저장',
-    editChatTitle: '채팅 제목 편집',
-    deleteChat: '채팅 삭제',
+    ...getCommonLabels('ko-KR'),
     stopResponding: '응답 중지',
   },
   chat: {

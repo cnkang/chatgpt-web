@@ -1,3 +1,5 @@
+import { getCommonLabels } from './commonLabels'
+
 export default {
   common: {
     add: 'Add',
@@ -26,14 +28,7 @@ export default {
     failed: 'Failed',
     verify: 'Verify',
     unauthorizedTips: 'Unauthorized, please verify first.',
-    workspaceAccess: 'Workspace Access',
-    accessToken: 'Access token',
-    enterWorkspaceToken: 'Enter the workspace token',
-    openSidebar: 'Open sidebar',
-    closeSidebar: 'Close sidebar',
-    saveChatTitle: 'Save chat title',
-    editChatTitle: 'Edit chat title',
-    deleteChat: 'Delete chat',
+    ...getCommonLabels('en-US'),
     stopResponding: 'Stop Responding',
     retry: 'Retry',
   },

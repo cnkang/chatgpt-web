@@ -17,6 +17,18 @@ import { createConfiguredServer } from '../server.js'
 import { buildHttpOrigin } from './test-helpers.js'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
+const CHAT_PROCESS_MESSAGE = {
+  id: 'msg-user-1',
+  role: 'user',
+  parts: [{ type: 'text', text: 'Hello' }],
+}
+
+function createChatProcessBody(systemMessage?: string) {
+  return {
+    messages: [CHAT_PROCESS_MESSAGE],
+    ...(systemMessage === undefined ? {} : { systemMessage }),
+  }
+}
 
 function getRequest(baseUrl: string, path: string, headers?: Record<string, string>) {
   return fetch(`${baseUrl}${path}`, headers === undefined ? undefined : { headers })
@@ -106,16 +118,12 @@ describe('Security Policies Tests', () => {
       })
 
       it('should allow access to /chat-process with valid Bearer token', async () => {
-        const response = await postWithBearer(baseUrl, '/chat-process', TEST_AUTH_TOKEN, {
-          messages: [
-            {
-              id: 'msg-user-1',
-              role: 'user',
-              parts: [{ type: 'text', text: 'Hello' }],
-            },
-          ],
-          systemMessage: 'You are a helpful assistant',
-        })
+        const response = await postWithBearer(
+          baseUrl,
+          '/chat-process',
+          TEST_AUTH_TOKEN,
+          createChatProcessBody('You are a helpful assistant'),
+        )
 
         // Should not be 401 (may be other errors due to provider)
         expect(response.status).not.toBe(401)
@@ -129,15 +137,7 @@ describe('Security Policies Tests', () => {
 
       it('should return 401 for invalid token on /chat-process', async () => {
         await expectFailureResponse(
-          await postWithBearer(baseUrl, '/chat-process', 'wrong-token', {
-            messages: [
-              {
-                id: 'msg-user-1',
-                role: 'user',
-                parts: [{ type: 'text', text: 'Hello' }],
-              },
-            ],
-          }),
+          await postWithBearer(baseUrl, '/chat-process', 'wrong-token', createChatProcessBody()),
           401,
         )
       })
@@ -150,15 +150,7 @@ describe('Security Policies Tests', () => {
 
       it('should return 401 when Authorization header is missing on /chat-process', async () => {
         await expectFailureResponse(
-          await postJson(baseUrl, '/chat-process', {
-            messages: [
-              {
-                id: 'msg-user-1',
-                role: 'user',
-                parts: [{ type: 'text', text: 'Hello' }],
-              },
-            ],
-          }),
+          await postJson(baseUrl, '/chat-process', createChatProcessBody()),
           401,
         )
       })
@@ -191,15 +183,7 @@ describe('Security Policies Tests', () => {
 
       it('/chat-process should require authentication', async () => {
         await expectFailureResponse(
-          await postJson(baseUrl, '/chat-process', {
-            messages: [
-              {
-                id: 'msg-user-1',
-                role: 'user',
-                parts: [{ type: 'text', text: 'Hello' }],
-              },
-            ],
-          }),
+          await postJson(baseUrl, '/chat-process', createChatProcessBody()),
           401,
         )
       })

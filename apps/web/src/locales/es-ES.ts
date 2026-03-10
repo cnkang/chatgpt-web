@@ -1,3 +1,5 @@
+import { getCommonLabels } from './commonLabels'
+
 export default {
   common: {
     add: 'Agregar',
@@ -26,14 +28,7 @@ export default {
     failed: 'Fallido',
     verify: 'Verificar',
     unauthorizedTips: 'No autorizado, por favor verifique primero.',
-    workspaceAccess: 'Acceso al espacio de trabajo',
-    accessToken: 'Token de acceso',
-    enterWorkspaceToken: 'Introduce el token del espacio de trabajo',
-    openSidebar: 'Abrir barra lateral',
-    closeSidebar: 'Cerrar barra lateral',
-    saveChatTitle: 'Guardar título del chat',
-    editChatTitle: 'Editar título del chat',
-    deleteChat: 'Eliminar chat',
+    ...getCommonLabels('es-ES'),
     stopResponding: 'No responde',
   },
   chat: {
