@@ -258,130 +258,174 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
   return async (req: TransportRequest, res: TransportResponse, next) => {
     try {
       const canPersistSession = await isSessionStoreAvailable(store)
+      await loadOrCreateSession(req, store, options)
 
-      // Parse session cookie from Cookie header
-      const cookies = parseCookies(req.getHeader('cookie') || '')
-      const sessionId = verifySignedSessionId(cookies[options.name], options.secret)
+      const sessionLifecycle = createSessionLifecycle({
+        req,
+        res,
+        store,
+        options,
+        canPersistSession,
+      })
 
-      // Try to load existing session
-      if (sessionId) {
-        const session = await store.get(sessionId)
-        if (session) {
-          req.session = session
-        }
-      }
-
-      // Create new session if none exists
-      req.session ??= {
-        id: randomBytes(32).toString('hex'),
-        data: {},
-        expires: Date.now() + options.maxAge,
-      }
-
-      // Wrap response methods so session headers/persistence still work for
-      // native streaming responses that bypass the transport wrapper.
-      const originalEnd = res.end.bind(res)
-      const nativeResponse = (
-        res as TransportResponse & { _nativeResponse?: NativeResponseWithStreamingHooks }
-      )._nativeResponse
-      const originalNativeEnd =
-        nativeResponse && typeof nativeResponse.end === 'function'
-          ? nativeResponse.end.bind(nativeResponse)
-          : null
-      const originalNativeWrite =
-        nativeResponse && typeof nativeResponse.write === 'function'
-          ? nativeResponse.write.bind(nativeResponse)
-          : null
-      const originalNativeWriteHead =
-        nativeResponse && typeof nativeResponse.writeHead === 'function'
-          ? nativeResponse.writeHead.bind(nativeResponse)
-          : null
-      let sessionPersisted = false
-      let sessionHeadersPrepared = false
-      let unavailableStoreWarningEmitted = false
-
-      const prepareSessionHeaders = () => {
-        if (sessionHeadersPrepared) {
-          return
-        }
-
-        sessionHeadersPrepared = true
-
-        if (!req.session) {
-          return
-        }
-
-        if (canPersistSession && !res.headersSent && !res.finished) {
-          const cookieValue = serializeCookie(options.name, req.session.id, {
-            secret: options.secret,
-            maxAge: options.maxAge,
-            secure: shouldSetSecureCookie(req, options.secure, options.trustProxy ?? false),
-            httpOnly: options.httpOnly,
-            sameSite: options.sameSite,
-            path: '/',
-          })
-          res.setHeader('Set-Cookie', cookieValue)
-        } else if (!canPersistSession && !unavailableStoreWarningEmitted) {
-          unavailableStoreWarningEmitted = true
-          console.warn('Session store unavailable, skipping session cookie issuance')
-        }
-      }
-
-      const persistSession = () => {
-        if (sessionPersisted) {
-          return
-        }
-
-        sessionPersisted = true
-
-        if (!req.session) {
-          return
-        }
-
-        req.session.expires = Date.now() + options.maxAge
-
-        if (canPersistSession) {
-          store.set(req.session.id, req.session).catch(error => {
-            console.error('Failed to save session:', error)
-          })
-        }
-      }
-
-      res.end = ((chunk?: string | Buffer) => {
-        prepareSessionHeaders()
-        persistSession()
-
-        // Call original end method
-        return originalEnd(chunk)
-      }) as typeof res.end
-
-      if (nativeResponse && originalNativeWrite) {
-        nativeResponse.write = ((...args: unknown[]) => {
-          prepareSessionHeaders()
-          return originalNativeWrite(...args)
-        }) as typeof nativeResponse.write
-      }
-
-      if (nativeResponse && originalNativeWriteHead) {
-        nativeResponse.writeHead = ((...args: unknown[]) => {
-          prepareSessionHeaders()
-          return originalNativeWriteHead(...args)
-        }) as typeof nativeResponse.writeHead
-      }
-
-      if (nativeResponse && originalNativeEnd) {
-        nativeResponse.end = ((...args: unknown[]) => {
-          prepareSessionHeaders()
-          persistSession()
-          return originalNativeEnd(...args)
-        }) as typeof nativeResponse.end
-      }
+      wrapTransportResponseEnd(res, sessionLifecycle)
+      wrapNativeStreamingResponse(res, sessionLifecycle)
 
       next()
     } catch (error) {
       console.error('Session middleware error:', error)
       next(error instanceof Error ? error : new Error('Session middleware error'))
     }
+  }
+}
+
+type SessionLifecycle = {
+  prepareSessionHeaders: () => void
+  persistSession: () => void
+}
+
+async function loadOrCreateSession(
+  req: TransportRequest,
+  store: SessionStore,
+  options: SessionOptions,
+): Promise<void> {
+  const cookies = parseCookies(req.getHeader('cookie') || '')
+  const sessionId = verifySignedSessionId(cookies[options.name], options.secret)
+
+  if (sessionId) {
+    const session = await store.get(sessionId)
+    if (session) {
+      req.session = session
+    }
+  }
+
+  req.session ??= {
+    id: randomBytes(32).toString('hex'),
+    data: {},
+    expires: Date.now() + options.maxAge,
+  }
+}
+
+function createSessionLifecycle(context: {
+  req: TransportRequest
+  res: TransportResponse
+  store: SessionStore
+  options: SessionOptions
+  canPersistSession: boolean
+}): SessionLifecycle {
+  const { req, res, store, options, canPersistSession } = context
+  let sessionPersisted = false
+  let sessionHeadersPrepared = false
+  let unavailableStoreWarningEmitted = false
+
+  const prepareSessionHeaders = () => {
+    if (sessionHeadersPrepared) {
+      return
+    }
+
+    sessionHeadersPrepared = true
+
+    if (!req.session) {
+      return
+    }
+
+    if (canPersistSession && !res.headersSent && !res.finished) {
+      const cookieValue = serializeCookie(options.name, req.session.id, {
+        secret: options.secret,
+        maxAge: options.maxAge,
+        secure: shouldSetSecureCookie(req, options.secure, options.trustProxy ?? false),
+        httpOnly: options.httpOnly,
+        sameSite: options.sameSite,
+        path: '/',
+      })
+      res.setHeader('Set-Cookie', cookieValue)
+    } else if (!canPersistSession && !unavailableStoreWarningEmitted) {
+      unavailableStoreWarningEmitted = true
+      console.warn('Session store unavailable, skipping session cookie issuance')
+    }
+  }
+
+  const persistSession = () => {
+    if (sessionPersisted) {
+      return
+    }
+
+    sessionPersisted = true
+
+    if (!req.session) {
+      return
+    }
+
+    req.session.expires = Date.now() + options.maxAge
+
+    if (canPersistSession) {
+      store.set(req.session.id, req.session).catch(error => {
+        console.error('Failed to save session:', error)
+      })
+    }
+  }
+
+  return {
+    prepareSessionHeaders,
+    persistSession,
+  }
+}
+
+function wrapTransportResponseEnd(
+  res: TransportResponse,
+  sessionLifecycle: SessionLifecycle,
+): void {
+  const originalEnd = res.end.bind(res)
+  res.end = ((chunk?: string | Buffer) => {
+    sessionLifecycle.prepareSessionHeaders()
+    sessionLifecycle.persistSession()
+    return originalEnd(chunk)
+  }) as typeof res.end
+}
+
+function getNativeResponse(res: TransportResponse): NativeResponseWithStreamingHooks | undefined {
+  return (res as TransportResponse & { _nativeResponse?: NativeResponseWithStreamingHooks })
+    ._nativeResponse
+}
+
+function wrapNativeStreamingResponse(
+  res: TransportResponse,
+  sessionLifecycle: SessionLifecycle,
+): void {
+  const nativeResponse = getNativeResponse(res)
+  if (!nativeResponse) {
+    return
+  }
+
+  const originalNativeWrite =
+    typeof nativeResponse.write === 'function' ? nativeResponse.write.bind(nativeResponse) : null
+  const originalNativeWriteHead =
+    typeof nativeResponse.writeHead === 'function'
+      ? nativeResponse.writeHead.bind(nativeResponse)
+      : null
+  const originalNativeEnd =
+    typeof nativeResponse.end === 'function' ? nativeResponse.end.bind(nativeResponse) : null
+
+  if (originalNativeWrite) {
+    nativeResponse.write = ((...args: unknown[]) => {
+      sessionLifecycle.prepareSessionHeaders()
+      return originalNativeWrite(...args)
+    }) as typeof nativeResponse.write
+  }
+
+  if (originalNativeWriteHead) {
+    nativeResponse.writeHead = ((...args: unknown[]) => {
+      sessionLifecycle.prepareSessionHeaders()
+      return originalNativeWriteHead(...args)
+    }) as typeof nativeResponse.writeHead
+  }
+
+  if (originalNativeEnd) {
+    nativeResponse.end = ((...args: unknown[]) => {
+      sessionLifecycle.prepareSessionHeaders()
+      sessionLifecycle.persistSession()
+      return originalNativeEnd(...args)
+    }) as typeof nativeResponse.end
   }
 }
 

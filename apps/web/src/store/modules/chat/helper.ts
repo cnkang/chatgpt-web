@@ -30,6 +30,7 @@ function toInt(value: unknown): number | null {
  *
  * @param value - A value that may be `null`, a non-object, or an object possibly containing `conversationId` and/or `parentMessageId` string properties.
  * @returns `null` if `value` is strictly `null`; `undefined` if `value` is not an object; otherwise an object that is either empty or contains `conversationId` and/or `parentMessageId` string properties.
+ */
 function normalizeConversationOptions(value: unknown): Record<string, string> | null | undefined {
   if (value === null) return null
   if (!isRecord(value)) return undefined

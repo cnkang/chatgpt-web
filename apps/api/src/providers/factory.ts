@@ -73,13 +73,13 @@ export function createProvider<T extends AIProvider = AIProvider>(config: AIConf
       if (!config.openai) {
         throw new Error('OpenAI configuration is required when using OpenAI provider')
       }
-      return new ProviderClass(config.openai) as T
+      return new ProviderClass(config.openai)
 
     case 'azure':
       if (!config.azure) {
         throw new Error('Azure configuration is required when using Azure provider')
       }
-      return new ProviderClass(config.azure) as T
+      return new ProviderClass(config.azure)
 
     default:
       throw new Error(`Unsupported provider: ${config.provider}`)

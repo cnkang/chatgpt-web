@@ -8,6 +8,7 @@ import {
   ErrorType,
   createExternalApiError,
   createNetworkError,
+  createRateLimitError,
   createTimeoutError,
 } from '../utils/error-handler.js'
 import { logger } from '../utils/logger.js'
@@ -387,6 +388,9 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
       }
       if (errorType === ErrorType.TIMEOUT) {
         return createTimeoutError(message)
+      }
+      if (errorType === ErrorType.RATE_LIMIT) {
+        return createRateLimitError(message)
       }
       return createExternalApiError(message, details)
     }

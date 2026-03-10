@@ -56,7 +56,7 @@ function handlePress(event: KeyboardEvent) {
       <div class="permission-modal__glow" />
       <div class="permission-modal__content">
         <header class="permission-modal__header">
-          <span class="permission-modal__badge">Workspace Access</span>
+          <span class="permission-modal__badge">{{ $t('common.workspaceAccess') }}</span>
           <h2 class="permission-modal__title">403</h2>
           <p class="permission-modal__copy">
             {{ $t('common.unauthorizedTips') }}
@@ -65,12 +65,12 @@ function handlePress(event: KeyboardEvent) {
         </header>
         <div class="permission-modal__form">
           <div class="permission-modal__field">
-            <span class="permission-modal__label">Access token</span>
+            <span class="permission-modal__label">{{ $t('common.accessToken') }}</span>
             <NInput
               v-model:value="token"
               class="permission-modal__input"
               type="password"
-              placeholder="Enter the workspace token"
+              :placeholder="$t('common.enterWorkspaceToken')"
               @keydown="handlePress"
             />
           </div>
@@ -134,8 +134,8 @@ function handlePress(event: KeyboardEvent) {
   justify-content: center;
   padding: 0.32rem 0.75rem;
   border-radius: 9999px;
-  background: rgba(79, 159, 114, 0.12);
-  color: rgb(32 90 60);
+  background: rgba(220, 252, 231, 0.82);
+  color: rgb(20 83 45);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -201,8 +201,8 @@ function handlePress(event: KeyboardEvent) {
 }
 
 :global(.dark) .permission-modal__badge {
-  background: rgba(79, 159, 114, 0.18);
-  color: rgb(187 247 208);
+  background: rgba(22, 101, 52, 0.55);
+  color: rgb(236 253 245);
 }
 
 :global(.dark) .permission-modal__title {

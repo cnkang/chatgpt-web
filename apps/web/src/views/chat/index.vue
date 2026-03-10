@@ -376,7 +376,7 @@ onUnmounted(() => {
   padding: clamp(1.4rem, 4vw, 2.2rem);
   border: 1px dashed rgba(148, 163, 184, 0.35);
   border-radius: 1.6rem;
-  color: rgb(100 116 139);
+  color: rgb(71 85 105);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.92)),
     radial-gradient(circle at top right, rgba(167, 243, 208, 0.18), transparent 35%);
@@ -398,7 +398,7 @@ onUnmounted(() => {
   height: 3.35rem;
   border-radius: 1.05rem;
   background: linear-gradient(135deg, rgba(32, 90, 60, 0.12), rgba(59, 130, 246, 0.12));
-  color: rgb(32 90 60);
+  color: rgb(22 78 52);
 }
 
 .chat-empty-kicker {
@@ -582,15 +582,11 @@ onUnmounted(() => {
 .composer-input-mobile :deep(.n-input__textarea-mirror) {
   padding-left: 0.9rem;
   padding-right: 4.65rem;
+  padding-block: 0.85rem;
 }
 
 .composer-input-mobile :deep(.n-input) {
   min-height: 3.55rem;
-}
-
-.composer-input-mobile :deep(.n-input__textarea-el),
-.composer-input-mobile :deep(.n-input__textarea-mirror) {
-  padding-block: 0.85rem;
 }
 
 .composer-send {
@@ -718,8 +714,8 @@ onUnmounted(() => {
 }
 
 :global(.dark) .chat-empty-icon {
-  color: rgb(167 243 208);
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(59, 130, 246, 0.14));
+  color: rgb(240 253 244);
+  background: linear-gradient(135deg, rgba(4, 47, 46, 0.78), rgba(30, 64, 175, 0.42));
 }
 
 :global(.dark) .composer-tool-icon {

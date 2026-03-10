@@ -56,7 +56,9 @@ function handleActionSelect(key: string | number) {
     return
   }
 
-  handleClear()
+  if (key === 'clear') {
+    handleClear()
+  }
 }
 </script>
 
@@ -71,7 +73,7 @@ function handleActionSelect(key: string | number) {
         <button
           class="mobile-chat-header__toggle"
           type="button"
-          :aria-label="collapsed ? 'Open sidebar' : 'Close sidebar'"
+          :aria-label="collapsed ? t('common.openSidebar') : t('common.closeSidebar')"
           @click="handleUpdateCollapsed"
         >
           <SvgIcon v-if="collapsed" class="text-2xl" icon="ri:align-justify" />
