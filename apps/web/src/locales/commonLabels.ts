@@ -1,107 +1,33 @@
-type CommonLabelTuple = readonly [
-  workspaceAccess: string,
-  accessToken: string,
-  enterWorkspaceToken: string,
-  openSidebar: string,
-  closeSidebar: string,
-  saveChatTitle: string,
-  editChatTitle: string,
-  deleteChat: string,
-]
+const commonLabelKeys = [
+  'workspaceAccess',
+  'accessToken',
+  'enterWorkspaceToken',
+  'openSidebar',
+  'closeSidebar',
+  'saveChatTitle',
+  'editChatTitle',
+  'deleteChat',
+] as const
+
+type CommonLabelKey = (typeof commonLabelKeys)[number]
+const LABEL_SEPARATOR = '\u0001'
 
 const commonLabelsByLocale = {
-  'en-US': [
-    'Workspace Access',
-    'Access token',
-    'Enter the workspace token',
-    'Open sidebar',
-    'Close sidebar',
-    'Save chat title',
-    'Edit chat title',
-    'Delete chat',
-  ],
-  'es-ES': [
-    'Acceso al espacio de trabajo',
-    'Token de acceso',
-    'Introduce el token del espacio de trabajo',
-    'Abrir barra lateral',
-    'Cerrar barra lateral',
-    'Guardar título del chat',
-    'Editar título del chat',
-    'Eliminar chat',
-  ],
-  'ko-KR': [
-    '워크스페이스 접근',
-    '액세스 토큰',
-    '워크스페이스 토큰을 입력하세요',
-    '사이드바 열기',
-    '사이드바 닫기',
-    '채팅 제목 저장',
-    '채팅 제목 편집',
-    '채팅 삭제',
-  ],
-  'ru-RU': [
-    'Доступ к рабочему пространству',
-    'Токен доступа',
-    'Введите токен рабочего пространства',
-    'Открыть боковую панель',
-    'Закрыть боковую панель',
-    'Сохранить название чата',
-    'Изменить название чата',
-    'Удалить чат',
-  ],
-  'vi-VN': [
-    'Truy cập không gian làm việc',
-    'Mã truy cập',
-    'Nhập mã truy cập không gian làm việc',
-    'Mở thanh bên',
-    'Đóng thanh bên',
-    'Lưu tiêu đề cuộc trò chuyện',
-    'Chỉnh sửa tiêu đề cuộc trò chuyện',
-    'Xóa cuộc trò chuyện',
-  ],
-  'zh-CN': [
-    '工作区访问',
-    '访问令牌',
-    '请输入工作区令牌',
-    '打开侧边栏',
-    '关闭侧边栏',
-    '保存聊天标题',
-    '编辑聊天标题',
-    '删除聊天',
-  ],
-  'zh-TW': [
-    '工作區存取',
-    '存取權杖',
-    '請輸入工作區權杖',
-    '開啟側邊欄',
-    '關閉側邊欄',
-    '儲存聊天標題',
-    '編輯聊天標題',
-    '刪除聊天',
-  ],
-} as const satisfies Record<string, CommonLabelTuple>
+  'en-US': `Workspace Access${LABEL_SEPARATOR}Access token${LABEL_SEPARATOR}Enter the workspace token${LABEL_SEPARATOR}Open sidebar${LABEL_SEPARATOR}Close sidebar${LABEL_SEPARATOR}Save chat title${LABEL_SEPARATOR}Edit chat title${LABEL_SEPARATOR}Delete chat`,
+  'es-ES': `Acceso al espacio de trabajo${LABEL_SEPARATOR}Token de acceso${LABEL_SEPARATOR}Introduce el token del espacio de trabajo${LABEL_SEPARATOR}Abrir barra lateral${LABEL_SEPARATOR}Cerrar barra lateral${LABEL_SEPARATOR}Guardar título del chat${LABEL_SEPARATOR}Editar título del chat${LABEL_SEPARATOR}Eliminar chat`,
+  'ko-KR': `워크스페이스 접근${LABEL_SEPARATOR}액세스 토큰${LABEL_SEPARATOR}워크스페이스 토큰을 입력하세요${LABEL_SEPARATOR}사이드바 열기${LABEL_SEPARATOR}사이드바 닫기${LABEL_SEPARATOR}채팅 제목 저장${LABEL_SEPARATOR}채팅 제목 편집${LABEL_SEPARATOR}채팅 삭제`,
+  'ru-RU': `Доступ к рабочему пространству${LABEL_SEPARATOR}Токен доступа${LABEL_SEPARATOR}Введите токен рабочего пространства${LABEL_SEPARATOR}Открыть боковую панель${LABEL_SEPARATOR}Закрыть боковую панель${LABEL_SEPARATOR}Сохранить название чата${LABEL_SEPARATOR}Изменить название чата${LABEL_SEPARATOR}Удалить чат`,
+  'vi-VN': `Truy cập không gian làm việc${LABEL_SEPARATOR}Mã truy cập${LABEL_SEPARATOR}Nhập mã truy cập không gian làm việc${LABEL_SEPARATOR}Mở thanh bên${LABEL_SEPARATOR}Đóng thanh bên${LABEL_SEPARATOR}Lưu tiêu đề cuộc trò chuyện${LABEL_SEPARATOR}Chỉnh sửa tiêu đề cuộc trò chuyện${LABEL_SEPARATOR}Xóa cuộc trò chuyện`,
+  'zh-CN': `工作区访问${LABEL_SEPARATOR}访问令牌${LABEL_SEPARATOR}请输入工作区令牌${LABEL_SEPARATOR}打开侧边栏${LABEL_SEPARATOR}关闭侧边栏${LABEL_SEPARATOR}保存聊天标题${LABEL_SEPARATOR}编辑聊天标题${LABEL_SEPARATOR}删除聊天`,
+  'zh-TW': `工作區存取${LABEL_SEPARATOR}存取權杖${LABEL_SEPARATOR}請輸入工作區權杖${LABEL_SEPARATOR}開啟側邊欄${LABEL_SEPARATOR}關閉側邊欄${LABEL_SEPARATOR}儲存聊天標題${LABEL_SEPARATOR}編輯聊天標題${LABEL_SEPARATOR}刪除聊天`,
+} as const satisfies Record<string, string>
 
-export function getCommonLabels(locale: keyof typeof commonLabelsByLocale) {
-  const [
-    workspaceAccess,
-    accessToken,
-    enterWorkspaceToken,
-    openSidebar,
-    closeSidebar,
-    saveChatTitle,
-    editChatTitle,
-    deleteChat,
-  ] = commonLabelsByLocale[locale]
+export type CommonLabelLocale = keyof typeof commonLabelsByLocale
 
-  return {
-    workspaceAccess,
-    accessToken,
-    enterWorkspaceToken,
-    openSidebar,
-    closeSidebar,
-    saveChatTitle,
-    editChatTitle,
-    deleteChat,
-  }
+export function getCommonLabels(locale: CommonLabelLocale) {
+  const values = commonLabelsByLocale[locale].split(LABEL_SEPARATOR)
+
+  return Object.fromEntries(
+    commonLabelKeys.map((key, index) => [key, values[index] ?? '']),
+  ) as Record<CommonLabelKey, string>
 }

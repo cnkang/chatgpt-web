@@ -1,5 +1,3 @@
-import { getCommonLabels } from './commonLabels'
-
 export default {
   common: {
     add: 'Thêm',
@@ -28,7 +26,6 @@ export default {
     failed: 'Thất bại',
     verify: 'Xác minh',
     unauthorizedTips: 'Không được ủy quyền, vui lòng xác minh trước.',
-    ...getCommonLabels('vi-VN'),
   },
   chat: {
     newChatButton: 'Tạo hội thoại',

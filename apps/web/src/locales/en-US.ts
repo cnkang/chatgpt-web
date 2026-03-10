@@ -1,5 +1,3 @@
-import { getCommonLabels } from './commonLabels'
-
 export default {
   common: {
     add: 'Add',
@@ -28,7 +26,6 @@ export default {
     failed: 'Failed',
     verify: 'Verify',
     unauthorizedTips: 'Unauthorized, please verify first.',
-    ...getCommonLabels('en-US'),
     stopResponding: 'Stop Responding',
     retry: 'Retry',
   },

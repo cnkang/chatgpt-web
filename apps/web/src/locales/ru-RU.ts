@@ -1,5 +1,3 @@
-import { getCommonLabels } from './commonLabels'
-
 export default {
   common: {
     add: 'Добавить',
@@ -28,7 +26,6 @@ export default {
     failed: 'Не удалось',
     verify: 'Проверить',
     unauthorizedTips: 'Не авторизован, сначала подтвердите свою личность.',
-    ...getCommonLabels('ru-RU'),
     stopResponding: 'Прекращение отклика',
   },
   chat: {

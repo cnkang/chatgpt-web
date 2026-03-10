@@ -1,4 +1,5 @@
 import { Chat as AIChat } from '@ai-sdk/vue'
+import { trimTrailingSlashes } from '@chatgpt-web/shared'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { t } from '@/locales'
 import { useAuthStore, useChatStore, useSettingStore } from '@/store'
@@ -64,7 +65,7 @@ function nowString() {
 function buildApiUrl(path: string) {
   const baseUrl = import.meta.env.VITE_GLOB_API_URL || ''
   if (!baseUrl) return path
-  return `${baseUrl.replace(/\/+$/, '')}${path}`
+  return `${trimTrailingSlashes(baseUrl)}${path}`
 }
 
 /**

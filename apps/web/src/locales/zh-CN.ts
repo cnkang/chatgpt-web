@@ -1,5 +1,3 @@
-import { getCommonLabels } from './commonLabels'
-
 export default {
   common: {
     add: '添加',
@@ -28,7 +26,6 @@ export default {
     failed: '操作失败',
     verify: '验证',
     unauthorizedTips: '未经授权，请先进行验证。',
-    ...getCommonLabels('zh-CN'),
     stopResponding: '停止响应',
     retry: '重试',
   },

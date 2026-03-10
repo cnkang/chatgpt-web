@@ -1,6 +1,7 @@
 import type { ServerResponse } from 'node:http'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenAI } from '@ai-sdk/openai'
+import { trimTrailingSlashes } from '@chatgpt-web/shared'
 import { convertToModelMessages, streamText, type UIMessage } from 'ai'
 import { getConfig } from '../providers/config.js'
 
@@ -57,7 +58,7 @@ function buildOpenAIModel() {
  * @returns The endpoint with trailing slashes removed and guaranteed to end with '/openai'
  */
 function normalizeAzureBaseUrl(endpoint: string) {
-  const trimmedEndpoint = endpoint.replace(/\/+$/, '')
+  const trimmedEndpoint = trimTrailingSlashes(endpoint)
   return trimmedEndpoint.endsWith('/openai') ? trimmedEndpoint : `${trimmedEndpoint}/openai`
 }
 
