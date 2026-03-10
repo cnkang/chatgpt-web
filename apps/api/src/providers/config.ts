@@ -156,7 +156,7 @@ export class ConfigurationManager {
           apiKey: process.env.AZURE_OPENAI_API_KEY || '',
           endpoint: process.env.AZURE_OPENAI_ENDPOINT || '',
           deployment: azureDeployment,
-          apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-15-preview',
+          apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2025-04-01-preview',
           useResponsesAPI: process.env.AZURE_OPENAI_USE_RESPONSES_API === 'true',
         },
       },
