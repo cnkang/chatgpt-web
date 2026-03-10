@@ -172,10 +172,20 @@ export function isValidUrl(url: string): boolean {
   return URL.canParse(url)
 }
 
+export function trimTrailingSlashes(value: string): string {
+  let endIndex = value.length
+
+  while (endIndex > 0 && value.charCodeAt(endIndex - 1) === 47) {
+    endIndex -= 1
+  }
+
+  return endIndex === value.length ? value : value.slice(0, endIndex)
+}
+
 export function normalizeUrl(url: string): string {
   try {
     const urlObj = new URL(url)
-    return urlObj.toString().replace(/\/$/, '') // Remove trailing slash
+    return trimTrailingSlashes(urlObj.toString())
   } catch {
     return url
   }

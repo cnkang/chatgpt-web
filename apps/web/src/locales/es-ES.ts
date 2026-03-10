@@ -1,5 +1,3 @@
-import { getCommonLabels } from './commonLabels'
-
 export default {
   common: {
     add: 'Agregar',
@@ -28,7 +26,6 @@ export default {
     failed: 'Fallido',
     verify: 'Verificar',
     unauthorizedTips: 'No autorizado, por favor verifique primero.',
-    ...getCommonLabels('es-ES'),
     stopResponding: 'No responde',
   },
   chat: {

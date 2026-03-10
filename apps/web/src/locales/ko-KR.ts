@@ -1,5 +1,3 @@
-import { getCommonLabels } from './commonLabels'
-
 export default {
   common: {
     add: '추가',
@@ -28,7 +26,6 @@ export default {
     failed: '실패',
     verify: '검증',
     unauthorizedTips: '인증되지 않았습니다. 먼저 확인하십시오.',
-    ...getCommonLabels('ko-KR'),
     stopResponding: '응답 중지',
   },
   chat: {
