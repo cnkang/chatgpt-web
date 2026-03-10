@@ -70,6 +70,10 @@ export default {
     starterBrainstorm: 'Cùng brainstorm vài hướng tiếp cận tốt hơn',
     contextOn: 'Có ngữ cảnh',
     contextOff: 'Chỉ lượt này',
+    backendUnavailableTitle: 'Backend tạm thời không khả dụng',
+    backendUnavailableDescription:
+      'Không thể kết nối đến backend chat, nên khởi tạo phiên trò chuyện chưa hoàn tất.',
+    backendUnavailableHint: 'Vui lòng kiểm tra kết nối backend hoặc thử lại sau.',
   },
   setting: {
     setting: 'Cài đặt',
