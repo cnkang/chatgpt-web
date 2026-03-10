@@ -111,6 +111,7 @@ const wrapClass = computed(() => {
 
 .message-bubble-user.message-bubble-grouped-top {
   border-top-right-radius: 0.45rem;
+  background: linear-gradient(135deg, rgba(214, 246, 210, 0.98), rgba(177, 232, 168, 0.95));
 }
 
 .message-bubble-user.message-bubble-grouped-bottom {
@@ -119,6 +120,7 @@ const wrapClass = computed(() => {
 
 .message-bubble-assistant.message-bubble-grouped-top {
   border-top-left-radius: 0.45rem;
+  background: linear-gradient(180deg, rgba(252, 253, 255, 0.98), rgba(244, 247, 251, 0.95));
 }
 
 .message-bubble-assistant.message-bubble-grouped-bottom {
@@ -129,14 +131,6 @@ const wrapClass = computed(() => {
   box-shadow:
     0 8px 18px rgba(15, 23, 42, 0.045),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-.message-bubble-assistant.message-bubble-grouped-top {
-  background: linear-gradient(180deg, rgba(252, 253, 255, 0.98), rgba(244, 247, 251, 0.95));
-}
-
-.message-bubble-user.message-bubble-grouped-top {
-  background: linear-gradient(135deg, rgba(214, 246, 210, 0.98), rgba(177, 232, 168, 0.95));
 }
 
 .message-bubble-user .message-copy {

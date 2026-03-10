@@ -128,7 +128,5 @@ async function streamUIChat(options: StreamUIChatOptions) {
 export async function pipeUIChatResponse(response: ServerResponse, options: StreamUIChatOptions) {
   const result = await streamUIChat(options)
 
-  result.pipeUIMessageStreamToResponse(response, {
-    onError: () => 'Something went wrong.',
-  })
+  result.pipeUIMessageStreamToResponse(response)
 }

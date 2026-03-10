@@ -83,7 +83,7 @@ function isActive(uuid: number) {
                 <button
                   type="button"
                   class="history-action-btn"
-                  aria-label="Save chat title"
+                  :aria-label="$t('common.saveChatTitle')"
                   @click="handleEdit(item, false, $event)"
                 >
                   <SvgIcon icon="ri:save-line" />
@@ -93,7 +93,7 @@ function isActive(uuid: number) {
                 <button
                   type="button"
                   class="history-action-btn"
-                  aria-label="Edit chat title"
+                  :aria-label="$t('common.editChatTitle')"
                   @click="handleEdit(item, true, $event)"
                 >
                   <SvgIcon icon="ri:edit-line" />
@@ -103,7 +103,12 @@ function isActive(uuid: number) {
                   @positive-click="handleDeleteDebounce(index, $event)"
                 >
                   <template #trigger>
-                    <button type="button" class="history-action-btn" aria-label="Delete chat">
+                    <button
+                      type="button"
+                      class="history-action-btn"
+                      :aria-label="$t('common.deleteChat')"
+                      @click.stop
+                    >
                       <SvgIcon icon="ri:delete-bin-line" />
                     </button>
                   </template>
@@ -181,12 +186,20 @@ function isActive(uuid: number) {
   flex: 0 0 4.4rem;
   justify-content: flex-end;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0s linear 0.2s;
 }
 
 .group:hover .history-item-actions,
+.group:focus-within .history-item-actions,
 .history-item-actions-visible {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 
 .history-action-btn {
@@ -250,6 +263,8 @@ function isActive(uuid: number) {
 
   .history-item-actions {
     opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
     flex-basis: 4rem;
   }
 }
