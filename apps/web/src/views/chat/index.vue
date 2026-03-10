@@ -398,7 +398,7 @@ onUnmounted(() => {
   height: 3.35rem;
   border-radius: 1.05rem;
   background: linear-gradient(135deg, rgba(220, 252, 231, 0.95), rgba(219, 234, 254, 0.94));
-  color: rgb(20 83 45);
+  color: rgb(5 46 22);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.88),
     0 10px 24px rgba(15, 23, 42, 0.06);
