@@ -1,9 +1,8 @@
-import { Chat as AIChat } from '@ai-sdk/vue'
-import { trimTrailingSlashes } from '@chatgpt-web/shared'
-import { DefaultChatTransport, type UIMessage } from 'ai'
 import { t } from '@/locales'
 import { useAuthStore, useChatStore, useSettingStore } from '@/store'
-import type { Chat as StoredChat } from '@chatgpt-web/shared'
+import { Chat as AIChat } from '@ai-sdk/vue'
+import { throttle, type Chat as StoredChat } from '@chatgpt-web/shared'
+import { DefaultChatTransport, type UIMessage } from 'ai'
 import {
   computed,
   markRaw,
@@ -64,8 +63,7 @@ function nowString() {
  */
 function buildApiUrl(path: string) {
   const baseUrl = import.meta.env.VITE_GLOB_API_URL || ''
-  if (!baseUrl) return path
-  return `${trimTrailingSlashes(baseUrl)}${path}`
+  return path.startsWith('http') ? path : `${baseUrl}${path}`
 }
 
 /**
@@ -101,9 +99,14 @@ function getMessageText(message: UIMessage) {
  *
  * @param message - The UI message to read `metadata.dateTime` from
  * @param fallback - Optional stored chat to use when the message has no valid `dateTime`
- * @returns The message's date-time string, the fallback chat's `dateTime`, or the current local date-time
+ * @param timestampCache - Map to cache generated timestamps for messages without metadata.dateTime
+ * @returns The message's date-time string, the fallback chat's `dateTime`, or a cached/new timestamp
  */
-function getMessageDateTime(message: UIMessage, fallback?: StoredChat) {
+function getMessageDateTime(
+  message: UIMessage,
+  fallback?: StoredChat,
+  timestampCache?: Map<string, string>,
+) {
   const metadata = message.metadata
   if (
     metadata &&
@@ -115,7 +118,16 @@ function getMessageDateTime(message: UIMessage, fallback?: StoredChat) {
     return metadata.dateTime
   }
 
-  return fallback?.dateTime ?? nowString()
+  // Check cache first to ensure stable timestamps across recomputes
+  if (timestampCache?.has(message.id)) {
+    const cached = timestampCache.get(message.id)
+    if (cached) return cached
+  }
+
+  // Generate new timestamp and cache it
+  const timestamp = fallback?.dateTime ?? nowString()
+  timestampCache?.set(message.id, timestamp)
+  return timestamp
 }
 
 /**
@@ -283,6 +295,9 @@ export function useAiSdkChatConversationFlow(options: UseAiSdkChatConversationFl
   const chatStore = useChatStore()
   const settingStore = useSettingStore()
 
+  // Cache for message timestamps to ensure stability across recomputes
+  const timestampCache = new Map<string, string>()
+
   const prompt = ref('')
   const transport = createTransport(authStore, settingStore, usingContext)
   const chat = shallowRef(
@@ -303,7 +318,7 @@ export function useAiSdkChatConversationFlow(options: UseAiSdkChatConversationFl
     const items: DisplayChatMessage[] = messages.map(message => ({
       id: message.id,
       messageId: message.id,
-      dateTime: getMessageDateTime(message),
+      dateTime: getMessageDateTime(message, undefined, timestampCache),
       text: getMessageText(message),
       inversion: message.role === 'user',
       error: false,
@@ -344,6 +359,9 @@ export function useAiSdkChatConversationFlow(options: UseAiSdkChatConversationFl
     chatStore.setChatByUuid(uuid.value, nextMessages)
   }
 
+  // Throttled version to avoid excessive store updates during streaming
+  const throttledSyncStore = throttle(syncStore, 500)
+
   async function handleSubmit() {
     const message = prompt.value.trim()
     if (!message || loading.value) return
@@ -371,6 +389,11 @@ export function useAiSdkChatConversationFlow(options: UseAiSdkChatConversationFl
     if (!message.messageId) {
       chat.value.clearError()
       return
+    }
+
+    // Stop any active streaming before deleting to prevent race conditions
+    if (loading.value) {
+      chat.value.stop()
     }
 
     chat.value.messages = chat.value.messages.filter(item => item.id !== message.messageId)
@@ -408,12 +431,19 @@ export function useAiSdkChatConversationFlow(options: UseAiSdkChatConversationFl
 
   function cleanup() {
     chat.value.stop()
+    // Ensure final state is persisted
+    void syncStore()
   }
 
   watch(
     () => [chat.value.messages, chat.value.status] as const,
     async () => {
-      await syncStore()
+      // Use throttled version during streaming, immediate on status changes
+      if (loading.value) {
+        throttledSyncStore()
+      } else {
+        await syncStore()
+      }
       await scrollToBottomIfAtBottom()
     },
     { deep: true, immediate: true },
