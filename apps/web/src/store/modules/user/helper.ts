@@ -16,7 +16,7 @@ export function defaultSetting(): UserState {
   return {
     userInfo: {
       avatar: 'https://t.videostory.com/panda.png',
-      name: '产品组数字小助手',
+      name: '数字小助手',
       description: '不要输入涉密/隐私信息！',
     },
   }

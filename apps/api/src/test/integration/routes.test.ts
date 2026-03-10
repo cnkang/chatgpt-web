@@ -68,7 +68,7 @@ describe('Route Integration Tests', () => {
         message: '',
         data: {
           auth: expect.any(Boolean),
-          model: expect.any(String),
+          model: 'ChatGPTAPI',
         },
       })
     })

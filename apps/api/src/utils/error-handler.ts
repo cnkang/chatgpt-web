@@ -124,46 +124,113 @@ export function createErrorResponse(error: Error | AppError, requestId?: string)
 }
 
 /**
- * Creates specific error types
+ * Error configuration map for consistent error creation
+ */
+const ERROR_CONFIGS = {
+  [ErrorType.VALIDATION]: {
+    statusCode: 400,
+    defaultMessage: 'Validation failed',
+    isOperational: true,
+  },
+  [ErrorType.AUTHENTICATION]: {
+    statusCode: 401,
+    defaultMessage: 'Authentication required',
+    isOperational: true,
+  },
+  [ErrorType.AUTHORIZATION]: {
+    statusCode: 403,
+    defaultMessage: 'Insufficient permissions',
+    isOperational: true,
+  },
+  [ErrorType.NOT_FOUND]: {
+    statusCode: 404,
+    defaultMessage: 'Resource not found',
+    isOperational: true,
+  },
+  [ErrorType.PAYLOAD_TOO_LARGE]: {
+    statusCode: 413,
+    defaultMessage: 'Request entity too large',
+    isOperational: true,
+  },
+  [ErrorType.RATE_LIMIT]: {
+    statusCode: 429,
+    defaultMessage: 'Rate limit exceeded',
+    isOperational: true,
+  },
+  [ErrorType.EXTERNAL_API]: {
+    statusCode: 502,
+    defaultMessage: 'External API error',
+    isOperational: true,
+  },
+  [ErrorType.NETWORK]: { statusCode: 503, defaultMessage: 'Network error', isOperational: true },
+  [ErrorType.TIMEOUT]: { statusCode: 504, defaultMessage: 'Request timeout', isOperational: true },
+  [ErrorType.CONFIGURATION]: {
+    statusCode: 500,
+    defaultMessage: 'Configuration error',
+    isOperational: false,
+  },
+  [ErrorType.INTERNAL]: {
+    statusCode: 500,
+    defaultMessage: 'Internal server error',
+    isOperational: true,
+  },
+} as const
+
+/**
+ * Generic error creator using configuration
+ */
+function createTypedError(type: ErrorType, message?: string, details?: unknown): AppError {
+  const config = ERROR_CONFIGS[type]
+  return new AppError(
+    message ?? config.defaultMessage,
+    type,
+    config.statusCode,
+    config.isOperational,
+    details,
+  )
+}
+
+/**
+ * Convenience functions for specific error types
  */
 export function createValidationError(message: string, details?: unknown) {
-  return new AppError(message, ErrorType.VALIDATION, 400, true, details)
+  return createTypedError(ErrorType.VALIDATION, message, details)
 }
 
-export function createAuthenticationError(message: string = 'Authentication required') {
-  return new AppError(message, ErrorType.AUTHENTICATION, 401, true)
+export function createAuthenticationError(message?: string) {
+  return createTypedError(ErrorType.AUTHENTICATION, message)
 }
 
-export function createAuthorizationError(message: string = 'Insufficient permissions') {
-  return new AppError(message, ErrorType.AUTHORIZATION, 403, true)
+export function createAuthorizationError(message?: string) {
+  return createTypedError(ErrorType.AUTHORIZATION, message)
 }
 
-export function createNotFoundError(message: string = 'Resource not found') {
-  return new AppError(message, ErrorType.NOT_FOUND, 404, true)
+export function createNotFoundError(message?: string) {
+  return createTypedError(ErrorType.NOT_FOUND, message)
 }
 
-export function createRateLimitError(message: string = 'Rate limit exceeded') {
-  return new AppError(message, ErrorType.RATE_LIMIT, 429, true)
+export function createRateLimitError(message?: string) {
+  return createTypedError(ErrorType.RATE_LIMIT, message)
 }
 
-export function createPayloadTooLargeError(message: string = 'Request entity too large') {
-  return new AppError(message, ErrorType.PAYLOAD_TOO_LARGE, 413, true)
+export function createPayloadTooLargeError(message?: string) {
+  return createTypedError(ErrorType.PAYLOAD_TOO_LARGE, message)
 }
 
 export function createExternalApiError(message: string, details?: unknown) {
-  return new AppError(message, ErrorType.EXTERNAL_API, 502, true, details)
+  return createTypedError(ErrorType.EXTERNAL_API, message, details)
 }
 
 export function createNetworkError(message: string, details?: unknown) {
-  return new AppError(message, ErrorType.NETWORK, 503, true, details)
+  return createTypedError(ErrorType.NETWORK, message, details)
 }
 
-export function createTimeoutError(message: string = 'Request timeout') {
-  return new AppError(message, ErrorType.TIMEOUT, 504, true)
+export function createTimeoutError(message?: string) {
+  return createTypedError(ErrorType.TIMEOUT, message)
 }
 
 export function createConfigurationError(message: string, details?: unknown) {
-  return new AppError(message, ErrorType.CONFIGURATION, 500, false, details)
+  return createTypedError(ErrorType.CONFIGURATION, message, details)
 }
 
 /**

@@ -379,22 +379,16 @@ export class OpenAIProvider extends BaseAIProvider implements AIProvider {
       const code = error.code || 'OPENAI_API_ERROR'
       const mapping = this.mapOpenAIStatusToError(statusCode, apiMessage, error.message)
       const { message, errorType } = mapping
+      const details = { provider: 'openai', statusCode, code }
 
-      // Create appropriate error based on type
-      switch (errorType) {
-        case ErrorType.AUTHENTICATION:
-          return createExternalApiError(message, { provider: 'openai', statusCode, code })
-        case ErrorType.AUTHORIZATION:
-          return createExternalApiError(message, { provider: 'openai', statusCode, code })
-        case ErrorType.RATE_LIMIT:
-          return createExternalApiError(message, { provider: 'openai', statusCode, code })
-        case ErrorType.NETWORK:
-          return createNetworkError(message, { provider: 'openai', statusCode, code })
-        case ErrorType.TIMEOUT:
-          return createTimeoutError(message)
-        default:
-          return createExternalApiError(message, { provider: 'openai', statusCode, code })
+      // Use appropriate error creator based on type
+      if (errorType === ErrorType.NETWORK) {
+        return createNetworkError(message, details)
       }
+      if (errorType === ErrorType.TIMEOUT) {
+        return createTimeoutError(message)
+      }
+      return createExternalApiError(message, details)
     }
 
     // Handle network-related errors

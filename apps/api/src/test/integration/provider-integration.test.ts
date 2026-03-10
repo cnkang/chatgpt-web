@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AzureOpenAIProvider } from '../../providers/azure.js'
 import type { ChatCompletionRequest } from '../../providers/base.js'
 import type { AIConfig } from '../../providers/config.js'
-import { AIProviderFactory, clearProviders, registerProvider } from '../../providers/factory.js'
+import { clearProviders, createProvider, registerProvider } from '../../providers/factory.js'
 import { OpenAIProvider } from '../../providers/openai.js'
 
 const { MockOpenAI, MockAzureOpenAI } = vi.hoisted(() => {
@@ -75,14 +75,11 @@ vi.mock('../../utils/error-handler.js', () => ({
 }))
 
 describe('provider integration tests', () => {
-  let factory: AIProviderFactory
-
   beforeEach(() => {
     // Clear registry and register providers fresh for each test
     clearProviders()
     registerProvider('openai', OpenAIProvider)
     registerProvider('azure', AzureOpenAIProvider)
-    factory = AIProviderFactory.getInstance()
 
     // Reset all mocks
     vi.clearAllMocks()
@@ -106,7 +103,7 @@ describe('provider integration tests', () => {
         },
       }
 
-      const openAIProvider = factory.create(openAIConfig)
+      const openAIProvider = createProvider(openAIConfig)
       expect(openAIProvider.name).toBe('openai')
       expect(openAIProvider.supportsStreaming).toBe(true)
       expect(openAIProvider.supportsReasoning).toBe(true)
@@ -124,7 +121,7 @@ describe('provider integration tests', () => {
         },
       }
 
-      const azureProvider = factory.create(azureConfig)
+      const azureProvider = createProvider(azureConfig)
       expect(azureProvider.name).toBe('azure')
       expect(azureProvider.supportsStreaming).toBe(true)
       expect(azureProvider.supportsReasoning).toBe(true)
@@ -136,7 +133,7 @@ describe('provider integration tests', () => {
 
     it('should handle provider errors consistently', async () => {
       // Test OpenAI error handling
-      const openAIProvider = factory.create({
+      const openAIProvider = createProvider({
         provider: 'openai',
         defaultModel: 'gpt-5.2',
         enableReasoning: false,
@@ -144,7 +141,7 @@ describe('provider integration tests', () => {
       })
 
       // Test Azure error handling
-      const azureProvider = factory.create({
+      const azureProvider = createProvider({
         provider: 'azure',
         defaultModel: 'gpt-4o',
         enableReasoning: false,
@@ -164,7 +161,7 @@ describe('provider integration tests', () => {
 
   describe('reasoning model integration', () => {
     it('should support reasoning models across providers', async () => {
-      const provider = factory.create({
+      const provider = createProvider({
         provider: 'openai',
         defaultModel: 'gpt-5.2',
         enableReasoning: true,
@@ -184,7 +181,7 @@ describe('provider integration tests', () => {
     })
 
     it('should handle reasoning model limitations correctly', async () => {
-      const provider = factory.create({
+      const provider = createProvider({
         provider: 'openai',
         defaultModel: 'o3',
         enableReasoning: true,
@@ -206,7 +203,7 @@ describe('provider integration tests', () => {
 
   describe('security measures integration', () => {
     it('should validate input parameters across all providers', async () => {
-      const provider = factory.create({
+      const provider = createProvider({
         provider: 'openai',
         defaultModel: 'gpt-4o',
         enableReasoning: false,
@@ -257,14 +254,14 @@ describe('provider integration tests', () => {
     })
 
     it('should implement consistent error handling across providers', async () => {
-      const openAIProvider = factory.create({
+      const openAIProvider = createProvider({
         provider: 'openai',
         defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
 
-      const azureProvider = factory.create({
+      const azureProvider = createProvider({
         provider: 'azure',
         defaultModel: 'gpt-4o',
         enableReasoning: false,
@@ -293,14 +290,14 @@ describe('provider integration tests', () => {
 
   describe('provider factory integration', () => {
     it('should create providers with consistent interfaces', async () => {
-      const openAIProvider = factory.create({
+      const openAIProvider = createProvider({
         provider: 'openai',
         defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
 
-      const azureProvider = factory.create({
+      const azureProvider = createProvider({
         provider: 'azure',
         defaultModel: 'gpt-4o',
         enableReasoning: false,
@@ -331,20 +328,22 @@ describe('provider integration tests', () => {
         enableReasoning: false,
       }
 
-      expect(() => factory.create(invalidConfig)).toThrow('Unsupported provider: unsupported')
+      expect(() => createProvider(invalidConfig)).toThrow(
+        'Provider "unsupported" is not registered',
+      )
     })
   })
 
   describe('model capabilities integration', () => {
     it('should provide accurate model capabilities across providers', async () => {
-      const openAIProvider = factory.create({
+      const openAIProvider = createProvider({
         provider: 'openai',
         defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
 
-      const azureProvider = factory.create({
+      const azureProvider = createProvider({
         provider: 'azure',
         defaultModel: 'gpt-4o',
         enableReasoning: false,
@@ -373,14 +372,14 @@ describe('provider integration tests', () => {
     })
 
     it('should support model validation across providers', async () => {
-      const openAIProvider = factory.create({
+      const openAIProvider = createProvider({
         provider: 'openai',
         defaultModel: 'gpt-5.2',
         enableReasoning: false,
         openai: { apiKey: 'sk-test-key' },
       })
 
-      const azureProvider = factory.create({
+      const azureProvider = createProvider({
         provider: 'azure',
         defaultModel: 'gpt-4o',
         enableReasoning: false,

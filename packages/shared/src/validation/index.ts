@@ -46,6 +46,17 @@ export const ChatContextSchema = z
   })
   .optional()
 
+export const UIMessagePartSchema = z.object({ type: z.string().trim().min(1) }).passthrough()
+
+export const UIMessageSchema = z
+  .object({
+    id: z.string().trim().min(1).optional(),
+    role: z.enum(['user', 'assistant', 'system']),
+    parts: z.array(UIMessagePartSchema).min(1, 'At least one message part is required'),
+    metadata: z.unknown().optional(),
+  })
+  .passthrough()
+
 export const ConversationRequestSchema = z.object({
   conversationId: z.string().optional(),
   parentMessageId: z.string().optional(),
@@ -93,16 +104,15 @@ export const ApiResponseSchema = z.object({
 })
 
 export const RequestPropsSchema = z.object({
-  prompt: z.string().trim().min(1),
-  options: ChatContextSchema,
+  messages: z.array(UIMessageSchema).min(1, 'At least one message is required'),
   systemMessage: z.string().trim().optional(),
   temperature: z.number().min(0).max(2).optional(),
   top_p: z.number().min(0).max(1).optional(),
+  usingContext: z.boolean().optional(),
 })
 
 export const ChatProcessRequestSchema = z.object({
-  prompt: z.string().trim().min(1, 'Prompt cannot be empty').max(32000, 'Prompt too long'),
-  options: ChatContextSchema,
+  messages: z.array(UIMessageSchema).min(1, 'At least one message is required'),
   systemMessage: z.string().trim().max(8000, 'System message too long').optional(),
   temperature: z
     .number()
@@ -110,6 +120,7 @@ export const ChatProcessRequestSchema = z.object({
     .max(2, 'Temperature must be at most 2')
     .optional(),
   top_p: z.number().min(0, 'Top_p must be at least 0').max(1, 'Top_p must be at most 1').optional(),
+  usingContext: z.boolean().optional(),
 })
 
 // ============================================================================
@@ -296,24 +307,6 @@ export const UUIDSchema = z.string().uuid('Invalid UUID format')
 export const EmailSchema = z.string().email('Invalid email format')
 
 export const UrlSchema = z.string().url('Invalid URL format')
-
-// ============================================================================
-// Legacy Schemas (for backward compatibility)
-// ============================================================================
-
-export const RequestOptionsSchema = z.object({
-  message: z.string().trim().min(1),
-  lastContext: z
-    .object({
-      conversationId: z.string().optional(),
-      parentMessageId: z.string().optional(),
-    })
-    .optional(),
-  process: z.function().optional(),
-  systemMessage: z.string().optional(),
-  temperature: z.number().min(0).max(2).optional(),
-  top_p: z.number().min(0).max(1).optional(),
-})
 
 export const UsageResponseSchema = z.object({
   total_usage: z.number().int().min(0),

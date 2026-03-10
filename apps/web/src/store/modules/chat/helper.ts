@@ -1,7 +1,7 @@
 import { t } from '@/locales'
 import { ss } from '@/utils/storage'
-import { ChatStateSchema } from '@chatgpt-web/shared'
 import type { ChatState } from '@chatgpt-web/shared'
+import { ChatStateSchema } from '@chatgpt-web/shared'
 
 const LOCAL_NAME = 'chatStorage'
 const CHAT_STORAGE_SCHEMA_VERSION = 1
@@ -33,50 +33,46 @@ function normalizeConversationOptions(value: unknown): Record<string, string> | 
   const parentMessageId =
     typeof value.parentMessageId === 'string' ? value.parentMessageId : undefined
 
-  if (conversationId || parentMessageId) {
-    return {
-      ...(conversationId ? { conversationId } : {}),
-      ...(parentMessageId ? { parentMessageId } : {}),
-    }
-  }
+  if (!conversationId && !parentMessageId) return {}
 
-  return {}
+  return {
+    ...(conversationId && { conversationId }),
+    ...(parentMessageId && { parentMessageId }),
+  }
 }
 
 function normalizeText(value: Record<string, unknown>): string {
-  if (typeof value.text === 'string') return value.text
-  if (typeof value.text === 'number' || typeof value.text === 'boolean') {
-    return String(value.text)
-  }
+  const text = value.text
+  if (typeof text === 'string') return text
+  if (typeof text === 'number' || typeof text === 'boolean') return String(text)
   return ''
 }
 
 function normalizeDateTime(value: Record<string, unknown>): string {
-  if (typeof value.dateTime === 'string' && value.dateTime.trim() !== '') return value.dateTime
-  return new Date().toLocaleString()
+  const dateTime = value.dateTime
+  return typeof dateTime === 'string' && dateTime.trim() ? dateTime : new Date().toLocaleString()
 }
 
-function resolvePrompt(value: Record<string, unknown>, text: string): string {
-  if (typeof value.prompt === 'string') return value.prompt
-  return text
+function resolvePrompt(value: Record<string, unknown>, fallback: string): string {
+  return typeof value.prompt === 'string' ? value.prompt : fallback
 }
 
 function normalizeRequestOptions(value: Record<string, unknown>, text: string) {
-  if (!isRecord(value.requestOptions)) {
+  const requestOptions = value.requestOptions
+
+  if (!isRecord(requestOptions)) {
     return {
       prompt: resolvePrompt(value, text),
       options: normalizeConversationOptions(value.options),
     }
   }
 
-  const prompt =
-    typeof value.requestOptions.prompt === 'string'
-      ? value.requestOptions.prompt
-      : resolvePrompt(value, text)
-
   return {
-    prompt,
-    options: normalizeConversationOptions(value.requestOptions.options),
+    prompt:
+      typeof requestOptions.prompt === 'string'
+        ? requestOptions.prompt
+        : resolvePrompt(value, text),
+    options: normalizeConversationOptions(requestOptions.options),
   }
 }
 
@@ -86,33 +82,26 @@ function normalizeMessage(value: unknown): Record<string, unknown> | null {
   const text = normalizeText(value)
   const dateTime = normalizeDateTime(value)
   const requestOptions = normalizeRequestOptions(value, text)
-  const normalizedRequestOptions: Record<string, unknown> = {
-    prompt: requestOptions.prompt,
-  }
-  const normalizedMessage: Record<string, unknown> = {
-    ...(typeof value.id === 'string' && value.id ? { id: value.id } : {}),
+  const conversationOptions = normalizeConversationOptions(value.conversationOptions)
+
+  const message: Record<string, unknown> = {
+    ...(typeof value.id === 'string' && value.id && { id: value.id }),
     dateTime,
     text,
-    ...(typeof value.inversion === 'boolean' ? { inversion: value.inversion } : {}),
-    ...(typeof value.error === 'boolean' ? { error: value.error } : {}),
-    ...(typeof value.loading === 'boolean' ? { loading: value.loading } : {}),
-    requestOptions: normalizedRequestOptions,
+    ...(typeof value.inversion === 'boolean' && { inversion: value.inversion }),
+    ...(typeof value.error === 'boolean' && { error: value.error }),
+    ...(typeof value.loading === 'boolean' && { loading: value.loading }),
+    requestOptions: {
+      prompt: requestOptions.prompt,
+      ...(requestOptions.options !== undefined && { options: requestOptions.options }),
+    },
   }
 
-  const conversationOptions = normalizeConversationOptions(value.conversationOptions)
-  if (conversationOptions === undefined) {
-    if (requestOptions.options !== undefined) {
-      normalizedRequestOptions.options = requestOptions.options
-    }
-    return normalizedMessage
+  if (conversationOptions !== undefined) {
+    message.conversationOptions = conversationOptions
   }
 
-  normalizedMessage.conversationOptions = conversationOptions
-  if (requestOptions.options !== undefined) {
-    normalizedRequestOptions.options = requestOptions.options
-  }
-
-  return normalizedMessage
+  return message
 }
 
 function normalizeHistoryItem(value: unknown): Record<string, unknown> | null {
@@ -151,7 +140,6 @@ function unwrapStoragePayload(raw: unknown): { version: number; state: unknown }
   ) {
     return { version: raw.version, state: raw.state }
   }
-
   return { version: 0, state: raw }
 }
 

@@ -27,6 +27,7 @@ export default {
     verify: 'Verify',
     unauthorizedTips: 'Unauthorized, please verify first.',
     stopResponding: 'Stop Responding',
+    retry: 'Retry',
   },
   chat: {
     newChatButton: 'New Chat',
@@ -54,11 +55,25 @@ export default {
     preview: 'Preview',
     showRawText: 'Show as raw text',
     thinking: 'Thinking...',
+    regenerate: 'Regenerate',
     send: 'Send Message',
     clearChatTooltip: 'Clear current chat',
     exportImageTooltip: 'Export chat as image',
     contextModeTooltip: 'Toggle context mode',
     clearHistoryTooltip: 'Clear all chat history',
+    mobileMenuActions: 'More actions',
+    emptyStateTitle: 'Start with a clear prompt',
+    emptyStateDescription:
+      'Pick a starter prompt below, or type your own message to begin a more focused conversation.',
+    starterSummarize: 'Summarize this request and extract action items',
+    starterPlan: 'Turn this task into an executable development plan',
+    starterBrainstorm: 'Brainstorm a few stronger approaches with me',
+    contextOn: 'With context',
+    contextOff: 'Single turn only',
+    backendUnavailableTitle: 'Backend unavailable',
+    backendUnavailableDescription:
+      'The chat backend is not reachable right now, so session bootstrap could not complete.',
+    backendUnavailableHint: 'Start `pnpm dev:api` or `pnpm dev:core`, then retry the connection.',
   },
   setting: {
     setting: 'Setting',

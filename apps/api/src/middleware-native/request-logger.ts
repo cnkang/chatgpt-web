@@ -11,7 +11,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { MiddlewareHandler } from '../transport/types.js'
+import type { MiddlewareHandler, TransportResponse } from '../transport/types.js'
 import { logger } from '../utils/logger.js'
 
 /**
@@ -19,6 +19,11 @@ import { logger } from '../utils/logger.js'
  */
 interface RequestWithId {
   requestId?: string
+}
+
+type NativeResponseWithEnd = {
+  end?: (...args: unknown[]) => unknown
+  statusCode?: number
 }
 
 /**
@@ -60,53 +65,72 @@ export function createRequestLoggerMiddleware(): MiddlewareHandler {
 
     // Wrap response.end() to capture completion
     const originalEnd = res.end.bind(res)
+    const nativeResponse = (res as TransportResponse & { _nativeResponse?: NativeResponseWithEnd })
+      ._nativeResponse
+    const originalNativeEnd =
+      nativeResponse && typeof nativeResponse.end === 'function'
+        ? nativeResponse.end.bind(nativeResponse)
+        : null
     let responseLogged = false
 
-    res.end = ((...args: unknown[]) => {
+    const logResponseCompletion = () => {
       // Log response only once
-      if (!responseLogged) {
-        responseLogged = true
-
-        const duration = Date.now() - start
-        const endMemory = process.memoryUsage()
-
-        // Calculate memory delta
-        const memoryDelta = {
-          heapUsed: endMemory.heapUsed - startMemory.heapUsed,
-          external: endMemory.external - startMemory.external,
-        }
-
-        // Extract status code from response
-        // Note: We need to access the native response to get the status code
-        // biome-ignore lint/suspicious/noExplicitAny: Accessing internal _nativeResponse property for status code
-        const statusCode = (res as any)._nativeResponse?.statusCode || 200
-
-        // Log API call completion
-        logger.logApiCall(req.method, req.path, statusCode, duration, {
-          requestId,
-          ip: req.ip,
-          userAgent: req.getHeader('user-agent'),
-        })
-
-        // Log performance metrics
-        logger.logPerformance(
-          `${req.method} ${req.path}`,
-          duration,
-          {
-            memoryDelta: {
-              heapUsed: `${Math.round(memoryDelta.heapUsed / 1024)}KB`,
-              external: `${Math.round(memoryDelta.external / 1024)}KB`,
-            },
-            statusCode,
-          },
-          {
-            requestId,
-          },
-        )
+      if (responseLogged) {
+        return
       }
+
+      responseLogged = true
+
+      const duration = Date.now() - start
+      const endMemory = process.memoryUsage()
+
+      // Calculate memory delta
+      const memoryDelta = {
+        heapUsed: endMemory.heapUsed - startMemory.heapUsed,
+        external: endMemory.external - startMemory.external,
+      }
+
+      // Extract status code from response
+      const statusCode =
+        (res as TransportResponse & { _nativeResponse?: { statusCode?: number } })._nativeResponse
+          ?.statusCode || 200
+
+      // Log API call completion
+      logger.logApiCall(req.method, req.path, statusCode, duration, {
+        requestId,
+        ip: req.ip,
+        userAgent: req.getHeader('user-agent'),
+      })
+
+      // Log performance metrics
+      logger.logPerformance(
+        `${req.method} ${req.path}`,
+        duration,
+        {
+          memoryDelta: {
+            heapUsed: `${Math.round(memoryDelta.heapUsed / 1024)}KB`,
+            external: `${Math.round(memoryDelta.external / 1024)}KB`,
+          },
+          statusCode,
+        },
+        {
+          requestId,
+        },
+      )
+    }
+
+    res.end = ((...args: unknown[]) => {
+      logResponseCompletion()
 
       return originalEnd(...(args as [string | Buffer | undefined]))
     }) as typeof res.end
+
+    if (nativeResponse && originalNativeEnd) {
+      nativeResponse.end = ((...args: unknown[]) => {
+        logResponseCompletion()
+        return originalNativeEnd(...args)
+      }) as typeof nativeResponse.end
+    }
 
     next()
   }
