@@ -175,7 +175,7 @@ export function isValidUrl(url: string): boolean {
 export function trimTrailingSlashes(value: string): string {
   let endIndex = value.length
 
-  while (endIndex > 0 && value.charCodeAt(endIndex - 1) === 47) {
+  while (endIndex > 0 && value.codePointAt(endIndex - 1) === 47) {
     endIndex -= 1
   }
 
