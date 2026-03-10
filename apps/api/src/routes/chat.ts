@@ -35,6 +35,16 @@ export const chatProcessHandler: RouteHandler = async (req, res) => {
   await handleUIMessageStream(body as ChatProcessBody & { messages: UIMessage[] }, res)
 }
 
+/**
+ * Stream chat responses for the provided UI messages to the native HTTP response.
+ *
+ * Streams model output for the given `messages`, applying the optional `systemMessage`,
+ * `temperature`, `top_p`, and `usingContext` generation parameters.
+ *
+ * @param body - Request body containing `messages` (required) and optional `systemMessage`, `temperature`, `top_p`, and `usingContext`.
+ * @param res - Transport response wrapper that must expose a `_nativeResponse` (node `ServerResponse`) to write the streamed output.
+ * @throws Error if the native HTTP response (`_nativeResponse`) is not available on `res`.
+ */
 async function handleUIMessageStream(
   body: ChatProcessBody & { messages: UIMessage[] },
   res: TransportResponse,

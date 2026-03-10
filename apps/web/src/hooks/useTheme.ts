@@ -3,6 +3,11 @@ import { darkTheme, useOsTheme } from 'naive-ui'
 import { computed, watch } from 'vue'
 import { useAppStore } from '@/store'
 
+/**
+ * Provides the active Naive UI theme and matching theme overrides derived from the application theme setting and the operating system color scheme.
+ *
+ * @returns An object with `theme` (the active Naive UI theme or `undefined` for the light/default theme) and `themeOverrides` (a `GlobalThemeOverrides` object containing token values appropriate for the active theme)
+ */
 export function useTheme() {
   const appStore = useAppStore()
 

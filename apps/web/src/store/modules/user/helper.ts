@@ -12,6 +12,11 @@ export interface UserState {
   userInfo: UserInfo
 }
 
+/**
+ * Provide the default user state for the application.
+ *
+ * @returns The default `UserState` containing `userInfo` with an avatar URL, name `"数字小助手"`, and description `"不要输入涉密/隐私信息！"`.
+ */
 export function defaultSetting(): UserState {
   return {
     userInfo: {

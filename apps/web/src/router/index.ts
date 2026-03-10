@@ -45,6 +45,11 @@ export const router = createRouter({
 
 setupPageGuard(router)
 
+/**
+ * Installs the configured router into the provided Vue application instance.
+ *
+ * @param app - The Vue application instance to register the router with
+ */
 export function setupRouter(app: App) {
   app.use(router)
 }

@@ -36,6 +36,17 @@ export interface RequestError extends Error {
   statusCode?: number
 }
 
+/**
+ * Constructs a RequestError and attaches optional metadata (network/upstream flags, response, and status code).
+ *
+ * @param message - The human-readable error message
+ * @param options - Optional metadata to attach to the error:
+ *   - `isNetworkError`: set to `true` if the error originated from a network failure
+ *   - `isUpstreamUnavailable`: set to `true` if the upstream service appears unavailable (e.g., empty 5xx response)
+ *   - `response`: the parsed response payload or raw error payload, if available
+ *   - `statusCode`: the HTTP status code associated with the error, if available
+ * @returns The created `RequestError` with the provided metadata properties set
+ */
 function createRequestError(
   message: string,
   options: {
@@ -53,6 +64,11 @@ function createRequestError(
   return error
 }
 
+/**
+ * Determines whether a value is a RequestError marked as upstream unavailable.
+ *
+ * @returns `true` if `error` is a `RequestError` and its `isUpstreamUnavailable` flag is `true`, `false` otherwise.
+ */
 export function isUpstreamUnavailableError(error: unknown): error is RequestError {
   return Boolean(
     error &&
@@ -62,6 +78,13 @@ export function isUpstreamUnavailableError(error: unknown): error is RequestErro
   )
 }
 
+/**
+ * Normalize an HTTP error response body into a structured payload.
+ *
+ * @param rawText - The raw response body text from the server
+ * @param statusText - The HTTP status text to use when `rawText` is empty
+ * @returns The parsed JSON payload when `rawText` is valid JSON; otherwise an object `{ data: null, message, status: 'Error' }` where `message` is `rawText` when present or `statusText` when not
+ */
 function parseErrorPayload(rawText: string, statusText: string): unknown {
   if (!rawText) {
     return {
@@ -90,6 +113,13 @@ function getErrorMessage(errorPayload: unknown, response: globalThis.Response): 
   return `HTTP ${response.status}: ${response.statusText}`
 }
 
+/**
+ * Handle a non-OK fetch Response by parsing its error payload and either returning authorization errors or throwing a RequestError.
+ *
+ * @param response - The fetch Response to evaluate and parse
+ * @returns A parsed `Response<T>` error payload when the status is 401 or 403
+ * @throws RequestError - If the response indicates an upstream service failure (status >= 500 with an empty body). The thrown error will have `isUpstreamUnavailable: true` and include `statusCode`. Also throws a RequestError containing a computed error message, the parsed error payload as `response`, and `statusCode` for other error responses.
+ */
 async function handleErrorResponse<T>(response: globalThis.Response): Promise<Response<T>> {
   const rawText = await response.text()
   const errorPayload = parseErrorPayload(rawText, response.statusText)
@@ -111,6 +141,14 @@ async function handleErrorResponse<T>(response: globalThis.Response): Promise<Re
   })
 }
 
+/**
+ * Invoke the progress callback with a constructed FetchProgressEvent.
+ *
+ * @param onProgress - Callback to receive progress updates
+ * @param loaded - Number of bytes (or units) that have been loaded so far
+ * @param total - Total number of bytes (or units) expected, or `undefined` if unknown
+ * @param responseText - Accumulated response text received so far
+ */
 function emitProgress(
   onProgress: (event: FetchProgressEvent) => void,
   loaded: number,
@@ -169,7 +207,17 @@ async function readStreamingResponse<T>(
 }
 
 /**
- * Create a fetch request with streaming support for chat responses
+ * Perform an HTTP fetch that supports streaming response bodies and unified error handling.
+ *
+ * When `onProgress` is provided and the response exposes a readable body, progress events
+ * will be emitted as the body is streamed and the streaming payload will be parsed.
+ *
+ * @param url - The request URL (absolute or built API path)
+ * @param options - Fetch RequestInit options (headers, method, body, signal, etc.)
+ * @param onProgress - Optional callback invoked with download progress events for streaming responses
+ * @returns The parsed response payload as a `Response<T>`
+ * @throws {RequestError} On network failures (marked with `isNetworkError` and `isUpstreamUnavailable`)
+ *   or when the server returns a non-OK HTTP status (see `handleErrorResponse` for details)
  */
 async function fetchWithStreaming<T>(
   url: string,
@@ -196,6 +244,12 @@ async function fetchWithStreaming<T>(
   return response.json()
 }
 
+/**
+ * Builds a RequestInit object for a fetch call using the provided method, headers, and optional abort signal.
+ *
+ * @param signal - Optional AbortSignal used to cancel the request
+ * @returns A RequestInit configured with the given HTTP method, headers, and `signal` (if provided)
+ */
 function buildRequestOptions(
   method: string,
   headers: Record<string, string>,
@@ -220,6 +274,18 @@ function attachAuthHeader(requestOptions: RequestInit) {
   }
 }
 
+/**
+ * Attaches the given request body to RequestInit and sets appropriate headers.
+ *
+ * For GET requests or when `data` is undefined/null, the requestOptions are unchanged.
+ * If `data` is a FormData instance, it is assigned to `requestOptions.body` and any explicit
+ * `Content-Type` header is removed so the browser can set the multipart boundary.
+ * For other data values, `data` is JSON-stringified and `Content-Type: application/json` is set.
+ *
+ * @param requestOptions - The mutable RequestInit object to modify
+ * @param method - HTTP method name (e.g., "GET", "POST")
+ * @param data - Optional request payload; if FormData it is sent as-is, otherwise JSON-stringified
+ */
 function applyRequestBody(requestOptions: RequestInit, method: string, data?: unknown) {
   if (method === 'GET' || !data) return
 
@@ -257,6 +323,13 @@ function appendQueryParams(url: string, data?: unknown): string {
   return `${url}${separator}${queryString}`
 }
 
+/**
+ * Creates a response handler that validates an API response and handles authorization failures.
+ *
+ * @template T
+ * @returns A function that accepts a `Response<T>` and: returns the response when `status` is `'Success'` or when `data` is a string; if `status` is `'Unauthorized'` removes the stored auth token and reloads the page; otherwise throws an `Error` with the original response attached as `error.response`.
+ * @throws Error The thrown error includes a `response` property containing the original `Response<T>`.
+ */
 function createSuccessHandler<T>() {
   return (res: Response<T>) => {
     const authStore = useAuthStore()
@@ -276,6 +349,11 @@ function createSuccessHandler<T>() {
   }
 }
 
+/**
+ * Produces an error handler that rethrows Error instances and converts non-Error values into a generic Error.
+ *
+ * @returns A function that takes an `unknown` `error` and throws the original `Error` if `error` is an instance of `Error`, otherwise throws a new `Error('Error')`.
+ */
 function createFailHandler() {
   return (error: unknown) => {
     if (error instanceof Error) {

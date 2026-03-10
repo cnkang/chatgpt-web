@@ -41,6 +41,28 @@ function parseReasoningFromResponse(response: unknown): ReasoningStep[] {
   }))
 }
 
+/**
+ * Provides reactive state, computed properties, and methods for tracking and managing a step-by-step reasoning session.
+ *
+ * The returned API includes:
+ * - state: computed ReasoningState containing session flags, steps, currentStep, estimatedTime, and startTime
+ * - isReasoningModel: computed boolean indicating whether the selected model supports reasoning
+ * - showReasoningSteps: computed boolean controlling visibility of the step list
+ * - hasReasoningSteps: computed boolean true when there are recorded steps
+ * - averageConfidence: computed average confidence across recorded steps (0 when no steps)
+ * - totalReasoningTime: computed elapsed time in milliseconds since reasoning started (0 when not started)
+ * - startReasoning(estimatedTime?): begins a reasoning session and initializes timing and state
+ * - stopReasoning(): ends the reasoning session and clears the current step
+ * - addReasoningStep(step): appends a new numbered reasoning step
+ * - updateCurrentStep(step): updates the transient current step text
+ * - clearReasoningSteps(): removes all recorded steps
+ * - setReasoningModel(modelName): marks whether a model supports reasoning based on its name
+ * - toggleReasoningStepsVisibility(): toggles visibility of the step list
+ * - getEstimatedTimeForModel: helper to get a default estimated time for a model name
+ * - parseReasoningFromResponse: helper to extract reasoning steps from an API response
+ *
+ * @returns An object exposing the reactive state, computed properties, control methods, and helper functions for reasoning session management
+ */
 export function useReasoning() {
   const state = ref<ReasoningState>({
     isReasoning: false,

@@ -27,14 +27,12 @@ type NativeResponseWithEnd = {
 }
 
 /**
- * Create request logging middleware
+ * Create middleware that logs request start, response completion, and performance metrics.
  *
- * Logs:
- * - Request start with method, path, query parameters
- * - Request completion with status code, duration, memory usage
- * - Performance metrics for monitoring
+ * Attaches or generates a request ID on the request, logs the request method, path and query at start,
+ * and when the response finishes logs status code, duration, and memory usage delta while emitting API and performance metrics.
  *
- * @returns Middleware handler
+ * @returns A middleware handler that records request and performance logs
  */
 export function createRequestLoggerMiddleware(): MiddlewareHandler {
   return async (req, res, next) => {
