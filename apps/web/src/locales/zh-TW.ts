@@ -67,6 +67,9 @@ export default {
     starterBrainstorm: '一起腦力激盪幾個更好的方案',
     contextOn: '攜帶上下文',
     contextOff: '僅本輪訊息',
+    backendUnavailableTitle: '後端暫不可用',
+    backendUnavailableDescription: '目前無法連接聊天後端，因此首屏對話初始化尚未完成。',
+    backendUnavailableHint: '請檢查後端連接或稍後重試。',
   },
   setting: {
     setting: '設定',

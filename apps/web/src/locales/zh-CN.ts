@@ -71,7 +71,7 @@ export default {
     contextOff: '仅当前消息',
     backendUnavailableTitle: '后端暂不可用',
     backendUnavailableDescription: '当前无法连接聊天后端，因此首屏会话初始化没有完成。',
-    backendUnavailableHint: '先启动 `pnpm dev:api` 或 `pnpm dev:core`，再点击重试。',
+    backendUnavailableHint: '请检查后端连接或稍后重试。',
   },
   setting: {
     setting: '设置',
