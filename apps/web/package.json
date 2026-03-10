@@ -28,9 +28,11 @@
     "test:lighthouse": "node -e \"const fs=require('fs'); fs.mkdirSync('lighthouse-results',{recursive:true}); fs.writeFileSync('lighthouse-results/summary.json', JSON.stringify({status:'skipped', reason:'Lighthouse tests not implemented in repo'}, null, 2)); console.log('Lighthouse tests skipped: placeholder results generated');\""
   },
   "dependencies": {
+    "@ai-sdk/vue": "^3.0.116",
     "@chatgpt-web/shared": "workspace:*",
     "@iconify/vue": "^5.0.0",
     "@vueuse/core": "^14.2.1",
+    "ai": "^6.0.116",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.38",
     "markstream-vue": "0.0.7",
@@ -45,7 +47,6 @@
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^25.4.0",
     "@vitejs/plugin-vue": "^6.0.4",
-    "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.27",
     "happy-dom": "^20.8.3",
     "less": "^4.5.1",

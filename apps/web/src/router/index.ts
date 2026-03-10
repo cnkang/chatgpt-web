@@ -45,7 +45,6 @@ export const router = createRouter({
 
 setupPageGuard(router)
 
-export async function setupRouter(app: App) {
+export function setupRouter(app: App) {
   app.use(router)
-  await router.isReady()
 }

@@ -113,29 +113,19 @@ export class RouterImpl implements Router {
    * @returns Matched route or null if no match
    */
   match(method: string, path: string): Route | null {
-    // Normalize request path by stripping "/api" prefix
     const normalizedRequestPath = this.normalizePath(path)
 
-    // Try to match with both normalized and original paths
     for (const route of this.routes) {
-      // Check if method matches (case-insensitive)
+      // Check method match (case-insensitive)
       if (route.method.toUpperCase() !== method.toUpperCase()) {
         continue
       }
 
-      // Normalize route path as well for comparison
+      // Check path match with dual compatibility:
+      // Match if normalized request path equals route path OR normalized route path
+      // This handles: /api/test route matches /test, /api/test, /api/api/test requests
       const normalizedRoutePath = this.normalizePath(route.path)
-
-      // Check if path matches (exact match for now, no pattern matching)
-      // Match if either:
-      // 1. Exact match with original paths
-      // 2. Normalized paths match (enables /api/path <-> /path compatibility)
-      if (
-        route.path === path ||
-        route.path === normalizedRequestPath ||
-        normalizedRoutePath === path ||
-        normalizedRoutePath === normalizedRequestPath
-      ) {
+      if (normalizedRequestPath === route.path || normalizedRequestPath === normalizedRoutePath) {
         return route
       }
     }

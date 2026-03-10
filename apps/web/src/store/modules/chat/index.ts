@@ -201,6 +201,24 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
 
+    setChatByUuid(uuid: number, chatData: Chat[]) {
+      ensureChatGroup(this.$state, uuid)
+
+      const index = findExplicitChatGroupIndex(this.chat, uuid)
+      if (index === -1) return
+
+      this.chat[index].data = chatData.map(chat => ensureChatId(chat))
+
+      const firstUserMessage = this.chat[index].data.find(
+        chat => chat.inversion && chat.text.trim(),
+      )
+      if (firstUserMessage && this.history[index].title === t('chat.newChatTitle')) {
+        this.history[index].title = firstUserMessage.text
+      }
+
+      this.recordState()
+    },
+
     deleteChatByUuid(uuid: number, index: number) {
       const group = getChatGroupByExplicitUuid(this.$state, uuid)
       if (group) {

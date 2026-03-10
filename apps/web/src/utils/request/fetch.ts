@@ -29,6 +29,39 @@ export interface Response<T = unknown> {
   status: string
 }
 
+export interface RequestError extends Error {
+  isNetworkError?: boolean
+  isUpstreamUnavailable?: boolean
+  response?: unknown
+  statusCode?: number
+}
+
+function createRequestError(
+  message: string,
+  options: {
+    isNetworkError?: boolean
+    isUpstreamUnavailable?: boolean
+    response?: unknown
+    statusCode?: number
+  } = {},
+): RequestError {
+  const error = new Error(message) as RequestError
+  error.isNetworkError = options.isNetworkError
+  error.isUpstreamUnavailable = options.isUpstreamUnavailable
+  error.response = options.response
+  error.statusCode = options.statusCode
+  return error
+}
+
+export function isUpstreamUnavailableError(error: unknown): error is RequestError {
+  return Boolean(
+    error &&
+    typeof error === 'object' &&
+    'isUpstreamUnavailable' in error &&
+    (error as RequestError).isUpstreamUnavailable,
+  )
+}
+
 function parseErrorPayload(rawText: string, statusText: string): unknown {
   if (!rawText) {
     return {
@@ -65,7 +98,17 @@ async function handleErrorResponse<T>(response: globalThis.Response): Promise<Re
     return errorPayload as Response<T>
   }
 
-  throw new Error(getErrorMessage(errorPayload, response))
+  if (response.status >= 500 && rawText.trim().length === 0) {
+    throw createRequestError('Backend service is unavailable.', {
+      isUpstreamUnavailable: true,
+      statusCode: response.status,
+    })
+  }
+
+  throw createRequestError(getErrorMessage(errorPayload, response), {
+    response: errorPayload,
+    statusCode: response.status,
+  })
 }
 
 function emitProgress(
@@ -133,7 +176,16 @@ async function fetchWithStreaming<T>(
   options: RequestInit,
   onProgress?: (event: FetchProgressEvent) => void,
 ): Promise<Response<T>> {
-  const response = await fetch(url, options)
+  let response: globalThis.Response
+
+  try {
+    response = await fetch(url, options)
+  } catch (error) {
+    throw createRequestError(error instanceof Error ? error.message : 'Network request failed', {
+      isNetworkError: true,
+      isUpstreamUnavailable: true,
+    })
+  }
 
   if (!response.ok) return handleErrorResponse<T>(response)
 
@@ -152,7 +204,6 @@ function buildRequestOptions(
   return {
     method,
     headers: {
-      'Content-Type': 'application/json',
       ...headers,
     },
     signal,
@@ -178,6 +229,10 @@ function applyRequestBody(requestOptions: RequestInit, method: string, data?: un
     return
   }
 
+  requestOptions.headers = {
+    ...requestOptions.headers,
+    'Content-Type': 'application/json',
+  }
   requestOptions.body = JSON.stringify(data)
 }
 
@@ -222,8 +277,12 @@ function createSuccessHandler<T>() {
 }
 
 function createFailHandler() {
-  return (error: Error) => {
-    throw new Error(error?.message ?? 'Error')
+  return (error: unknown) => {
+    if (error instanceof Error) {
+      throw error
+    }
+
+    throw new Error('Error')
   }
 }
 

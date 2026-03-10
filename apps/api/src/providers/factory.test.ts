@@ -3,12 +3,11 @@
  * Tests provider factory implementation according to task 7.2
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { isOfficialAzureOpenAIEndpoint } from '../utils/url-security.js'
 import type { AIProvider, ChatCompletionChunk, ChatCompletionResponse, UsageInfo } from './base.js'
 import type { AIConfig, AzureOpenAIConfig, OpenAIConfig } from './config.js'
 import {
-  AIProviderFactory,
   clearProviders,
   createProvider,
   createProviderWithValidation,
@@ -151,25 +150,14 @@ describe('provider registry', () => {
 })
 
 describe('ai provider factory', () => {
-  let factory: AIProviderFactory
-
   beforeEach(() => {
     clearProviders()
     registerProvider('openai', MockOpenAIProvider)
     registerProvider('azure', MockAzureProvider)
-    factory = AIProviderFactory.getInstance()
   })
 
   afterEach(() => {
     clearProviders()
-  })
-
-  describe('singleton pattern', () => {
-    it('should return the same instance', () => {
-      const factory1 = AIProviderFactory.getInstance()
-      const factory2 = AIProviderFactory.getInstance()
-      expect(factory1).toBe(factory2)
-    })
   })
 
   describe('provider creation', () => {
@@ -184,7 +172,7 @@ describe('ai provider factory', () => {
         },
       }
 
-      const provider = factory.create(config)
+      const provider = createProvider(config)
       expect(provider).toBeInstanceOf(MockOpenAIProvider)
       expect(provider.name).toBe('openai')
     })
@@ -202,7 +190,7 @@ describe('ai provider factory', () => {
         },
       }
 
-      const provider = factory.create(config)
+      const provider = createProvider(config)
       expect(provider).toBeInstanceOf(MockAzureProvider)
       expect(provider.name).toBe('azure')
     })
@@ -214,7 +202,7 @@ describe('ai provider factory', () => {
         enableReasoning: false,
       }
 
-      expect(() => factory.create(config)).toThrow('Unsupported provider: unsupported')
+      expect(() => createProvider(config)).toThrow('Provider "unsupported" is not registered')
     })
 
     it('should throw error for missing OpenAI config', () => {
@@ -225,7 +213,7 @@ describe('ai provider factory', () => {
         // Missing openai config
       }
 
-      expect(() => factory.create(config)).toThrow(
+      expect(() => createProvider(config)).toThrow(
         'OpenAI configuration is required when using OpenAI provider',
       )
     })
@@ -238,70 +226,24 @@ describe('ai provider factory', () => {
         // Missing azure config
       }
 
-      expect(() => factory.create(config)).toThrow(
+      expect(() => createProvider(config)).toThrow(
         'Azure configuration is required when using Azure provider',
       )
     })
-  })
 
-  describe('direct provider creation', () => {
-    it('should create OpenAI provider directly', () => {
-      const config: OpenAIConfig = {
-        apiKey: 'sk-test-key',
-        baseUrl: 'https://api.openai.com/v1',
-      }
-
-      const provider = factory.createOpenAI(config)
-      expect(provider).toBeInstanceOf(MockOpenAIProvider)
-      expect((provider as MockOpenAIProvider).config).toBe(config)
-    })
-
-    it('should create Azure provider directly', () => {
-      const config: AzureOpenAIConfig = {
-        apiKey: 'azure-key',
-        endpoint: 'https://test.openai.azure.com',
-        deployment: 'gpt-4o',
-        apiVersion: '2024-02-15-preview',
-      }
-
-      const provider = factory.createAzure(config)
-      expect(provider).toBeInstanceOf(MockAzureProvider)
-      expect((provider as MockAzureProvider).config).toBe(config)
-    })
-
-    it('should throw error for unregistered OpenAI provider', () => {
+    it('should throw error for unregistered provider', () => {
       clearProviders() // Remove registered providers
 
-      const config: OpenAIConfig = {
-        apiKey: 'sk-test-key',
+      const config: AIConfig = {
+        provider: 'openai',
+        defaultModel: 'gpt-5.2',
+        enableReasoning: false,
+        openai: {
+          apiKey: 'sk-test-key',
+        },
       }
 
-      expect(() => factory.createOpenAI(config)).toThrow(
-        'OpenAI provider is not registered. Make sure to register it first.',
-      )
-    })
-
-    it('should throw error for unregistered Azure provider', () => {
-      clearProviders() // Remove registered providers
-
-      const config: AzureOpenAIConfig = {
-        apiKey: 'azure-key',
-        endpoint: 'https://test.openai.azure.com',
-        deployment: 'gpt-4o',
-        apiVersion: '2024-02-15-preview',
-      }
-
-      expect(() => factory.createAzure(config)).toThrow(
-        'Azure OpenAI provider is not registered. Make sure to register it first.',
-      )
-    })
-  })
-
-  describe('supported providers', () => {
-    it('should return list of supported providers', () => {
-      const providers = factory.getSupportedProviders()
-      expect(providers).toContain('openai')
-      expect(providers).toContain('azure')
+      expect(() => createProvider(config)).toThrow('Provider "openai" is not registered')
     })
   })
 
@@ -316,7 +258,7 @@ describe('ai provider factory', () => {
         },
       }
 
-      const provider = await factory.createWithValidation(config)
+      const provider = await createProviderWithValidation(config)
       expect(provider).toBeInstanceOf(MockOpenAIProvider)
     })
 
@@ -330,69 +272,8 @@ describe('ai provider factory', () => {
         },
       }
 
-      await expect(factory.createWithValidation(config)).rejects.toThrow(
+      await expect(createProviderWithValidation(config)).rejects.toThrow(
         'Provider openai configuration validation failed',
-      )
-    })
-  })
-
-  describe('provider creation with retry', () => {
-    it('should create provider with retry on success', async () => {
-      const config: AIConfig = {
-        provider: 'openai',
-        defaultModel: 'gpt-5.2',
-        enableReasoning: false,
-        openai: {
-          apiKey: 'sk-valid-key',
-        },
-      }
-
-      const provider = await factory.createWithRetry(config, 3, 100)
-      expect(provider).toBeInstanceOf(MockOpenAIProvider)
-    })
-
-    it('should retry on failure and eventually succeed', async () => {
-      let attempts = 0
-      const originalValidate = MockOpenAIProvider.prototype.validateConfiguration
-
-      // Mock validation to fail first 2 times, then succeed
-      MockOpenAIProvider.prototype.validateConfiguration = vi.fn().mockImplementation(async () => {
-        attempts++
-        if (attempts < 3) {
-          return false
-        }
-        return true
-      })
-
-      const config: AIConfig = {
-        provider: 'openai',
-        defaultModel: 'gpt-5.2',
-        enableReasoning: false,
-        openai: {
-          apiKey: 'sk-test-key',
-        },
-      }
-
-      const provider = await factory.createWithRetry(config, 3, 10)
-      expect(provider).toBeInstanceOf(MockOpenAIProvider)
-      expect(attempts).toBe(3)
-
-      // Restore original method
-      MockOpenAIProvider.prototype.validateConfiguration = originalValidate
-    })
-
-    it('should fail after max retries', async () => {
-      const config: AIConfig = {
-        provider: 'openai',
-        defaultModel: 'gpt-5.2',
-        enableReasoning: false,
-        openai: {
-          apiKey: 'invalid-key', // Always fails validation
-        },
-      }
-
-      await expect(factory.createWithRetry(config, 2, 10)).rejects.toThrow(
-        'Failed to create provider after 2 attempts',
       )
     })
   })

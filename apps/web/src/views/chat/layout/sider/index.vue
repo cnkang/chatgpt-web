@@ -78,6 +78,12 @@ watch(
 
 <template>
   <NLayoutSider
+    class="chat-sider-panel"
+    :class="{
+      'chat-sider-panel-mobile': isMobile,
+      'chat-sider-panel-desktop': !isMobile,
+      'chat-sider-panel-open': isMobile && !collapsed,
+    }"
     :collapsed="collapsed"
     :collapsed-width="0"
     :width="260"
@@ -88,10 +94,10 @@ watch(
     :style="getMobileClass"
     @update-collapsed="handleUpdateCollapsed"
   >
-    <div class="flex flex-col h-full" :style="mobileSafeArea">
+    <div class="chat-sider flex flex-col h-full" :style="mobileSafeArea">
       <main class="flex flex-col flex-1 min-h-0">
-        <div class="p-4">
-          <NButton dashed block @click="handleAdd">
+        <div class="p-4 pb-3">
+          <NButton class="new-chat-button" block @click="handleAdd">
             {{ $t('chat.newChatButton') }}
           </NButton>
         </div>
@@ -132,19 +138,107 @@ watch(
 </template>
 
 <style scoped>
+.chat-sider-panel-mobile {
+  transition:
+    transform 0.24s ease,
+    opacity 0.24s ease !important;
+}
+
+.chat-sider-panel-mobile:not(.chat-sider-panel-open) {
+  transform: translateX(calc(-100% - 0.85rem)) !important;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.chat-sider-panel-mobile.chat-sider-panel-open {
+  transform: translateX(0) !important;
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.chat-sider {
+  position: relative;
+  background: linear-gradient(180deg, rgba(247, 250, 252, 0.95), rgba(255, 255, 255, 0.92));
+}
+
+.chat-sider::after {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  right: 0;
+  bottom: 1rem;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(226, 232, 240, 0),
+    rgba(203, 213, 225, 0.95),
+    rgba(226, 232, 240, 0)
+  );
+  pointer-events: none;
+}
+
+.chat-sider-panel-desktop {
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.35);
+}
+
+.new-chat-button {
+  height: 3rem;
+  border: 0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgb(32 90 60), rgb(78 159 106));
+  box-shadow: 0 16px 28px rgba(75, 158, 95, 0.22);
+}
+
+.new-chat-button :deep(.n-button__content) {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: white;
+}
+
 .clear-history-btn {
-  opacity: 0.6;
-  transition: all 0.2s ease;
-  padding: 0.25rem;
-  border-radius: 0.375rem;
+  opacity: 0.74;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .clear-history-btn:hover {
   opacity: 1;
-  background-color: rgba(243, 244, 246, 0.5);
+  border-color: rgba(248, 113, 113, 0.22);
+  background-color: rgba(255, 255, 255, 0.94);
 }
 
 .dark .clear-history-btn:hover {
-  background-color: rgba(31, 41, 55, 0.5);
+  background-color: rgba(31, 41, 55, 0.82);
+}
+
+:global(.dark) .chat-sider {
+  background: linear-gradient(180deg, rgba(9, 14, 24, 0.96), rgba(15, 23, 42, 0.92));
+}
+
+:global(.dark) .chat-sider::after {
+  background: linear-gradient(
+    180deg,
+    rgba(51, 65, 85, 0),
+    rgba(71, 85, 105, 0.95),
+    rgba(51, 65, 85, 0)
+  );
+}
+
+:global(.dark) .new-chat-button {
+  background: linear-gradient(135deg, rgb(26 74 48), rgb(45 125 82));
+  box-shadow: 0 16px 28px rgba(16, 185, 129, 0.16);
+}
+
+:global(.dark) .clear-history-btn {
+  border-color: rgba(51, 65, 85, 0.84);
+  background: rgba(15, 23, 42, 0.76);
 }
 </style>

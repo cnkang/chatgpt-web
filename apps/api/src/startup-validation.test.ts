@@ -1,5 +1,68 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ConfigurationValidator } from './config/validator.js'
+import { assessStartupValidation } from './startup-validation.js'
+
+describe('assessStartupValidation', () => {
+  it('allows degraded startup for missing provider auth in development', () => {
+    const assessment = assessStartupValidation(
+      'development',
+      {
+        isValid: false,
+        errors: ['Missing required configuration: OPENAI_API_KEY'],
+        warnings: [],
+      },
+      {
+        isSecure: false,
+        risks: [
+          {
+            type: 'MISSING_OFFICIAL_AUTH',
+            description: 'Missing official OpenAI API key',
+            severity: 'HIGH',
+            mitigation: 'Set OPENAI_API_KEY',
+          },
+        ],
+      },
+    )
+
+    expect(assessment.allowDegradedStartup).toBe(true)
+    expect(assessment.blockingConfigErrors).toEqual([])
+    expect(assessment.blockingSecurityRisks).toEqual([])
+    expect(assessment.nonBlockingConfigErrors).toEqual([
+      'Missing required configuration: OPENAI_API_KEY',
+    ])
+    expect(assessment.nonBlockingSecurityRisks).toHaveLength(1)
+  })
+
+  it('treats missing provider auth as blocking in production', () => {
+    const assessment = assessStartupValidation(
+      'production',
+      {
+        isValid: false,
+        errors: ['Missing required configuration: OPENAI_API_KEY'],
+        warnings: [],
+      },
+      {
+        isSecure: false,
+        risks: [
+          {
+            type: 'MISSING_OFFICIAL_AUTH',
+            description: 'Missing official OpenAI API key',
+            severity: 'HIGH',
+            mitigation: 'Set OPENAI_API_KEY',
+          },
+        ],
+      },
+    )
+
+    expect(assessment.allowDegradedStartup).toBe(false)
+    expect(assessment.blockingConfigErrors).toEqual([
+      'Missing required configuration: OPENAI_API_KEY',
+    ])
+    expect(assessment.blockingSecurityRisks).toHaveLength(1)
+    expect(assessment.nonBlockingConfigErrors).toEqual([])
+    expect(assessment.nonBlockingSecurityRisks).toEqual([])
+  })
+})
 
 describe('startup Validation - Deprecated Configuration Handling', () => {
   let originalEnv: NodeJS.ProcessEnv

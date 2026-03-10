@@ -4,7 +4,6 @@
  */
 
 import { currentModel } from '../chatgpt/provider-adapter.js'
-import { getConfig } from '../providers/config.js'
 import type { RouteHandler, SessionData } from '../transport/types.js'
 
 /**
@@ -29,7 +28,6 @@ function updateSessionMetadata(session: SessionData | undefined): void {
 
 export const sessionHandler: RouteHandler = async (req, res) => {
   try {
-    const config = getConfig()
     const model = currentModel()
     updateSessionMetadata(req.session)
 
@@ -38,7 +36,7 @@ export const sessionHandler: RouteHandler = async (req, res) => {
       message: '',
       data: {
         auth: Boolean(process.env.AUTH_SECRET_KEY),
-        model: config.ai.defaultModel || model || 'gpt-4o',
+        model,
       },
     })
   } catch (error) {

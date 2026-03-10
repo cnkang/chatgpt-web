@@ -39,10 +39,7 @@ export type {
 export { ConfigurationManager, getAIConfig, getConfig, validateConfig } from './config.js'
 
 // Provider factory
-export type { ProviderFactory } from './factory.js'
-
 export {
-  AIProviderFactory,
   clearProviders,
   createProvider,
   createProviderWithValidation,

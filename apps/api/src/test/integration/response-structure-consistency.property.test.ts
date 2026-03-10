@@ -37,6 +37,18 @@ interface BaseResponse {
   }
 }
 
+function createChatProcessBody(text = 'test') {
+  return {
+    messages: [
+      {
+        id: 'msg-user-1',
+        role: 'user' as const,
+        parts: [{ type: 'text' as const, text }],
+      },
+    ],
+  }
+}
+
 function validateResponseStructure(body: unknown, endpoint?: string, method?: string): void {
   expect(body).toBeDefined()
   expect(typeof body).toBe('object')
@@ -192,7 +204,7 @@ describe('Property 2: Response Structure Consistency', () => {
 
   it('Property 2: POST /chat-process without auth returns consistent error structure', async () => {
     await runConstantProperty(async () => {
-      const res = await executeIntegrationRequest('POST', '/chat-process', { prompt: 'test' })
+      const res = await executeIntegrationRequest('POST', '/chat-process', createChatProcessBody())
 
       expect(res.statusCode).toBe(401)
       validateResponseStructure(res.body)
@@ -345,7 +357,19 @@ describe('Property 2: Response Structure Consistency', () => {
             token: fc.string(),
           }),
           fc.record({
-            prompt: fc.string(),
+            messages: fc.array(
+              fc.record({
+                id: fc.string(),
+                role: fc.constantFrom('user', 'assistant', 'system'),
+                parts: fc.array(
+                  fc.record({
+                    type: fc.string({ minLength: 1 }),
+                    text: fc.string(),
+                  }),
+                  { minLength: 1 },
+                ),
+              }),
+            ),
           }),
           fc.object(),
         ),

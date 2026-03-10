@@ -68,7 +68,10 @@ describe('Request Logger Middleware', () => {
       }),
       headersSent: false,
       finished: false,
-      _nativeResponse: { statusCode: 200 },
+      _nativeResponse: {
+        statusCode: 200,
+        end: vi.fn(),
+      },
     } as any
 
     // Allow setting end callback for testing
@@ -207,6 +210,17 @@ describe('Request Logger Middleware', () => {
     mockRes.end()
 
     // Should only log once
+    expect(loggerSpy.logApiCall).toHaveBeenCalledOnce()
+    expect(loggerSpy.logPerformance).toHaveBeenCalledOnce()
+  })
+
+  it('should log completion when the native response ends directly', async () => {
+    const middleware = createRequestLoggerMiddleware()
+
+    await middleware(mockReq, mockRes, next)
+    ;(mockRes as any)._nativeResponse.statusCode = 200
+    ;(mockRes as any)._nativeResponse.end()
+
     expect(loggerSpy.logApiCall).toHaveBeenCalledOnce()
     expect(loggerSpy.logPerformance).toHaveBeenCalledOnce()
   })

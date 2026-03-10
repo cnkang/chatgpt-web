@@ -107,47 +107,6 @@ export function useReasoning() {
     showReasoningSteps.value = !showReasoningSteps.value
   }
 
-  // Simulate reasoning steps for demo purposes
-  function simulateReasoningSteps() {
-    const demoSteps = [
-      {
-        thought:
-          "Let me break down this problem into its core components to understand what's being asked.",
-        confidence: 85,
-        duration: 2000,
-      },
-      {
-        thought:
-          'I need to consider multiple approaches and evaluate which would be most effective for this specific case.',
-        confidence: 78,
-        duration: 3500,
-      },
-      {
-        thought:
-          'Looking at the constraints and requirements, I can narrow down the solution space significantly.',
-        confidence: 92,
-        duration: 2800,
-      },
-      {
-        thought:
-          'Let me verify this approach by checking it against edge cases and potential issues.',
-        confidence: 88,
-        duration: 4200,
-      },
-    ]
-
-    demoSteps.forEach((step, index) => {
-      setTimeout(() => {
-        addReasoningStep(step)
-        updateCurrentStep(`Processing step ${index + 2}...`)
-      }, index * 3000)
-    })
-
-    setTimeout(() => {
-      stopReasoning()
-    }, demoSteps.length * 3000)
-  }
-
   return {
     // State
     state: computed(() => state.value),
@@ -169,6 +128,5 @@ export function useReasoning() {
     toggleReasoningStepsVisibility,
     getEstimatedTimeForModel,
     parseReasoningFromResponse,
-    simulateReasoningSteps,
   }
 }

@@ -109,9 +109,7 @@ export function createBodyParserMiddleware(options: BodyParserOptions = {}): Mid
       const maxSize = contentType.includes('application/json') ? jsonLimit : urlencodedLimit
 
       // Access native request object through internal property
-      // Note: This requires the TransportRequest implementation to expose the native request
-      // biome-ignore lint/suspicious/noExplicitAny: Accessing internal _nativeRequest property from TransportRequest
-      const nativeReq = (req as any)._nativeRequest as IncomingMessage | Http2ServerRequest
+      const nativeReq = req._nativeRequest as IncomingMessage | Http2ServerRequest | undefined
 
       if (!nativeReq) {
         // If native request is not available, skip body parsing

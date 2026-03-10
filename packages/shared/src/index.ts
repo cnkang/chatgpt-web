@@ -43,8 +43,6 @@ export {
   PaginationSchema,
   // Chat and message schemas
   ReasoningStepSchema,
-  // Legacy schemas
-  RequestOptionsSchema,
   RequestPropsSchema,
   SecurityConfigSchema,
   ServerConfigSchema,

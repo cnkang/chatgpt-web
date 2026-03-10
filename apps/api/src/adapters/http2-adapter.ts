@@ -23,12 +23,12 @@ import type {
   TransportRequest,
   TransportResponse,
 } from '../transport/index.js'
+import { logger } from '../utils/logger.js'
 import {
   normalizeIpAddress,
   readForwardedClientIp,
   type TrustedProxyConfig,
 } from '../utils/proxy-trust.js'
-import { logger } from '../utils/logger.js'
 
 /**
  * TLS configuration for HTTPS/HTTP2
@@ -421,8 +421,7 @@ export class HTTP2Adapter {
     }
 
     // Store reference to native response for logging middleware
-    // biome-ignore lint/suspicious/noExplicitAny: Attaching internal property to wrapped response for middleware access
-    ;(wrapped as any)._nativeResponse = res
+    ;(wrapped as TransportResponse & { _nativeResponse?: unknown })._nativeResponse = res
 
     return wrapped
   }

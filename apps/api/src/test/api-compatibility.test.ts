@@ -15,6 +15,19 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { HTTP2Adapter } from '../adapters/http2-adapter.js'
 import { createConfiguredServer } from '../server.js'
 
+function createChatBody(text = 'Hello') {
+  return {
+    messages: [
+      {
+        id: 'msg-user-1',
+        role: 'user',
+        parts: [{ type: 'text', text }],
+      },
+    ],
+    systemMessage: 'You are a helpful assistant',
+  }
+}
+
 describe('API Compatibility Tests', () => {
   let adapter: HTTP2Adapter
   let baseUrl: string
@@ -77,10 +90,7 @@ describe('API Compatibility Tests', () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
         },
-        body: JSON.stringify({
-          prompt: 'Hello',
-          options: { systemMessage: 'You are a helpful assistant' },
-        }),
+        body: JSON.stringify(createChatBody()),
       })
 
       // Should not be 401 or 404
@@ -94,9 +104,7 @@ describe('API Compatibility Tests', () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: 'Hello',
-        }),
+        body: JSON.stringify(createChatBody()),
       })
 
       expect(response.status).toBe(401)
@@ -108,9 +116,7 @@ describe('API Compatibility Tests', () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: 'Hello',
-        }),
+        body: JSON.stringify(createChatBody()),
       })
 
       expect(response.status).toBe(401)
@@ -130,20 +136,65 @@ describe('API Compatibility Tests', () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
         },
-        body: JSON.stringify({
-          prompt: 'Hello',
-          options: { systemMessage: 'You are a helpful assistant' },
-        }),
+        body: JSON.stringify(createChatBody()),
       })
 
       // Check for streaming content type or error response
       const contentType = response.headers.get('content-type')
       expect(contentType).toBeTruthy()
-      // Should be either streaming (octet-stream) or error (json)
+      // Should be either streaming (event-stream) or error (json)
       expect(
-        contentType?.includes('application/octet-stream') ||
-          contentType?.includes('application/json'),
+        contentType?.includes('text/event-stream') || contentType?.includes('application/json'),
       ).toBe(true)
+    })
+
+    it('should reject malformed UI messages with 400 instead of 500', async () => {
+      const response = await fetch(`${baseUrl}/chat-process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
+        },
+        body: JSON.stringify({
+          messages: [{ role: 'user' }],
+        }),
+      })
+
+      expect(response.status).toBe(400)
+      const data = (await response.json()) as Record<string, unknown>
+      expect(data).toMatchObject({
+        status: 'Fail',
+        data: null,
+      })
+    })
+
+    it('should not expose internal provider configuration errors to clients', async () => {
+      const originalApiKey = process.env.OPENAI_API_KEY
+      delete process.env.OPENAI_API_KEY
+
+      try {
+        const response = await fetch(`${baseUrl}/chat-process`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
+          },
+          body: JSON.stringify(createChatBody()),
+        })
+
+        expect(response.status).toBe(500)
+        const data = (await response.json()) as Record<string, unknown>
+        expect(data).toMatchObject({
+          status: 'Error',
+          message: 'Internal server error',
+          data: null,
+          error: {
+            code: 'INTERNAL_ERROR',
+          },
+        })
+      } finally {
+        process.env.OPENAI_API_KEY = originalApiKey
+      }
     })
   })
 
@@ -373,18 +424,14 @@ describe('API Compatibility Tests', () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
           },
-          body: JSON.stringify({
-            prompt: 'Hello',
-            options: { systemMessage: 'You are a helpful assistant' },
-          }),
+          body: JSON.stringify(createChatBody()),
         })
 
         const contentType = response.headers.get('content-type')
-        // Should be either streaming (octet-stream) or error (json)
+        // Should be either streaming (event-stream) or error (json)
         expect(contentType).toBeTruthy()
         expect(
-          contentType?.includes('application/octet-stream') ||
-            contentType?.includes('application/json'),
+          contentType?.includes('text/event-stream') || contentType?.includes('application/json'),
         ).toBe(true)
       } catch (error) {
         // Connection reset is expected when OpenAI provider is not configured
@@ -405,10 +452,7 @@ describe('API Compatibility Tests', () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
         },
-        body: JSON.stringify({
-          prompt: 'Hello',
-          options: { systemMessage: 'You are a helpful assistant' },
-        }),
+        body: JSON.stringify(createChatBody()),
       })
 
       // Cache-Control should be set for streaming responses
@@ -416,7 +460,7 @@ describe('API Compatibility Tests', () => {
       const cacheControl = response.headers.get('cache-control')
       const contentType = response.headers.get('content-type')
 
-      if (contentType?.includes('application/octet-stream')) {
+      if (contentType?.includes('text/event-stream')) {
         expect(cacheControl).toBe('no-cache')
       }
       // For error responses, we don't check cache-control
@@ -429,16 +473,13 @@ describe('API Compatibility Tests', () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${TEST_AUTH_TOKEN}`,
         },
-        body: JSON.stringify({
-          prompt: 'Hello',
-          options: { systemMessage: 'You are a helpful assistant' },
-        }),
+        body: JSON.stringify(createChatBody()),
       })
 
       const connection = response.headers.get('connection')
       const contentType = response.headers.get('content-type')
 
-      if (contentType?.includes('application/octet-stream')) {
+      if (contentType?.includes('text/event-stream')) {
         expect(connection).toBe('keep-alive')
       }
       // For error responses, connection header may vary

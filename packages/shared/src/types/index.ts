@@ -33,6 +33,20 @@ export interface ChatContext {
   parentMessageId?: string
 }
 
+export interface UIMessagePart {
+  type: string
+  text?: string
+  [key: string]: unknown
+}
+
+export interface UIMessageLike {
+  id?: string
+  role: 'user' | 'assistant' | 'system'
+  parts: UIMessagePart[]
+  metadata?: unknown
+  [key: string]: unknown
+}
+
 export interface ConversationRequest {
   conversationId?: string
   parentMessageId?: string
@@ -90,19 +104,19 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface RequestProps {
-  prompt: string
-  options?: ChatContext
+  messages: UIMessageLike[]
   systemMessage: string
   temperature?: number
   top_p?: number
+  usingContext?: boolean
 }
 
 export interface ChatProcessRequest {
-  prompt: string
-  options?: ChatContext
+  messages: UIMessageLike[]
   systemMessage?: string
   temperature?: number
   top_p?: number
+  usingContext?: boolean
 }
 
 // ============================================================================
@@ -254,19 +268,6 @@ export interface AuthHeader {
 export interface PaginationQuery {
   page: number
   limit: number
-}
-
-// ============================================================================
-// Legacy Types (for backward compatibility)
-// ============================================================================
-
-export interface RequestOptions {
-  message: string
-  lastContext?: { conversationId?: string; parentMessageId?: string }
-  process?: (chat: ChatMessage) => void
-  systemMessage?: string
-  temperature?: number
-  top_p?: number
 }
 
 export interface UsageResponse {

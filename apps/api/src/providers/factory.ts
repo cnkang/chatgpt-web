@@ -4,24 +4,11 @@
  */
 
 import type { AIProvider } from './base.js'
-import type { AIConfig, AzureOpenAIConfig, OpenAIConfig } from './config.js'
+import type { AIConfig } from './config.js'
 
 type ProviderConstructor<TConfig, T extends AIProvider = AIProvider> = new (config: TConfig) => T
 
-/**
- * Provider factory interface with TypeScript generics
- */
-export interface ProviderFactory<T extends AIProvider = AIProvider> {
-  create: (config: AIConfig) => T
-  createOpenAI: (config: OpenAIConfig) => T
-  createAzure: (config: AzureOpenAIConfig) => T
-  getSupportedProviders: () => string[]
-}
-
-// -----------------------------------
-// Provider Registry – module-level Map with exported functions
-// ---------------------------------------------------------------------------
-
+// Provider Registry
 const providers = new Map<string, ProviderConstructor<unknown, AIProvider>>()
 
 /**
@@ -32,22 +19,6 @@ export function registerProvider<TConfig, T extends AIProvider>(
   providerClass: ProviderConstructor<TConfig, T>,
 ): void {
   providers.set(name, providerClass as ProviderConstructor<unknown, AIProvider>)
-}
-
-/**
- * Get a provider class by name
- */
-function getProviderClass<TConfig, T extends AIProvider>(
-  name: string,
-): ProviderConstructor<TConfig, T> | undefined {
-  return providers.get(name) as ProviderConstructor<TConfig, T> | undefined
-}
-
-/**
- * Get all registered provider names
- */
-function getRegisteredProviders(): string[] {
-  return Array.from(providers.keys())
 }
 
 /**
@@ -68,140 +39,53 @@ export function clearProviders(): void {
  * Get available provider names
  */
 export function getAvailableProviders(): string[] {
-  return getRegisteredProviders()
-}
-
-// ---------------------------------------------------------------------------
-// AI Provider Factory
-// ---------------------------------------------------------------------------
-
-/**
- * Generic AI Provider Factory
- * Creates provider instances with type safety
- */
-export class AIProviderFactory<T extends AIProvider = AIProvider> implements ProviderFactory<T> {
-  private static instance: AIProviderFactory
-
-  /**
-   * Get singleton instance
-   */
-  public static getInstance<T extends AIProvider = AIProvider>(): AIProviderFactory<T> {
-    if (!AIProviderFactory.instance) {
-      AIProviderFactory.instance = new AIProviderFactory()
-    }
-    return AIProviderFactory.instance as AIProviderFactory<T>
-  }
-
-  /**
-   * Create provider based on configuration
-   */
-  create(config: AIConfig): T {
-    switch (config.provider) {
-      case 'openai':
-        if (!config.openai) {
-          throw new Error('OpenAI configuration is required when using OpenAI provider')
-        }
-        return this.createOpenAI(config.openai)
-
-      case 'azure':
-        if (!config.azure) {
-          throw new Error('Azure configuration is required when using Azure provider')
-        }
-        return this.createAzure(config.azure)
-
-      default:
-        throw new Error(`Unsupported provider: ${config.provider}`)
-    }
-  }
-
-  /**
-   * Create OpenAI provider instance
-   */
-  createOpenAI(config: OpenAIConfig): T {
-    const ProviderClass = getProviderClass<OpenAIConfig, T>('openai')
-    if (!ProviderClass) {
-      throw new Error('OpenAI provider is not registered. Make sure to register it first.')
-    }
-    return new ProviderClass(config)
-  }
-
-  /**
-   * Create Azure OpenAI provider instance
-   */
-  createAzure(config: AzureOpenAIConfig): T {
-    const ProviderClass = getProviderClass<AzureOpenAIConfig, T>('azure')
-    if (!ProviderClass) {
-      throw new Error('Azure OpenAI provider is not registered. Make sure to register it first.')
-    }
-    return new ProviderClass(config)
-  }
-
-  /**
-   * Get list of supported providers
-   */
-  getSupportedProviders(): string[] {
-    return getRegisteredProviders()
-  }
-
-  /**
-   * Create provider with validation
-   */
-  createWithValidation(config: AIConfig): Promise<T> {
-    const provider = this.create(config)
-    return provider.validateConfiguration().then(isValid => {
-      if (!isValid) {
-        throw new Error(`Provider ${config.provider} configuration validation failed`)
-      }
-      return provider
-    })
-  }
-
-  /**
-   * Create provider with retry logic
-   */
-  async createWithRetry(
-    config: AIConfig,
-    maxRetries: number = 3,
-    retryDelay: number = 1000,
-  ): Promise<T> {
-    let lastError: Error | undefined
-    const attemptCreate = async (attempt: number): Promise<T> => {
-      try {
-        return await this.createWithValidation(config)
-      } catch (error) {
-        lastError = error as Error
-        if (attempt >= maxRetries) {
-          throw error
-        }
-        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt))
-        return attemptCreate(attempt + 1)
-      }
-    }
-
-    try {
-      return await attemptCreate(1)
-    } catch {
-      throw new Error(
-        `Failed to create provider after ${maxRetries} attempts. Last error: ${lastError?.message || 'Unknown error'}`,
-      )
-    }
-  }
+  return Array.from(providers.keys())
 }
 
 /**
- * Convenience function to create a provider
+ * Create provider based on configuration
  */
 export function createProvider<T extends AIProvider = AIProvider>(config: AIConfig): T {
-  const factory = AIProviderFactory.getInstance<T>()
-  return factory.create(config)
+  const ProviderClass = providers.get(config.provider) as
+    | ProviderConstructor<unknown, T>
+    | undefined
+
+  if (!ProviderClass) {
+    throw new Error(
+      `Provider "${config.provider}" is not registered. Available providers: ${getAvailableProviders().join(', ')}`,
+    )
+  }
+
+  switch (config.provider) {
+    case 'openai':
+      if (!config.openai) {
+        throw new Error('OpenAI configuration is required when using OpenAI provider')
+      }
+      return new ProviderClass(config.openai) as T
+
+    case 'azure':
+      if (!config.azure) {
+        throw new Error('Azure configuration is required when using Azure provider')
+      }
+      return new ProviderClass(config.azure) as T
+
+    default:
+      throw new Error(`Unsupported provider: ${config.provider}`)
+  }
 }
 
 /**
- * Convenience function to create a provider with validation
+ * Create provider with validation
  */
 export async function createProviderWithValidation<T extends AIProvider = AIProvider>(
   config: AIConfig,
 ): Promise<T> {
-  const factory = AIProviderFactory.getInstance<T>()
-  return factory.createWithValidation(config)
+  const provider = createProvider<T>(config)
+  const isValid = await provider.validateConfiguration()
+
+  if (!isValid) {
+    throw new Error(`Provider ${config.provider} configuration validation failed`)
+  }
+
+  return provider
 }

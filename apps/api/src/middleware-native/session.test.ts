@@ -254,6 +254,33 @@ describe('createSessionMiddleware', () => {
     expect(savedSession?.id).toBe(sessionId)
   })
 
+  it('should issue the session cookie before a native streaming response writes headers', async () => {
+    const nativeResponse = {
+      end: vi.fn(),
+      write: vi.fn(),
+      writeHead: vi.fn(),
+    }
+    ;(mockRes as unknown as { _nativeResponse?: unknown })._nativeResponse = nativeResponse
+
+    const middleware = createSessionMiddleware({
+      secret: 'test-secret',
+      name: 'sessionId',
+      maxAge: 1000,
+      secure: false,
+      httpOnly: true,
+      sameSite: 'strict',
+      store,
+    })
+
+    await middleware(mockReq, mockRes, nextFn)
+    nativeResponse.writeHead(200)
+
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      'Set-Cookie',
+      expect.stringContaining('sessionId='),
+    )
+  })
+
   it('should not set a session cookie after headers are sent', async () => {
     const middleware = createSessionMiddleware({
       secret: 'test-secret',

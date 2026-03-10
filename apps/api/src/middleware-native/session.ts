@@ -47,6 +47,12 @@ interface AvailabilityAwareSessionStore extends SessionStore {
   isAvailable?(): Promise<boolean>
 }
 
+type NativeResponseWithStreamingHooks = {
+  end?: (...args: unknown[]) => unknown
+  write?: (...args: unknown[]) => unknown
+  writeHead?: (...args: unknown[]) => unknown
+}
+
 /**
  * In-memory session store
  *
@@ -272,38 +278,104 @@ export function createSessionMiddleware(options: SessionOptions): MiddlewareHand
         expires: Date.now() + options.maxAge,
       }
 
-      // Wrap res.end() to save session and set cookie
+      // Wrap response methods so session headers/persistence still work for
+      // native streaming responses that bypass the transport wrapper.
       const originalEnd = res.end.bind(res)
-      res.end = ((chunk?: string | Buffer) => {
-        // Update session expiry
-        if (req.session) {
-          req.session.expires = Date.now() + options.maxAge
+      const nativeResponse = (
+        res as TransportResponse & { _nativeResponse?: NativeResponseWithStreamingHooks }
+      )._nativeResponse
+      const originalNativeEnd =
+        nativeResponse && typeof nativeResponse.end === 'function'
+          ? nativeResponse.end.bind(nativeResponse)
+          : null
+      const originalNativeWrite =
+        nativeResponse && typeof nativeResponse.write === 'function'
+          ? nativeResponse.write.bind(nativeResponse)
+          : null
+      const originalNativeWriteHead =
+        nativeResponse && typeof nativeResponse.writeHead === 'function'
+          ? nativeResponse.writeHead.bind(nativeResponse)
+          : null
+      let sessionPersisted = false
+      let sessionHeadersPrepared = false
+      let unavailableStoreWarningEmitted = false
 
-          if (canPersistSession) {
-            store.set(req.session.id, req.session).catch(error => {
-              console.error('Failed to save session:', error)
-            })
-          }
-
-          // Avoid issuing a durable cookie when the backing store is unavailable.
-          if (canPersistSession && !res.headersSent && !res.finished) {
-            const cookieValue = serializeCookie(options.name, req.session.id, {
-              secret: options.secret,
-              maxAge: options.maxAge,
-              secure: shouldSetSecureCookie(req, options.secure, options.trustProxy ?? false),
-              httpOnly: options.httpOnly,
-              sameSite: options.sameSite,
-              path: '/',
-            })
-            res.setHeader('Set-Cookie', cookieValue)
-          } else if (!canPersistSession) {
-            console.warn('Session store unavailable, skipping session cookie issuance')
-          }
+      const prepareSessionHeaders = () => {
+        if (sessionHeadersPrepared) {
+          return
         }
+
+        sessionHeadersPrepared = true
+
+        if (!req.session) {
+          return
+        }
+
+        if (canPersistSession && !res.headersSent && !res.finished) {
+          const cookieValue = serializeCookie(options.name, req.session.id, {
+            secret: options.secret,
+            maxAge: options.maxAge,
+            secure: shouldSetSecureCookie(req, options.secure, options.trustProxy ?? false),
+            httpOnly: options.httpOnly,
+            sameSite: options.sameSite,
+            path: '/',
+          })
+          res.setHeader('Set-Cookie', cookieValue)
+        } else if (!canPersistSession && !unavailableStoreWarningEmitted) {
+          unavailableStoreWarningEmitted = true
+          console.warn('Session store unavailable, skipping session cookie issuance')
+        }
+      }
+
+      const persistSession = () => {
+        if (sessionPersisted) {
+          return
+        }
+
+        sessionPersisted = true
+
+        if (!req.session) {
+          return
+        }
+
+        req.session.expires = Date.now() + options.maxAge
+
+        if (canPersistSession) {
+          store.set(req.session.id, req.session).catch(error => {
+            console.error('Failed to save session:', error)
+          })
+        }
+      }
+
+      res.end = ((chunk?: string | Buffer) => {
+        prepareSessionHeaders()
+        persistSession()
 
         // Call original end method
         return originalEnd(chunk)
       }) as typeof res.end
+
+      if (nativeResponse && originalNativeWrite) {
+        nativeResponse.write = ((...args: unknown[]) => {
+          prepareSessionHeaders()
+          return originalNativeWrite(...args)
+        }) as typeof nativeResponse.write
+      }
+
+      if (nativeResponse && originalNativeWriteHead) {
+        nativeResponse.writeHead = ((...args: unknown[]) => {
+          prepareSessionHeaders()
+          return originalNativeWriteHead(...args)
+        }) as typeof nativeResponse.writeHead
+      }
+
+      if (nativeResponse && originalNativeEnd) {
+        nativeResponse.end = ((...args: unknown[]) => {
+          prepareSessionHeaders()
+          persistSession()
+          return originalNativeEnd(...args)
+        }) as typeof nativeResponse.end
+      }
 
       next()
     } catch (error) {

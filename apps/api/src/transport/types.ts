@@ -76,6 +76,12 @@ export interface TransportRequest {
  */
 export interface TransportResponse {
   /**
+   * Internal: Native response object for middleware that needs direct access
+   * @internal
+   */
+  _nativeResponse?: unknown
+
+  /**
    * Set HTTP status code
    * @param code - HTTP status code (200, 404, 500, etc.)
    * @returns this for method chaining

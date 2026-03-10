@@ -1,7 +1,6 @@
-import { randomBytes } from 'node:crypto'
-import { readFileSync } from 'node:fs'
+import { ChatProcessRequestSchema } from '@chatgpt-web/shared'
 import { z } from 'zod'
-import { HTTP2Adapter, type TLSConfig } from './adapters/http2-adapter.js'
+import { HTTP2Adapter } from './adapters/http2-adapter.js'
 import {
   createAuthMiddleware,
   createAuthRateLimiter,
@@ -28,6 +27,12 @@ import {
 import { MiddlewareChainImpl } from './transport/middleware-chain.js'
 import { RouterImpl } from './transport/router.js'
 import { asyncHandler } from './utils/async-handler.js'
+import {
+  parseIntegerEnv,
+  parseSameSite,
+  resolveSessionSecret,
+  resolveTlsConfig,
+} from './utils/config-utils.js'
 import { parseTrustedProxyConfig } from './utils/proxy-trust.js'
 
 const DEFAULT_JSON_BODY_LIMIT = 1_048_576
@@ -35,16 +40,8 @@ const DEFAULT_FORM_BODY_LIMIT = 32_768
 const DEFAULT_CHAT_BODY_LIMIT = 1_048_576
 const DEFAULT_VERIFY_BODY_LIMIT = 1_024
 const DEFAULT_SESSION_MAX_AGE = 24 * 60 * 60 * 1000
-let developmentSessionSecret: string | undefined
-let hasWarnedAboutDevelopmentSessionSecret = false
 
-const chatRequestSchema = z.object({
-  prompt: z.string().trim().min(1),
-  options: z.unknown().optional(),
-  systemMessage: z.string().optional(),
-  temperature: z.number().optional(),
-  top_p: z.number().optional(),
-})
+const chatRequestSchema = ChatProcessRequestSchema
 
 const verifyRequestSchema = z.object({
   token: z.string().min(1),
@@ -66,76 +63,6 @@ export interface NativeServerRuntimeConfig {
 export interface ConfiguredServer {
   adapter: HTTP2Adapter
   runtime: NativeServerRuntimeConfig
-}
-
-function parseIntegerEnv(name: string, fallback: number): number {
-  const rawValue = process.env[name]
-  if (!rawValue) {
-    return fallback
-  }
-
-  const parsedValue = Number.parseInt(rawValue, 10)
-  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback
-}
-
-function parseSameSite(value: string | undefined): 'strict' | 'lax' | 'none' {
-  switch (value?.toLowerCase()) {
-    case 'lax':
-      return 'lax'
-    case 'none':
-      return 'none'
-    default:
-      return 'strict'
-  }
-}
-
-function resolveTlsConfig(): TLSConfig | undefined {
-  const keyPath = process.env.TLS_KEY_PATH
-  const certPath = process.env.TLS_CERT_PATH
-
-  if (!keyPath && !certPath) {
-    return undefined
-  }
-
-  if (!keyPath || !certPath) {
-    throw new Error('TLS_KEY_PATH and TLS_CERT_PATH must both be configured to enable TLS')
-  }
-
-  try {
-    return {
-      key: readFileSync(keyPath),
-      cert: readFileSync(certPath),
-    }
-  } catch (error) {
-    throw new Error(
-      `Failed to read TLS certificate files: ${
-        error instanceof Error ? error.message : String(error)
-      }. Ensure TLS_KEY_PATH="${keyPath}" and TLS_CERT_PATH="${certPath}" are valid readable files.`,
-    )
-  }
-}
-
-function resolveSessionSecret(): string {
-  const secret = process.env.SESSION_SECRET || process.env.AUTH_SECRET_KEY
-
-  if (secret) {
-    return secret
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    developmentSessionSecret ??= randomBytes(32).toString('hex')
-    if (!hasWarnedAboutDevelopmentSessionSecret) {
-      hasWarnedAboutDevelopmentSessionSecret = true
-      console.warn(
-        'Warning: SESSION_SECRET/AUTH_SECRET_KEY not configured. Using an ephemeral development session secret.',
-      )
-    }
-    return developmentSessionSecret
-  }
-
-  throw new Error(
-    'SESSION_SECRET or AUTH_SECRET_KEY must be configured for secure session management',
-  )
 }
 
 function createSessionStore(): SessionStore {

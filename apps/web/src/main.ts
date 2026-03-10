@@ -25,7 +25,7 @@ setupStore(app)
 
 setupI18n(app)
 
-await setupRouter(app)
+setupRouter(app)
 
 app.mount('#app')
 

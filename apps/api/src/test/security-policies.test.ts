@@ -107,8 +107,14 @@ describe('Security Policies Tests', () => {
 
       it('should allow access to /chat-process with valid Bearer token', async () => {
         const response = await postWithBearer(baseUrl, '/chat-process', TEST_AUTH_TOKEN, {
-          prompt: 'Hello',
-          options: { systemMessage: 'You are a helpful assistant' },
+          messages: [
+            {
+              id: 'msg-user-1',
+              role: 'user',
+              parts: [{ type: 'text', text: 'Hello' }],
+            },
+          ],
+          systemMessage: 'You are a helpful assistant',
         })
 
         // Should not be 401 (may be other errors due to provider)
@@ -123,7 +129,15 @@ describe('Security Policies Tests', () => {
 
       it('should return 401 for invalid token on /chat-process', async () => {
         await expectFailureResponse(
-          await postWithBearer(baseUrl, '/chat-process', 'wrong-token', { prompt: 'Hello' }),
+          await postWithBearer(baseUrl, '/chat-process', 'wrong-token', {
+            messages: [
+              {
+                id: 'msg-user-1',
+                role: 'user',
+                parts: [{ type: 'text', text: 'Hello' }],
+              },
+            ],
+          }),
           401,
         )
       })
@@ -136,7 +150,15 @@ describe('Security Policies Tests', () => {
 
       it('should return 401 when Authorization header is missing on /chat-process', async () => {
         await expectFailureResponse(
-          await postJson(baseUrl, '/chat-process', { prompt: 'Hello' }),
+          await postJson(baseUrl, '/chat-process', {
+            messages: [
+              {
+                id: 'msg-user-1',
+                role: 'user',
+                parts: [{ type: 'text', text: 'Hello' }],
+              },
+            ],
+          }),
           401,
         )
       })
@@ -169,7 +191,15 @@ describe('Security Policies Tests', () => {
 
       it('/chat-process should require authentication', async () => {
         await expectFailureResponse(
-          await postJson(baseUrl, '/chat-process', { prompt: 'Hello' }),
+          await postJson(baseUrl, '/chat-process', {
+            messages: [
+              {
+                id: 'msg-user-1',
+                role: 'user',
+                parts: [{ type: 'text', text: 'Hello' }],
+              },
+            ],
+          }),
           401,
         )
       })

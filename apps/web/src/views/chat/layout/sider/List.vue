@@ -59,23 +59,14 @@ function isActive(uuid: number) {
       <template v-else>
         <div v-for="(item, index) of dataSources" :key="item.uuid">
           <a
-            class="relative flex items-center gap-3 px-3 py-3 break-all border rounded-md cursor-pointer hover:bg-neutral-100 group dark:border-neutral-800 dark:hover:bg-[#24272e]"
-            :class="
-              isActive(item.uuid) && [
-                'border-[#4b9e5f]',
-                'bg-neutral-100',
-                'text-[#4b9e5f]',
-                'dark:bg-[#24272e]',
-                'dark:border-[#4b9e5f]',
-                'pr-14',
-              ]
-            "
+            class="history-item group"
+            :class="isActive(item.uuid) && ['history-item-active']"
             @click="handleSelect(item)"
           >
-            <span>
+            <span class="history-item-icon">
               <SvgIcon icon="ri:message-3-line" />
             </span>
-            <div class="relative flex-1 overflow-hidden break-all text-ellipsis whitespace-nowrap">
+            <div class="history-item-title">
               <NInput
                 v-if="item.isEdit"
                 v-model:value="item.title"
@@ -84,22 +75,35 @@ function isActive(uuid: number) {
               />
               <span v-else>{{ item.title }}</span>
             </div>
-            <div v-if="isActive(item.uuid)" class="absolute z-10 flex visible right-1">
+            <div
+              class="history-item-actions"
+              :class="{ 'history-item-actions-visible': isActive(item.uuid) }"
+            >
               <template v-if="item.isEdit">
-                <button class="p-1" @click="handleEdit(item, false, $event)">
+                <button
+                  type="button"
+                  class="history-action-btn"
+                  aria-label="Save chat title"
+                  @click="handleEdit(item, false, $event)"
+                >
                   <SvgIcon icon="ri:save-line" />
                 </button>
               </template>
               <template v-else>
-                <button class="p-1">
-                  <SvgIcon icon="ri:edit-line" @click="handleEdit(item, true, $event)" />
+                <button
+                  type="button"
+                  class="history-action-btn"
+                  aria-label="Edit chat title"
+                  @click="handleEdit(item, true, $event)"
+                >
+                  <SvgIcon icon="ri:edit-line" />
                 </button>
                 <NPopconfirm
                   placement="bottom"
                   @positive-click="handleDeleteDebounce(index, $event)"
                 >
                   <template #trigger>
-                    <button class="p-1">
+                    <button type="button" class="history-action-btn" aria-label="Delete chat">
                       <SvgIcon icon="ri:delete-bin-line" />
                     </button>
                   </template>
@@ -113,3 +117,140 @@ function isActive(uuid: number) {
     </div>
   </NScrollbar>
 </template>
+
+<style scoped>
+.history-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.92));
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+}
+
+.history-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(75, 158, 95, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.history-item-active {
+  color: rgb(58 121 72);
+  border-color: rgba(75, 158, 95, 0.48);
+  background: linear-gradient(135deg, rgba(237, 247, 233, 0.98), rgba(227, 244, 221, 0.94));
+  box-shadow: 0 16px 34px rgba(75, 158, 95, 0.12);
+}
+
+.history-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.76);
+  color: rgb(100 116 139);
+}
+
+.history-item-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item-actions {
+  z-index: 10;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-left: 0.5rem;
+  flex: 0 0 4.4rem;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.group:hover .history-item-actions,
+.history-item-actions-visible {
+  opacity: 1;
+}
+
+.history-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: rgb(100 116 139);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.history-action-btn:hover {
+  transform: translateY(-1px);
+  background-color: rgb(255 255 255);
+  border-color: rgba(75, 158, 95, 0.25);
+  color: rgb(15 23 42);
+}
+
+:global(.dark) .history-item {
+  border-color: rgba(71, 85, 105, 0.34);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(17, 24, 39, 0.9));
+  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.24);
+}
+
+:global(.dark) .history-item:hover {
+  border-color: rgba(94, 234, 212, 0.18);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
+}
+
+:global(.dark) .history-item-active {
+  color: rgb(167 243 208);
+  border-color: rgba(94, 234, 212, 0.34);
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.72), rgba(15, 23, 42, 0.94));
+}
+
+:global(.dark) .history-item-icon,
+:global(.dark) .history-action-btn {
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(71, 85, 105, 0.44);
+  color: rgb(203 213 225);
+}
+
+:global(.dark) .history-action-btn:hover {
+  background-color: rgba(51, 65, 85, 0.96);
+  color: rgb(248 250 252);
+}
+
+@media (max-width: 640px) {
+  .history-item {
+    padding: 0.75rem;
+    gap: 0.65rem;
+  }
+
+  .history-item-actions {
+    opacity: 1;
+    flex-basis: 4rem;
+  }
+}
+</style>

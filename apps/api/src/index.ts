@@ -8,6 +8,7 @@
 import { ConfigurationValidator } from './config/validator.js'
 import { performSecurityValidation } from './security/index.js'
 import { createConfiguredServer } from './server.js'
+import { assessStartupValidation } from './startup-validation.js'
 import { setupGracefulShutdown } from './utils/graceful-shutdown.js'
 import { logger } from './utils/logger.js'
 
@@ -36,13 +37,30 @@ function validateNodeVersion(): void {
 function validateConfigOrExit(): void {
   try {
     validateNodeVersion()
-    ConfigurationValidator.validateEnvironment()
-    logger.info('Configuration validation passed')
-
+    const configValidation = ConfigurationValidator.validateSafely()
     const securityResult = performSecurityValidation()
-    if (!securityResult.isSecure) {
+    const assessment = assessStartupValidation(
+      process.env.NODE_ENV,
+      configValidation,
+      securityResult,
+    )
+
+    if (assessment.blockingConfigErrors.length > 0) {
+      throw new Error(assessment.blockingConfigErrors.join('\n'))
+    }
+
+    if (assessment.nonBlockingConfigErrors.length > 0 || configValidation.warnings.length > 0) {
+      logger.warn('Configuration validation reported non-blocking issues', {
+        errors: assessment.nonBlockingConfigErrors,
+        warnings: configValidation.warnings,
+      })
+    } else {
+      logger.info('Configuration validation passed')
+    }
+
+    if (assessment.blockingSecurityRisks.length > 0) {
       logger.error('Security validation failed')
-      securityResult.risks.forEach(risk => {
+      assessment.blockingSecurityRisks.forEach(risk => {
         logger.error(`[${risk.severity}] ${risk.description}`, {
           mitigation: risk.mitigation,
         })
@@ -50,7 +68,13 @@ function validateConfigOrExit(): void {
       process.exit(1)
     }
 
-    logger.info('Security validation passed')
+    if (assessment.nonBlockingSecurityRisks.length > 0) {
+      logger.warn('Security validation reported non-blocking issues', {
+        risks: assessment.nonBlockingSecurityRisks,
+      })
+    } else {
+      logger.info('Security validation passed')
+    }
   } catch (error) {
     logger.error('Configuration validation failed', {
       error: error instanceof Error ? error.message : String(error),
