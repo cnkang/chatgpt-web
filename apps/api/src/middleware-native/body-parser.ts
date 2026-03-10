@@ -72,26 +72,12 @@ async function parseBody(
 }
 
 /**
- * Create body parser middleware
+ * Create a middleware that parses HTTP request bodies and attaches the parsed result to `req.body`.
  *
- * Parses request bodies based on Content-Type header and attaches the result to req.body.
- * Supports:
- * - application/json (parsed as JSON object)
- * - application/x-www-form-urlencoded (parsed as key-value object)
- * - Other content types (returned as raw string)
+ * Supports parsing `application/json` (JSON object), `application/x-www-form-urlencoded` (key-value object), and returns the raw UTF-8 string for other content types. The middleware enforces configurable size limits for JSON and URL-encoded payloads and skips parsing for GET, HEAD, and DELETE requests or when the underlying native request is unavailable.
  *
- * @param options - Body parser configuration
- * @returns Middleware handler
- *
- * @example
- * ```typescript
- * const bodyParser = createBodyParserMiddleware({
- *   jsonLimit: 1048576,      // 1MB for JSON
- *   urlencodedLimit: 32768   // 32KB for URL-encoded
- * })
- *
- * middleware.use(bodyParser)
- * ```
+ * @param options - Optional configuration for body size limits (`jsonLimit` and `urlencodedLimit`). Defaults are 1MB for JSON and 32KB for URL-encoded.
+ * @returns A middleware handler that parses the request body and assigns the parsed value to `req.body`
  */
 export function createBodyParserMiddleware(options: BodyParserOptions = {}): MiddlewareHandler {
   const jsonLimit = options.jsonLimit ?? 1048576 // 1MB default

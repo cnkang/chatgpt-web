@@ -32,10 +32,10 @@ export function parseIntegerEnv(name: string, fallback: number): number {
 }
 
 /**
- * Parse SameSite cookie attribute from string
+ * Normalize a SameSite cookie attribute to one of 'strict', 'lax', or 'none'.
  *
- * @param value - Raw SameSite value
- * @returns Normalized SameSite value
+ * @param value - Raw SameSite value to normalize (case-insensitive)
+ * @returns `'lax'` if `value` equals `'lax'` (case-insensitive), `'none'` if `value` equals `'none'` (case-insensitive), `'strict'` otherwise
  */
 export function parseSameSite(value: string | undefined): 'strict' | 'lax' | 'none' {
   switch (value?.toLowerCase()) {
@@ -85,10 +85,13 @@ let developmentSessionSecret: string | undefined
 let hasWarnedAboutDevelopmentSessionSecret = false
 
 /**
- * Resolve session secret from environment variables
+ * Resolve the session secret used to sign and encrypt sessions.
  *
- * @returns Session secret string
- * @throws Error if not configured in production
+ * Selects the first of the environment variables SESSION_SECRET or AUTH_SECRET_KEY.
+ * If neither is set and NODE_ENV is not 'production', lazily generates and returns a per-process ephemeral secret and emits a one-time warning. If neither is set in production, an error is thrown.
+ *
+ * @returns The session secret string
+ * @throws Error if no session secret is configured and NODE_ENV is 'production'
  */
 export function resolveSessionSecret(): string {
   const secret = process.env.SESSION_SECRET || process.env.AUTH_SECRET_KEY

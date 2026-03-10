@@ -65,6 +65,11 @@ export interface ConfiguredServer {
   runtime: NativeServerRuntimeConfig
 }
 
+/**
+ * Create a session store based on environment configuration.
+ *
+ * @returns A `SessionStore` backed by Redis when `REDIS_URL` is set; otherwise an in-memory session store.
+ */
 function createSessionStore(): SessionStore {
   if (!process.env.REDIS_URL) {
     return new MemorySessionStore()

@@ -12,7 +12,10 @@ type ProviderConstructor<TConfig, T extends AIProvider = AIProvider> = new (conf
 const providers = new Map<string, ProviderConstructor<unknown, AIProvider>>()
 
 /**
- * Register a provider class
+ * Register or replace a provider constructor under the given name.
+ *
+ * @param name - The identifier used to look up the provider when creating instances
+ * @param providerClass - The provider constructor to register for `name`
  */
 export function registerProvider<TConfig, T extends AIProvider>(
   name: string,
@@ -36,14 +39,23 @@ export function clearProviders(): void {
 }
 
 /**
- * Get available provider names
+ * List names of all registered providers.
+ *
+ * @returns An array of registered provider names
  */
 export function getAvailableProviders(): string[] {
   return Array.from(providers.keys())
 }
 
 /**
- * Create provider based on configuration
+ * Instantiate a registered AI provider based on the given configuration.
+ *
+ * Creates and returns a provider instance corresponding to `config.provider` using the provider-specific
+ * configuration present on `config` (for example, `config.openai` for `"openai"` or `config.azure` for `"azure"`).
+ *
+ * @param config - Configuration object that specifies `provider` and the provider-specific settings
+ * @returns An instance of the provider corresponding to `config.provider`
+ * @throws If the named provider is not registered, if the provider-specific configuration is missing, or if the provider value is unsupported
  */
 export function createProvider<T extends AIProvider = AIProvider>(config: AIConfig): T {
   const ProviderClass = providers.get(config.provider) as
@@ -75,7 +87,11 @@ export function createProvider<T extends AIProvider = AIProvider>(config: AIConf
 }
 
 /**
- * Create provider with validation
+ * Creates a provider instance for the given config and ensures its configuration is valid.
+ *
+ * @param config - The AI provider configuration, including the provider name and provider-specific settings.
+ * @returns The validated provider instance.
+ * @throws Error if the provider's configuration validation fails.
  */
 export async function createProviderWithValidation<T extends AIProvider = AIProvider>(
   config: AIConfig,

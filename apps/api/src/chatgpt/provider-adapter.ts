@@ -23,7 +23,15 @@ const isTestEnv =
   process.env.VITEST === 'true' ||
   Boolean(process.env.VITEST_WORKER_ID)
 
-// Initialize provider based on configuration
+/**
+ * Initialize the global AI provider and record the active API model from configuration.
+ *
+ * Creates and validates a provider using current configuration, assigns it to the module-level
+ * `provider` variable, sets `apiModel` to either `AzureOpenAI` or `ChatGPTAPI` based on the
+ * configured provider, and emits a console warning on successful initialization.
+ *
+ * @throws Propagates any error thrown while creating or validating the provider
+ */
 async function initializeProvider(): Promise<void> {
   const config = getConfig()
 
@@ -102,7 +110,11 @@ async function chatConfig(): Promise<Awaited<ReturnType<typeof sendResponse<Mode
 }
 
 /**
- * Get current model
+ * Determine the active API model.
+ *
+ * If a model was set during initialization, that value is returned; otherwise the model is derived from configuration.
+ *
+ * @returns `'AzureOpenAI'` when `getConfig().ai.provider` is `'azure'`, `'ChatGPTAPI'` otherwise.
  */
 function currentModel(): ApiModel {
   if (apiModel) {

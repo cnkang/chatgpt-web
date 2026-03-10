@@ -25,6 +25,11 @@ function toInt(value: unknown): number | null {
   return null
 }
 
+/**
+ * Normalize conversation-related identifiers from an arbitrary input.
+ *
+ * @param value - A value that may be `null`, a non-object, or an object possibly containing `conversationId` and/or `parentMessageId` string properties.
+ * @returns `null` if `value` is strictly `null`; `undefined` if `value` is not an object; otherwise an object that is either empty or contains `conversationId` and/or `parentMessageId` string properties.
 function normalizeConversationOptions(value: unknown): Record<string, string> | null | undefined {
   if (value === null) return null
   if (!isRecord(value)) return undefined
@@ -41,6 +46,12 @@ function normalizeConversationOptions(value: unknown): Record<string, string> | 
   }
 }
 
+/**
+ * Coerces the `text` property of an object into a string.
+ *
+ * @param value - Object that may contain a `text` property
+ * @returns The `text` value as a string; returns an empty string if `text` is absent or not a string/number/boolean
+ */
 function normalizeText(value: Record<string, unknown>): string {
   const text = value.text
   if (typeof text === 'string') return text
@@ -48,15 +59,37 @@ function normalizeText(value: Record<string, unknown>): string {
   return ''
 }
 
+/**
+ * Produces a date-time string from a provided object or falls back to the current locale date-time.
+ *
+ * @param value - Object that may contain a `dateTime` property
+ * @returns The `dateTime` string from `value` if it is a non-empty string, otherwise the current locale date-time string
+ */
 function normalizeDateTime(value: Record<string, unknown>): string {
   const dateTime = value.dateTime
   return typeof dateTime === 'string' && dateTime.trim() ? dateTime : new Date().toLocaleString()
 }
 
+/**
+ * Extracts a prompt string from an object or returns a fallback.
+ *
+ * @param value - Object that may contain a `prompt` property
+ * @param fallback - Fallback string used when `value.prompt` is not a string
+ * @returns The `prompt` from `value` if it is a string, `fallback` otherwise
+ */
 function resolvePrompt(value: Record<string, unknown>, fallback: string): string {
   return typeof value.prompt === 'string' ? value.prompt : fallback
 }
 
+/**
+ * Build normalized request options (prompt and conversation options) from a raw input object and fallback text.
+ *
+ * If `value.requestOptions` is a record, `prompt` is taken from `requestOptions.prompt` when it's a string; otherwise the prompt is resolved from `value` and `text`. `options` are normalized from `requestOptions.options` when present; if `requestOptions` is not a record, `prompt` is resolved from `value` and `text` and `options` are normalized from `value.options`.
+ *
+ * @param value - Raw input object that may contain `requestOptions`, `options`, or a direct `prompt`
+ * @param text - Fallback text used to resolve the prompt when one is not provided
+ * @returns An object with `prompt` (resolved string) and `options` (normalized conversation options or `undefined`)
+ */
 function normalizeRequestOptions(value: Record<string, unknown>, text: string) {
   const requestOptions = value.requestOptions
 
@@ -76,6 +109,12 @@ function normalizeRequestOptions(value: Record<string, unknown>, text: string) {
   }
 }
 
+/**
+ * Normalize a raw message-like value into the standardized chat message shape or return null if the input is not an object.
+ *
+ * @param value - The raw value to normalize (typically a loosely-typed message object).
+ * @returns A normalized message object containing `id` (when provided), `dateTime`, `text`, a `requestOptions` object with `prompt` and optional `options`, and optional properties `inversion`, `error`, `loading`, and `conversationOptions`; `null` if `value` is not a plain object.
+ */
 function normalizeMessage(value: unknown): Record<string, unknown> | null {
   if (!isRecord(value)) return null
 
@@ -104,6 +143,12 @@ function normalizeMessage(value: unknown): Record<string, unknown> | null {
   return message
 }
 
+/**
+ * Normalize a raw history item into a validated history object.
+ *
+ * @param value - Raw value expected to contain history item fields (e.g., `uuid`, `title`, `isEdit`)
+ * @returns An object with `uuid` (number), `title` (string, using a default translated title when missing), and `isEdit` (boolean); returns `null` if `value` is not a valid history item or `uuid` cannot be converted to an integer.
+ */
 function normalizeHistoryItem(value: unknown): Record<string, unknown> | null {
   if (!isRecord(value)) return null
 
@@ -131,6 +176,12 @@ function normalizeChatGroup(value: unknown): Record<string, unknown> | null {
   return { uuid, data }
 }
 
+/**
+ * Validate and extract a versioned state object from a raw storage payload.
+ *
+ * @param raw - The raw value read from storage (typically parsed JSON).
+ * @returns An object with `version` (the integer version if present, otherwise `0`) and `state` (the contained `state` when present, otherwise the original `raw` value)
+ */
 function unwrapStoragePayload(raw: unknown): { version: number; state: unknown } {
   if (
     isRecord(raw) &&

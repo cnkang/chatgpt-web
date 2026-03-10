@@ -34,6 +34,11 @@ function validateNodeVersion(): void {
   logger.info('Node.js version check passed', { version: nodeVersion })
 }
 
+/**
+ * Validates the Node.js runtime, application configuration, and security posture, and terminates the process on blocking failures.
+ *
+ * Performs runtime version validation and runs configuration and security checks. If blocking configuration errors are detected, the process exits with code 1. Non-blocking configuration issues and warnings are logged as warnings; passing validation is logged as info. If blocking security risks are detected, each risk is logged and the process exits with code 1. Non-blocking security risks are logged as warnings; successful security validation is logged as info. Any unexpected error during validation is logged and causes the process to exit with code 1.
+ */
 function validateConfigOrExit(): void {
   try {
     validateNodeVersion()
