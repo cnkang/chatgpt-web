@@ -1,0 +1,107 @@
+type CommonLabelTuple = readonly [
+  workspaceAccess: string,
+  accessToken: string,
+  enterWorkspaceToken: string,
+  openSidebar: string,
+  closeSidebar: string,
+  saveChatTitle: string,
+  editChatTitle: string,
+  deleteChat: string,
+]
+
+const commonLabelsByLocale = {
+  'en-US': [
+    'Workspace Access',
+    'Access token',
+    'Enter the workspace token',
+    'Open sidebar',
+    'Close sidebar',
+    'Save chat title',
+    'Edit chat title',
+    'Delete chat',
+  ],
+  'es-ES': [
+    'Acceso al espacio de trabajo',
+    'Token de acceso',
+    'Introduce el token del espacio de trabajo',
+    'Abrir barra lateral',
+    'Cerrar barra lateral',
+    'Guardar título del chat',
+    'Editar título del chat',
+    'Eliminar chat',
+  ],
+  'ko-KR': [
+    '워크스페이스 접근',
+    '액세스 토큰',
+    '워크스페이스 토큰을 입력하세요',
+    '사이드바 열기',
+    '사이드바 닫기',
+    '채팅 제목 저장',
+    '채팅 제목 편집',
+    '채팅 삭제',
+  ],
+  'ru-RU': [
+    'Доступ к рабочему пространству',
+    'Токен доступа',
+    'Введите токен рабочего пространства',
+    'Открыть боковую панель',
+    'Закрыть боковую панель',
+    'Сохранить название чата',
+    'Изменить название чата',
+    'Удалить чат',
+  ],
+  'vi-VN': [
+    'Truy cập không gian làm việc',
+    'Mã truy cập',
+    'Nhập mã truy cập không gian làm việc',
+    'Mở thanh bên',
+    'Đóng thanh bên',
+    'Lưu tiêu đề cuộc trò chuyện',
+    'Chỉnh sửa tiêu đề cuộc trò chuyện',
+    'Xóa cuộc trò chuyện',
+  ],
+  'zh-CN': [
+    '工作区访问',
+    '访问令牌',
+    '请输入工作区令牌',
+    '打开侧边栏',
+    '关闭侧边栏',
+    '保存聊天标题',
+    '编辑聊天标题',
+    '删除聊天',
+  ],
+  'zh-TW': [
+    '工作區存取',
+    '存取權杖',
+    '請輸入工作區權杖',
+    '開啟側邊欄',
+    '關閉側邊欄',
+    '儲存聊天標題',
+    '編輯聊天標題',
+    '刪除聊天',
+  ],
+} as const satisfies Record<string, CommonLabelTuple>
+
+export function getCommonLabels(locale: keyof typeof commonLabelsByLocale) {
+  const [
+    workspaceAccess,
+    accessToken,
+    enterWorkspaceToken,
+    openSidebar,
+    closeSidebar,
+    saveChatTitle,
+    editChatTitle,
+    deleteChat,
+  ] = commonLabelsByLocale[locale]
+
+  return {
+    workspaceAccess,
+    accessToken,
+    enterWorkspaceToken,
+    openSidebar,
+    closeSidebar,
+    saveChatTitle,
+    editChatTitle,
+    deleteChat,
+  }
+}

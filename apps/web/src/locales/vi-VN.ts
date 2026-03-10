@@ -1,3 +1,5 @@
+import { getCommonLabels } from './commonLabels'
+
 export default {
   common: {
     add: 'Thêm',
@@ -26,14 +28,7 @@ export default {
     failed: 'Thất bại',
     verify: 'Xác minh',
     unauthorizedTips: 'Không được ủy quyền, vui lòng xác minh trước.',
-    workspaceAccess: 'Truy cập không gian làm việc',
-    accessToken: 'Mã truy cập',
-    enterWorkspaceToken: 'Nhập mã truy cập không gian làm việc',
-    openSidebar: 'Mở thanh bên',
-    closeSidebar: 'Đóng thanh bên',
-    saveChatTitle: 'Lưu tiêu đề cuộc trò chuyện',
-    editChatTitle: 'Chỉnh sửa tiêu đề cuộc trò chuyện',
-    deleteChat: 'Xóa cuộc trò chuyện',
+    ...getCommonLabels('vi-VN'),
   },
   chat: {
     newChatButton: 'Tạo hội thoại',
