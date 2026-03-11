@@ -12,7 +12,8 @@
     "chatgpt-web",
     "chatgpt",
     "chatbot",
-    "express"
+    "http2",
+    "native-http"
   ],
   "engines": {
     "node": ">=24.0.0",

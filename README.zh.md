@@ -14,7 +14,7 @@
 ChatGPT Web 是一个基于 Monorepo 的现代化应用，支持 OpenAI 兼容 API 与 Azure OpenAI：
 
 - 前端：Vue 3.5+（`apps/web`）
-- 后端：Express 5（`apps/api`）
+- 后端：原生 Node.js 24+ HTTP/2 服务器（`apps/api`）
 - 共享类型与工具：`packages/shared`
 - 文档中心：`packages/docs`
 

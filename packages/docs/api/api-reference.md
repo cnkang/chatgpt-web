@@ -423,7 +423,7 @@ Verify authentication token.
 
 ### POST /chat-process
 
-Process chat messages with streaming AI responses.
+Process chat messages with streaming AI responses using Vercel AI SDK UI format.
 
 **Path:** `POST /chat-process` or `POST /api/chat-process`
 
@@ -433,30 +433,44 @@ Process chat messages with streaming AI responses.
 
 **Body Limit:** 1MB (1048576 bytes)
 
+**AI SDK Integration:** This endpoint uses Vercel AI SDK (`streamText` and `pipeUIMessageStreamToResponse`) for streaming responses.
+
 **Request Body:**
 
 ```json
 {
-  "prompt": "Hello, how are you?",
-  "options": {
-    "parentMessageId": "msg_123",
-    "conversationId": "conv_456"
-  },
+  "messages": [
+    {
+      "id": "msg-1",
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text": "Hello, how are you?"
+        }
+      ]
+    }
+  ],
   "systemMessage": "You are a helpful assistant.",
   "temperature": 0.7,
-  "top_p": 0.9
+  "top_p": 0.9,
+  "usingContext": true
 }
 ```
 
 **Request Fields:**
 
-- `prompt` (required): User message to send to AI
-- `options` (optional): Conversation context
-  - `parentMessageId`: ID of previous message in conversation
-  - `conversationId`: ID of conversation thread
+- `messages` (required): Array of UIMessage objects following AI SDK UI format
+  - `id` (string): Unique message identifier
+  - `role` (string): Message role - `"user"`, `"assistant"`, or `"system"`
+  - `parts` (array): Message content parts
+    - `type` (string): Part type - currently only `"text"` supported
+    - `text` (string): Text content
+  - `metadata` (optional): Additional message metadata
 - `systemMessage` (optional): System prompt to guide AI behavior
 - `temperature` (optional): Sampling temperature (0.0-2.0)
 - `top_p` (optional): Nucleus sampling parameter (0.0-1.0)
+- `usingContext` (optional): Whether to use conversation context (default: true)
 
 **Response:** Streaming newline-delimited JSON (see [Streaming Protocol](#streaming-protocol))
 
@@ -553,14 +567,25 @@ AZURE_OPENAI_USE_RESPONSES_API=true
 
 ## Request/Response Examples
 
-### Basic Chat Request
+### Basic Chat Request (AI SDK UI Format)
 
 ```bash
 curl -X POST http://localhost:3002/api/chat-process \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your_secret_key" \
   -d '{
-    "prompt": "Explain quantum computing in simple terms",
+    "messages": [
+      {
+        "id": "msg-1",
+        "role": "user",
+        "parts": [
+          {
+            "type": "text",
+            "text": "Explain quantum computing in simple terms"
+          }
+        ]
+      }
+    ],
     "systemMessage": "You are a helpful science teacher.",
     "temperature": 0.7
   }'
@@ -573,11 +598,24 @@ curl -X POST http://localhost:3002/api/chat-process \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your_secret_key" \
   -d '{
-    "prompt": "What did I just ask about?",
-    "options": {
-      "conversationId": "conv_abc123",
-      "parentMessageId": "msg_xyz789"
-    }
+    "messages": [
+      {
+        "id": "msg-1",
+        "role": "user",
+        "parts": [{"type": "text", "text": "What is quantum computing?"}]
+      },
+      {
+        "id": "msg-2",
+        "role": "assistant",
+        "parts": [{"type": "text", "text": "Quantum computing is..."}]
+      },
+      {
+        "id": "msg-3",
+        "role": "user",
+        "parts": [{"type": "text", "text": "Can you explain more?"}]
+      }
+    ],
+    "usingContext": true
   }'
 ```
 

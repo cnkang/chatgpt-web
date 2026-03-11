@@ -43,7 +43,7 @@ pnpm --filter @chatgpt-web/docs validate
 ```
 apps/
 ├── web/                # Vue.js frontend
-└── api/                # Express.js backend
+└── api/                # Native Node.js HTTP/2 backend
 
 packages/
 ├── shared/             # Common utilities and types
@@ -57,7 +57,7 @@ packages/
 - **PNPM 10+** - Package manager
 - **TypeScript 5.9+** - Type safety
 - **Vue.js 3.5+** - Frontend framework
-- **Express.js 5+** - Backend framework
+- **Node.js 24+** - Backend runtime with native HTTP/2
 
 ## Getting Started
 

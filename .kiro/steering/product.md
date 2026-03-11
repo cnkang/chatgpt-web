@@ -4,179 +4,228 @@ inclusion: always
 
 # Product Context & Conventions
 
-## Application Identity
+ChatGPT Web is a security-focused, self-hosted ChatGPT interface supporting OpenAI and Azure OpenAI APIs with advanced reasoning model capabilities.
 
-ChatGPT Web - A security-focused, self-hosted ChatGPT interface supporting OpenAI and Azure OpenAI APIs with advanced reasoning model capabilities.
+## Core Principles (Non-Negotiable)
 
-## Core Product Principles
+1. **Security First**: All user inputs validated with Zod, XSS prevention mandatory, API keys never exposed
+2. **Official APIs Only**: Vercel AI SDK (ai package) with @ai-sdk/openai and @ai-sdk/azure - no unofficial/proxy APIs
+3. **Zero Tolerance**: Zero TypeScript errors, zero ESLint warnings before commit
+4. **Modern Standards**: Node.js 24+ native HTTP server (no Express), ESNext syntax, latest browser APIs
 
-When working on this codebase, always prioritize:
+## Supported Features
 
-1. **Security First**: Never compromise on input validation, XSS protection, or API security
-2. **Official APIs Only**: Use OpenAI SDK v6+ and official Azure OpenAI endpoints exclusively
-3. **Zero Tolerance**: Maintain zero TypeScript errors and zero ESLint warnings
-4. **Modern Standards**: Target Node.js 24+ features, ESNext syntax, latest browser APIs
+### AI Provider Support
 
-## Supported AI Capabilities
-
-### Provider Support
-
-- OpenAI API (primary): GPT-4o, GPT-4o-mini, o3, o3-mini, o4-mini
-- Azure OpenAI (enterprise): Same models via Azure endpoints
-- Provider switching must be seamless with no data loss
+**OpenAI API** (primary): GPT-4o, GPT-4o-mini, GPT-5, GPT-5.1, GPT-5.2, o3, o3-mini, o4-mini
+**Azure OpenAI** (enterprise): Same models via Azure endpoints with Responses API support
+**Provider Switching**: Must be seamless with zero data loss
+**AI SDK**: Vercel AI SDK (ai package v6+) with @ai-sdk/openai and @ai-sdk/azure providers
 
 ### Reasoning Models (o3/o4 series)
 
-- Display step-by-step reasoning process in UI
-- Handle extended response times gracefully
+When implementing reasoning model features:
+
+- Display step-by-step reasoning process in UI components
+- Handle extended response times with loading states
 - Preserve reasoning steps in session history
 - Support streaming for reasoning content
 
-### Response Handling
+### Response Rendering
 
-- All responses must support streaming
-- Markdown rendering with syntax highlighting (highlight.js)
-- Math formulas via KaTeX
-- Diagrams via Mermaid
-- D2 diagram rendering is deployment-level opt-in, not a default product feature
-- Preserve formatting across sessions
+All chat responses must support:
 
-## Feature Boundaries
+- Streaming via Vercel AI SDK's `streamText` and `pipeUIMessageStreamToResponse`
+- UI Message format from AI SDK for frontend compatibility
+- Markdown with syntax highlighting (highlight.js)
+- Math formulas (KaTeX)
+- Diagrams (Mermaid)
+- D2 diagrams (deployment opt-in only, not default)
 
-### What This Product Does
+## Product Scope
 
-- Provides web interface for ChatGPT API interactions
-- Manages multi-session conversations with context
-- Handles authentication and rate limiting
-- Supports internationalization (i18n)
-- Offers prompt templates and management
+### In Scope
 
-### What This Product Does NOT Do
+- Web interface for ChatGPT API interactions
+- Multi-session conversation management with context preservation
+- Authentication and rate limiting (default: 100 req/hour)
+- Internationalization (i18n) with runtime language switching
+- Session export/import functionality
 
-- Does not use unofficial/proxy APIs (removed in recent migration)
-- Does not store conversation data in external databases (session-based only)
-- Does not provide model training or fine-tuning
-- Does not implement custom AI models
+### Out of Scope
 
-## User Experience Conventions
+- Unofficial/proxy APIs (removed in migration)
+- External database storage (session-based only via Redis)
+- Model training or fine-tuning
+- Custom AI model implementations
 
-### Session Management
-
-- Support multiple concurrent chat sessions
-- Preserve context within sessions
-- Allow session export/import
-- Clear session boundaries in UI
-
-### Internationalization
-
-- All user-facing text must use i18n keys
-- Support language switching without reload
-- Maintain translations in `apps/web/src/locales/`
-
-### Error Handling
-
-- Display user-friendly error messages
-- Log detailed errors server-side only
-- Provide actionable recovery steps
-- Never expose API keys or internal details
-
-## Security Requirements
+## Security Requirements (Mandatory)
 
 ### Input Validation
 
-- Validate all user inputs with Zod schemas
-- Sanitize inputs before processing
-- Reject malformed requests early
-- Use middleware validation consistently
+When handling user input:
+
+- Validate ALL inputs with Zod schemas in `apps/api/src/validation/`
+- Sanitize before processing using security middleware
+- Reject malformed requests at middleware layer
+- Never trust client-side validation alone
 
 ### API Security
 
-- Require authentication for all API endpoints
-- Implement rate limiting (default: 100 req/hour)
-- Use secure headers (Helmet middleware)
-- Validate API keys on startup
+For all API endpoints:
+
+- Require authentication via native middleware in `apps/api/src/middleware-native/`
+- Apply rate limiting via `limiter.ts` middleware
+- Use security headers middleware for CSP, HSTS, etc.
+- Validate API keys on application startup
 
 ### Content Security
 
-- Prevent XSS in rendered markdown
-- Sanitize user-generated content
-- Use CSP headers appropriately
-- Escape special characters in outputs
+When rendering user content:
 
-## Deployment Constraints
+- Prevent XSS in markdown rendering
+- Sanitize user-generated content before display
+- Apply CSP headers appropriately
+- Escape special characters in all outputs
+- Never expose API keys, secrets, or internal errors to users
 
-### Environment Requirements
+## User Experience Patterns
+
+### Session Management
+
+When implementing session features:
+
+- Support multiple concurrent chat sessions
+- Preserve context within each session
+- Provide session export/import functionality
+- Display clear session boundaries in UI
+
+### Internationalization
+
+For all user-facing text:
+
+- Use i18n keys from `apps/web/src/locales/` (never hardcoded strings)
+- Support runtime language switching without page reload
+- Add translations for all supported languages when adding new text
+
+### Error Handling
+
+When errors occur:
+
+- Display user-friendly messages in UI
+- Log detailed errors server-side only (use `logger.ts`)
+- Provide actionable recovery steps
+- Never expose API keys, secrets, or stack traces to users
+
+## Deployment Requirements
+
+### Environment
 
 - Node.js 24.0.0+ (required for native fetch)
-- PNPM 10.0.0+ (required package manager)
-- Redis 5+ (for session storage)
-- HTTPS in production (required)
+- PNPM 10.0.0+ (only supported package manager)
+- Redis 5+ (session storage)
+- HTTPS in production (mandatory)
 
 ### Configuration
 
-- All secrets via environment variables
-- No hardcoded credentials
-- Validate environment on startup
-- Provide clear .env.example templates
+When adding configuration:
 
-### Scaling Considerations
+- Use environment variables for all secrets
+- Never hardcode credentials
+- Validate environment on startup with Zod
+- Update `.env.example` templates
+
+### Scaling
+
+Architecture must support:
 
 - Stateless backend design
-- Session storage in Redis
-- Support horizontal scaling
+- Session storage in Redis (not in-memory)
+- Horizontal scaling
 - Connection pooling for external APIs
 
-## Development Workflow
+## Code Quality Standards
 
-### Code Quality Gates
+### Pre-Commit Requirements
 
-- TypeScript strict mode must pass
-- ESLint must show zero warnings
-- Prettier formatting enforced
+Before committing code:
+
+- TypeScript strict mode passes with zero errors
+- ESLint shows zero warnings (warnings = errors)
+- Prettier formatting applied
 - Pre-commit hooks validate all changes
 
 ### Testing Requirements
 
+When implementing features:
+
 - Unit tests for business logic
-- Property-based tests (fast-check) for validation
+- Property-based tests (fast-check) for validation logic
 - Integration tests for API endpoints
-- Test coverage for security-critical paths
+- Test coverage for all security-critical paths
 
 ### Performance Targets
 
+Maintain these benchmarks:
+
 - Frontend: First contentful paint < 1.5s
-- Backend: API response time < 200ms (excluding AI provider)
-- Bundle size: Keep main chunk < 500KB
-- Code splitting: Route-based lazy loading
+- Backend: API response < 200ms (excluding AI provider latency)
+- Bundle size: Main chunk < 500KB
+- Use route-based code splitting and lazy loading
 
-## Integration Points
+## External Integrations
 
-### External Services
+### Supported Services
 
-- OpenAI API: Official SDK v6+, streaming support
-- Azure OpenAI: Compatible with OpenAI SDK
-- Redis: Session storage and caching
-- No other external dependencies
+- **Vercel AI SDK**: ai package v6+ with @ai-sdk/openai and @ai-sdk/azure providers
+- **OpenAI API**: Via @ai-sdk/openai, streaming support required
+- **Azure OpenAI**: Via @ai-sdk/azure with Responses API support
+- **Redis**: Session storage and caching only
+- No other external dependencies allowed
 
 ### API Contracts
 
-- RESTful endpoints for chat operations
-- Streaming responses via Server-Sent Events
+All API endpoints must follow:
+
+- Native Node.js HTTP/HTTP2 server patterns
+- Streaming responses via AI SDK's `pipeUIMessageStreamToResponse`
+- UI Message format from Vercel AI SDK
 - JSON request/response format
 - Consistent error response structure
 
-## Migration Context
+## Migration Context & Deprecated Patterns
 
-### Recent Changes
+### Recent Architectural Changes
 
+- Removed Express framework, migrated to native Node.js HTTP/HTTP2 server
 - Removed unofficial ChatGPT proxy API support
-- Migrated to official OpenAI SDK v6+
-- Upgraded to Node.js 24 for native fetch
-- Modernized Express routing patterns
+- Migrated to Vercel AI SDK (ai package) with @ai-sdk/openai and @ai-sdk/azure
+- Upgraded to Node.js 24 for native fetch and modern APIs
+- Implemented custom middleware chain and router for native HTTP server
 
-### Deprecated Patterns
+### Forbidden Patterns (Do Not Use)
 
-- Do not use `chatgpt` npm package (unofficial)
-- Avoid `node-fetch` (use native fetch)
-- Do not use Express 4 patterns (use Express 5)
-- Avoid CommonJS (use ESM exclusively)
+When writing code, never use:
+
+- ❌ Express framework (removed, use native HTTP server)
+- ❌ `chatgpt` npm package (unofficial, removed)
+- ❌ `node-fetch`, `axios`, `got` (use native fetch)
+- ❌ OpenAI SDK directly (use Vercel AI SDK instead)
+- ❌ CommonJS `require`/`module.exports` (use ESM)
+- ❌ Unofficial/proxy APIs for ChatGPT
+- ❌ Hardcoded user-facing strings (use i18n keys)
+- ❌ Relative imports without `.js` extension in backend
+
+### Correct Patterns (Always Use)
+
+When writing code, always use:
+
+- ✅ Vercel AI SDK (ai package) with @ai-sdk/openai and @ai-sdk/azure
+- ✅ Native Node.js HTTP/HTTP2 server (HTTP2Adapter)
+- ✅ Node.js 24 native fetch
+- ✅ Custom middleware chain in `apps/api/src/middleware-native/`
+- ✅ RouterImpl for routing in `apps/api/src/transport/`
+- ✅ ESM with `.js` extensions in backend imports
+- ✅ Zod schemas for all validation
+- ✅ i18n keys for all user-facing text
+- ✅ `@/` alias for frontend imports

@@ -91,7 +91,7 @@ Then open http://localhost:1002 and send a test message.
 chatgpt-web/
 ├── apps/
 │   ├── web/                   # Vue.js frontend
-│   └── api/                   # Express backend
+│   └── api/                   # Native Node.js HTTP/2 backend
 ├── packages/
 │   ├── shared/                # Shared types/utilities
 │   ├── config/                # Shared config/tooling

@@ -6,6 +6,7 @@ This package contains all documentation for the ChatGPT Web monorepo project.
 
 - **[Setup](./setup/)** - Installation and initial setup guides
 - **[Development](./development/)** - Development workflows and guidelines
+  - [AI SDK Integration](./development/ai-sdk-integration.md) - Vercel AI SDK usage guide
 - **[Deployment](./deployment/)** - Deployment guides and configurations
 - **[API](./api/)** - API documentation and references
 - **[Packages](./packages/)** - Package-specific documentation

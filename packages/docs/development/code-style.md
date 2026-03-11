@@ -362,8 +362,8 @@ class ChatError extends Error {
 ### Backend Error Handling
 
 ```typescript
-// Express error handling middleware
-export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
+// Native HTTP error handling middleware
+export const errorHandler = (error: Error, req: TransportRequest, res: TransportResponse) => {
   logger.error('Request error:', {
     error: error.message,
     stack: error.stack,

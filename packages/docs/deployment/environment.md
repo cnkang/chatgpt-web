@@ -146,7 +146,7 @@ SOCKS_PROXY_PASSWORD=password
 
 ## Compatibility and Advanced Flags
 
-These variables are read by the provider configuration layer and are safe to set, but not all of them affect the current Express middleware directly:
+These variables are read by the provider configuration layer and are safe to set, but not all of them affect the current native HTTP middleware directly:
 
 ```bash
 DEFAULT_MODEL=gpt-5.4

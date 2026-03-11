@@ -4,11 +4,11 @@ This directory contains comprehensive API documentation for the ChatGPT Web back
 
 ## Available Documentation
 
-- **[API Reference](./api-reference.md)** - Complete API endpoint documentation with streaming protocol details
+- **[API Reference](./api-reference.md)** - Complete API endpoint documentation with streaming protocol details and AI SDK UI integration
 - **[Authentication](./authentication.md)** - API authentication and security
 - **[Error Handling](./error-handling.md)** - Error response structure and codes
 - **[Rate Limiting](./rate-limiting.md)** - Rate limiting thresholds and configuration
-- **[Provider Integration](./providers.md)** - AI provider integration details
+- **[Provider Integration](./providers.md)** - OpenAI and Azure OpenAI provider details
 
 ## API Overview
 

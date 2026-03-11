@@ -7,7 +7,7 @@ This directory contains documentation for each package in the ChatGPT Web monore
 ### Applications
 
 - **[@chatgpt-web/web](./web.md)** - Vue.js frontend application
-- **[@chatgpt-web/api](./api.md)** - Express.js backend service
+- **[@chatgpt-web/api](./api.md)** - Native Node.js HTTP/2 backend service
 
 ### Shared Packages
 

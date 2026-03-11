@@ -36,7 +36,7 @@ This project has been upgraded to support Node.js 24 LTS and updated all major d
 
 #### Backend Dependencies (apps/api)
 
-- **express-rate-limit**: 6.11.2 → 8.2.1
+- **Vercel AI SDK**: 6.0+ with @ai-sdk/openai and @ai-sdk/azure
 - **dotenv**: removed (replaced by native `process.loadEnvFile()` on Node.js 24+)
 - **chatgpt / axios / proxy-agent adapters**: removed from runtime path to reduce dependency surface
 

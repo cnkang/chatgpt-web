@@ -284,8 +284,10 @@ apps/web/src/
 └── types/             # Frontend-specific types
 
 apps/api/src/
-├── routes/            # Express routes
-├── middleware/        # Express middleware
+├── routes/            # Route handlers
+├── middleware-native/ # Native HTTP middleware
+├── transport/         # Framework-agnostic abstractions
+├── adapters/          # HTTP/2 adapter implementation
 ├── services/          # Business logic
 ├── utils/             # Backend-specific utilities
 └── types/             # Backend-specific types

@@ -43,7 +43,7 @@ These dependencies are managed at the root level and shared across all packages:
 Each package only includes dependencies it directly uses:
 
 - **apps/web**: Vue.js ecosystem, UI libraries, frontend-specific tools
-- **apps/api**: Express.js, OpenAI SDK, backend-specific libraries
+- **apps/api**: Vercel AI SDK, native Node.js HTTP/2, backend-specific libraries
 - **packages/shared**: Minimal dependencies (only `zod` for validation)
 - **packages/config**: No dependencies (peer dependencies only)
 - **packages/docs**: Documentation-specific tools
@@ -197,7 +197,7 @@ Some version conflicts are documented as acceptable:
 ```bash
 # Add to specific package
 pnpm --filter @chatgpt-web/web add vue-router
-pnpm --filter @chatgpt-web/api add express
+pnpm --filter @chatgpt-web/api add zod
 
 # Add dev dependency to specific package
 pnpm --filter @chatgpt-web/web add -D @types/node

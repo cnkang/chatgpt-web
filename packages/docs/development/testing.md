@@ -125,13 +125,13 @@ describe('validator', () => {
 })
 ```
 
-### Testing Express Middleware
+### Testing Native HTTP Middleware
 
 ```typescript
-// apps/api/src/middleware/__tests__/auth.test.ts
+// apps/api/src/middleware-native/__tests__/auth.test.ts
 import { describe, it, expect, vi } from 'vitest'
-import type { Request, Response, NextFunction } from 'express'
-import { authMiddleware } from '../auth'
+import type { TransportRequest, TransportResponse } from '../../transport/types.js'
+import { authMiddleware } from '../auth.js'
 
 describe('authMiddleware', () => {
   const mockRequest = (headers: Record<string, string> = {}) =>
