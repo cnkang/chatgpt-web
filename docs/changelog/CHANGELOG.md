@@ -1,3 +1,64 @@
+## v3.1.0
+
+`2026-03-12`
+
+### 🚀 Backend Architecture Upgrade
+
+#### Native Node.js HTTP/2 Runtime
+
+- **Native Transport Migration**: Replaced the Express-based backend runtime with a Node.js 24 native HTTP/2 transport layer while preserving the existing application behavior
+- **AI SDK UI Streaming**: Migrated `/chat-process` to AI SDK UI message streaming for cleaner frontend/backend interoperability
+- **Middleware Port Complete**: Auth, rate limiting, static delivery, proxy/session handling, and error handling are now fully wired through the native stack
+- **Deployment Guidance**: Added migration, validation, and HTTP/2 deployment documentation for TLS-enabled setups and HTTP/1.1 fallback
+
+### 💬 Chat Experience Improvements
+
+#### Faster and Clearer Chat Workspace
+
+- **Workspace Refresh**: Reworked the chat workspace layout and visual hierarchy for a cleaner day-to-day interface
+- **Rendering Performance**: Reduced message/store churn during streaming and optimized the chat rendering pipeline for smoother long conversations
+- **Accessibility and i18n**: Improved empty-state contrast and completed backend-unavailable translations
+- **UI Cleanup**: Removed duplicate layout CSS and other review-driven frontend inconsistencies
+
+### 🔒 Reliability and Maintainability
+
+#### Runtime and Code Quality Hardening
+
+- **Proxy Session Hardening**: Tightened native proxy-session handling and completed the remaining routing migration fixes
+- **Unicode Safety**: Switched shared Unicode processing to `codePointAt` for safer non-BMP character handling
+- **Configuration Cleanup**: Updated the default Azure OpenAI API version and removed deprecated Turbo daemon configuration
+- **Quality Sweep**: Resolved remaining Sonar findings, duplication hotspots, TypeScript config issues, and review follow-ups across the stack
+
+### 🧪 Testing and Documentation
+
+- **Native Backend Test Coverage**: Added and refined comprehensive tests for the native transport implementation and migration validation
+- **Documentation Reorganization**: Consolidated docs structure and expanded API, migration, deployment, and validation guides
+- **Operational Clarity**: Added migration reports and troubleshooting material for the native HTTP/2 architecture
+
+### 📦 Dependency Updates
+
+- **openai**: 6.25.0 → 6.27.0
+- **naive-ui**: 2.43.2 → 2.44.1
+- **vue-i18n ecosystem**: refreshed via grouped workspace upgrade
+- **turbo**: 2.8.13 → 2.8.16
+- **mermaid**: 11.12.3 → 11.13.0
+
+### 📋 Migration Notes
+
+For users upgrading from v3.0.3:
+
+1. **Custom API Clients**: Align any custom `/chat-process` integrations with the AI SDK UI message format and streaming behavior
+2. **Direct HTTP/2 Deployments**: Use TLS-capable deployment or proxy termination if you want browser-facing HTTP/2; HTTP/1.1 fallback remains available
+3. **Backend Extensions**: Re-validate any Express-specific middleware customizations against the native transport-based backend
+4. **Operations Review**: Review the updated deployment and migration documentation before production rollout
+
+### 🎉 Benefits
+
+- **Lower Backend Overhead**: Native transport removes framework indirection from the API runtime
+- **Better Streaming UX**: AI SDK UI streaming and render optimizations improve responsiveness in long chats
+- **Cleaner Interface**: The refreshed workspace and accessibility fixes make the app easier to use every day
+- **Safer Upgrades**: Expanded documentation and validation guidance reduce rollout risk
+
 ## v3.0.3
 
 `2026-03-06`
