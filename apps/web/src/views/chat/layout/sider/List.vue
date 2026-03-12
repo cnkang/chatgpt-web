@@ -130,7 +130,7 @@ function isActive(uuid: number) {
   align-items: center;
   gap: 0.75rem;
   padding: 0.85rem 0.9rem;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--app-border-soft);
   border-radius: 1rem;
   cursor: pointer;
   transition:
@@ -138,22 +138,22 @@ function isActive(uuid: number) {
     background-color 0.2s ease,
     transform 0.2s ease,
     box-shadow 0.2s ease;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.92));
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 253, 0.92), rgba(245, 248, 244, 0.92));
+  box-shadow: 0 10px 22px rgba(36, 50, 43, 0.04);
 }
 
 .history-item:hover {
   transform: translateY(-1px);
-  border-color: rgba(75, 158, 95, 0.24);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  border-color: var(--app-border-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 253, 0.98), rgba(247, 249, 246, 0.98));
+  box-shadow: 0 14px 30px rgba(36, 50, 43, 0.08);
 }
 
 .history-item-active {
-  color: rgb(58 121 72);
-  border-color: rgba(75, 158, 95, 0.48);
-  background: linear-gradient(135deg, rgba(237, 247, 233, 0.98), rgba(227, 244, 221, 0.94));
-  box-shadow: 0 16px 34px rgba(75, 158, 95, 0.12);
+  color: var(--app-accent-strong);
+  border-color: rgba(76, 139, 114, 0.26);
+  background: linear-gradient(135deg, rgba(239, 245, 240, 0.98), rgba(231, 239, 233, 0.94));
+  box-shadow: 0 16px 34px rgba(61, 114, 93, 0.08);
 }
 
 .history-item-icon {
@@ -164,8 +164,8 @@ function isActive(uuid: number) {
   width: 1.9rem;
   height: 1.9rem;
   border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.76);
-  color: rgb(100 116 139);
+  background: rgba(255, 255, 253, 0.76);
+  color: var(--app-text-3);
 }
 
 .history-item-title {
@@ -208,10 +208,11 @@ function isActive(uuid: number) {
   justify-content: center;
   width: 1.875rem;
   height: 1.875rem;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid var(--app-interactive-border);
   border-radius: 0.65rem;
-  background: rgba(255, 255, 255, 0.72);
-  color: rgb(100 116 139);
+  background: var(--app-interactive-bg);
+  color: var(--app-interactive-text);
+  box-shadow: var(--app-interactive-shadow);
   transition:
     background-color 0.2s ease,
     color 0.2s ease,
@@ -220,39 +221,48 @@ function isActive(uuid: number) {
 }
 
 .history-action-btn:hover {
-  transform: translateY(-1px);
-  background-color: rgb(255 255 255);
-  border-color: rgba(75, 158, 95, 0.25);
-  color: rgb(15 23 42);
+  transform: translateY(-0.5px);
+  background-color: var(--app-interactive-bg-hover);
+  border-color: var(--app-interactive-border-hover);
+  color: var(--app-interactive-text-hover);
+  box-shadow: var(--app-interactive-shadow-hover);
 }
 
-:global(.dark) .history-item {
-  border-color: rgba(71, 85, 105, 0.34);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(17, 24, 39, 0.9));
-  box-shadow: 0 16px 30px rgba(2, 6, 23, 0.24);
+.history-action-btn:active {
+  transform: translateY(0);
+  background: var(--app-interactive-bg-active);
+  box-shadow: var(--app-interactive-shadow);
 }
 
-:global(.dark) .history-item:hover {
-  border-color: rgba(94, 234, 212, 0.18);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
+:global(html.dark) .history-item {
+  border-color: var(--app-border-soft);
+  background: linear-gradient(180deg, rgba(25, 35, 31, 0.94), rgba(22, 31, 28, 0.9));
+  box-shadow: 0 16px 30px rgba(5, 10, 8, 0.22);
 }
 
-:global(.dark) .history-item-active {
-  color: rgb(167 243 208);
-  border-color: rgba(94, 234, 212, 0.34);
-  background: linear-gradient(135deg, rgba(20, 83, 45, 0.72), rgba(15, 23, 42, 0.94));
+:global(html.dark) .history-item:hover {
+  border-color: var(--app-border-strong);
+  background: linear-gradient(180deg, rgba(31, 42, 38, 0.96), rgba(25, 35, 31, 0.94));
 }
 
-:global(.dark) .history-item-icon,
-:global(.dark) .history-action-btn {
-  background: rgba(30, 41, 59, 0.88);
-  border-color: rgba(71, 85, 105, 0.44);
-  color: rgb(203 213 225);
+:global(html.dark) .history-item-active {
+  color: var(--app-text-1);
+  border-color: rgba(125, 177, 153, 0.22);
+  background: linear-gradient(135deg, rgba(35, 54, 45, 0.88), rgba(26, 38, 33, 0.94));
 }
 
-:global(.dark) .history-action-btn:hover {
-  background-color: rgba(51, 65, 85, 0.96);
-  color: rgb(248 250 252);
+:global(html.dark) .history-item-icon,
+:global(html.dark) .history-action-btn {
+  background: var(--app-interactive-bg);
+  border-color: var(--app-interactive-border);
+  color: var(--app-interactive-text);
+}
+
+:global(html.dark) .history-action-btn:hover {
+  background-color: var(--app-interactive-bg-hover);
+  border-color: var(--app-interactive-border-hover);
+  color: var(--app-interactive-text-hover);
+  box-shadow: var(--app-interactive-shadow-hover);
 }
 
 @media (max-width: 640px) {

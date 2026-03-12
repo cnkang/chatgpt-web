@@ -107,7 +107,7 @@ function handleActionSelect(key: string | number) {
 
 <style scoped>
 .mobile-chat-header {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.82));
+  background: linear-gradient(180deg, var(--app-header-bg-start), var(--app-header-bg-end));
   backdrop-filter: blur(18px);
 }
 
@@ -123,21 +123,38 @@ function handleActionSelect(key: string | number) {
   justify-content: center;
   width: 2.58rem;
   height: 2.58rem;
+  border: 1px solid var(--app-interactive-border);
   border-radius: 0.9rem;
+  background: var(--app-interactive-bg);
+  box-shadow: var(--app-interactive-shadow);
   transition:
+    border-color 0.2s ease,
     background-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .mobile-chat-header__toggle,
 .mobile-chat-header__action-btn,
 .mobile-chat-header__title {
-  color: rgb(15 23 42);
+  color: var(--app-text-1);
 }
 
 .mobile-chat-header__toggle:hover,
 .mobile-chat-header__action-btn:hover {
-  background: rgba(226, 232, 240, 0.55);
+  transform: translateY(-0.5px);
+  border-color: var(--app-interactive-border-hover);
+  background: var(--app-interactive-bg-hover);
+  color: var(--app-interactive-text-hover);
+  box-shadow: var(--app-interactive-shadow-hover);
+}
+
+.mobile-chat-header__toggle:active,
+.mobile-chat-header__action-btn:active {
+  transform: translateY(0);
+  background: var(--app-interactive-bg-active);
+  box-shadow: var(--app-interactive-shadow);
 }
 
 .mobile-chat-header__title {
@@ -145,7 +162,7 @@ function handleActionSelect(key: string | number) {
   align-items: center;
   gap: 0.55rem;
   margin: 0;
-  font-weight: 600;
+  font-weight: 650;
   font-size: 0.96rem;
   line-height: 1.2rem;
 }
@@ -154,38 +171,13 @@ function handleActionSelect(key: string | number) {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background: rgb(148 163 184);
-  box-shadow: 0 0 0 4px rgba(226, 232, 240, 0.75);
+  background: var(--app-text-3);
+  box-shadow: 0 0 0 4px var(--app-status-ring);
   flex: 0 0 auto;
 }
 
 .mobile-chat-header__status-active {
-  background: rgb(16 185 129);
-  box-shadow: 0 0 0 4px rgba(209, 250, 229, 0.85);
-}
-
-:global(.dark) .mobile-chat-header {
-  background: linear-gradient(180deg, rgba(9, 14, 24, 0.82), rgba(15, 23, 42, 0.76));
-}
-
-:global(.dark) .mobile-chat-header__toggle:hover,
-:global(.dark) .mobile-chat-header__action-btn:hover {
-  background: rgba(30, 41, 59, 0.85);
-}
-
-:global(.dark) .mobile-chat-header__toggle,
-:global(.dark) .mobile-chat-header__action-btn,
-:global(.dark) .mobile-chat-header__title {
-  color: rgb(241 245 249);
-}
-
-:global(.dark) .mobile-chat-header__status {
-  background: rgb(100 116 139);
-  box-shadow: 0 0 0 4px rgba(30, 41, 59, 0.72);
-}
-
-:global(.dark) .mobile-chat-header__status-active {
-  background: rgb(52 211 153);
-  box-shadow: 0 0 0 4px rgba(6, 78, 59, 0.72);
+  background: var(--app-accent);
+  box-shadow: 0 0 0 4px var(--app-status-active-ring);
 }
 </style>

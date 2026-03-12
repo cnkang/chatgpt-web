@@ -190,6 +190,7 @@ async function handleCopy() {
 
 <style scoped>
 .message-row {
+  --message-row-reserved-width: 3.95rem;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
@@ -234,7 +235,7 @@ async function handleCopy() {
   left: 50%;
   width: 1px;
   border-radius: 9999px;
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0.32));
+  background: linear-gradient(180deg, rgba(128, 144, 136, 0.08), rgba(128, 144, 136, 0.3));
   transform: translateX(-50%);
 }
 
@@ -250,7 +251,7 @@ async function handleCopy() {
 
 .message-row-user.message-row-grouped-top .message-avatar::before,
 .message-row-user.message-row-grouped-bottom .message-avatar::after {
-  background: linear-gradient(180deg, rgba(110, 231, 183, 0.08), rgba(52, 211, 153, 0.3));
+  background: linear-gradient(180deg, rgba(125, 177, 153, 0.08), rgba(125, 177, 153, 0.3));
 }
 
 .message-avatar-grouped {
@@ -292,7 +293,7 @@ async function handleCopy() {
   padding-inline: 0.2rem;
   font-size: 0.75rem;
   line-height: 1rem;
-  color: rgb(148 163 184);
+  color: var(--app-text-3);
   width: fit-content;
   max-width: 100%;
 }
@@ -312,21 +313,26 @@ async function handleCopy() {
   min-height: 1.45rem;
   padding: 0.16rem 0.55rem;
   border-radius: 9999px;
-  background: rgba(248, 250, 252, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.92);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  background: rgba(247, 249, 246, 0.92);
+  border: 1px solid var(--app-border-soft);
 }
 
 .message-content {
   display: flex;
   align-items: flex-start;
   gap: 0;
-  width: min(100%, 44rem);
+  width: min(
+    max(0px, calc(100% - var(--message-row-reserved-width))),
+    var(--chat-message-row-max, 44rem)
+  );
   position: relative;
 }
 
 .message-row-replying .message-content {
-  width: min(100%, 46rem);
+  width: min(
+    max(0px, calc(100% - var(--message-row-reserved-width))),
+    var(--chat-message-row-reply-max, 46rem)
+  );
 }
 
 .message-content-user {
@@ -372,11 +378,11 @@ async function handleCopy() {
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid var(--app-interactive-border);
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.82);
-  color: rgb(100 116 139);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  background: var(--app-interactive-bg);
+  color: var(--app-interactive-text);
+  box-shadow: var(--app-interactive-shadow);
   transition:
     background-color 0.2s ease,
     color 0.2s ease,
@@ -385,43 +391,51 @@ async function handleCopy() {
 }
 
 .message-action-btn:hover {
-  transform: translateY(-1px);
-  background-color: rgb(255 255 255);
-  border-color: rgba(75, 158, 95, 0.28);
-  color: rgb(29 78 216);
+  transform: translateY(-0.5px);
+  background-color: var(--app-interactive-bg-hover);
+  border-color: var(--app-interactive-border-hover);
+  color: var(--app-interactive-text-hover);
+  box-shadow: var(--app-interactive-shadow-hover);
+}
+
+.message-action-btn:active {
+  transform: translateY(0);
+  background: var(--app-interactive-bg-active);
+  box-shadow: var(--app-interactive-shadow);
 }
 
 .message-row-user .message-action-btn {
-  background: rgba(245, 247, 250, 0.92);
+  background: var(--app-interactive-bg);
 }
 
-:global(.dark) .message-action-btn {
-  border-color: rgba(71, 85, 105, 0.4);
-  background: rgba(15, 23, 42, 0.86);
-  color: rgb(148 163 184);
-  box-shadow: 0 12px 24px rgba(2, 6, 23, 0.24);
+:global(html.dark) .message-action-btn {
+  border-color: var(--app-interactive-border);
+  background: var(--app-interactive-bg);
+  color: var(--app-interactive-text);
+  box-shadow: var(--app-interactive-shadow);
 }
 
-:global(.dark) .message-action-btn:hover {
-  background-color: rgba(30, 41, 59, 0.96);
-  border-color: rgba(94, 234, 212, 0.25);
-  color: rgb(226 232 240);
+:global(html.dark) .message-action-btn:hover {
+  background-color: var(--app-interactive-bg-hover);
+  border-color: var(--app-interactive-border-hover);
+  color: var(--app-interactive-text-hover);
+  box-shadow: var(--app-interactive-shadow-hover);
 }
 
-:global(.dark) .message-time-pill {
-  background: rgba(15, 23, 42, 0.84);
-  border-color: rgba(51, 65, 85, 0.92);
-  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.04);
+:global(html.dark) .message-time-pill {
+  background: rgba(27, 37, 33, 0.84);
+  border-color: var(--app-border-soft);
+  color: var(--app-text-2);
 }
 
-:global(.dark) .message-row-grouped-top .message-avatar::before,
-:global(.dark) .message-row-grouped-bottom .message-avatar::after {
-  background: linear-gradient(180deg, rgba(71, 85, 105, 0.16), rgba(148, 163, 184, 0.28));
+:global(html.dark) .message-row-grouped-top .message-avatar::before,
+:global(html.dark) .message-row-grouped-bottom .message-avatar::after {
+  background: linear-gradient(180deg, rgba(132, 153, 140, 0.12), rgba(132, 153, 140, 0.24));
 }
 
-:global(.dark) .message-row-user.message-row-grouped-top .message-avatar::before,
-:global(.dark) .message-row-user.message-row-grouped-bottom .message-avatar::after {
-  background: linear-gradient(180deg, rgba(20, 83, 45, 0.14), rgba(52, 211, 153, 0.28));
+:global(html.dark) .message-row-user.message-row-grouped-top .message-avatar::before,
+:global(html.dark) .message-row-user.message-row-grouped-bottom .message-avatar::after {
+  background: linear-gradient(180deg, rgba(125, 177, 153, 0.14), rgba(125, 177, 153, 0.26));
 }
 
 @media (max-width: 640px) {
@@ -505,7 +519,7 @@ async function handleCopy() {
     width: 1.8rem;
     height: 1.8rem;
     opacity: 1;
-    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 8px 16px rgba(36, 50, 43, 0.08);
   }
 }
 </style>

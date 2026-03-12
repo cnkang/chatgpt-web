@@ -1,4 +1,5 @@
 import { ss } from '@/utils/storage'
+import defaultAvatar from '@/assets/avatar.jpg'
 
 const LOCAL_NAME = 'userStorage'
 
@@ -15,12 +16,12 @@ export interface UserState {
 /**
  * Provide the default user state for the application.
  *
- * @returns The default `UserState` containing `userInfo` with an avatar URL, name `"数字小助手"`, and description `"不要输入涉密/隐私信息！"`.
+ * @returns The default `UserState` containing `userInfo` with a bundled local avatar, name `"数字小助手"`, and description `"不要输入涉密/隐私信息！"`.
  */
 export function defaultSetting(): UserState {
   return {
     userInfo: {
-      avatar: 'https://t.videostory.com/panda.png',
+      avatar: defaultAvatar,
       name: '数字小助手',
       description: '不要输入涉密/隐私信息！',
     },

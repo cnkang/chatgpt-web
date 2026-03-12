@@ -71,38 +71,47 @@ async function handleRetrySession() {
 <template>
   <div class="workspace-shell h-full transition-all" :class="[isMobile ? 'p-2.5' : 'p-6']">
     <div class="h-full overflow-hidden" :class="getMobileClass">
-      <NLayout class="workspace-surface z-40 transition" :class="getContainerClass" has-sider>
+      <NLayout
+        class="workspace-surface h-full z-40 transition"
+        :class="getContainerClass"
+        has-sider
+      >
         <Sider />
         <NLayoutContent class="workspace-content h-full">
-          <div
-            v-if="showBackendUnavailableBanner"
-            class="backend-status-banner"
-            :class="{ 'backend-status-banner-mobile': isMobile }"
-          >
-            <div class="backend-status-copy">
-              <p class="backend-status-eyebrow">{{ t('chat.backendUnavailableTitle') }}</p>
-              <p class="backend-status-text">{{ backendUnavailableMessage }}</p>
-              <p class="backend-status-hint">{{ t('chat.backendUnavailableHint') }}</p>
-            </div>
-            <NButton
-              class="backend-status-action"
-              quaternary
-              type="primary"
-              @click="handleRetrySession"
+          <div class="workspace-content-inner">
+            <div
+              v-if="showBackendUnavailableBanner"
+              class="backend-status-banner"
+              :class="{ 'backend-status-banner-mobile': isMobile }"
             >
-              {{ t('common.retry') }}
-            </NButton>
+              <div class="backend-status-copy">
+                <p class="backend-status-eyebrow">{{ t('chat.backendUnavailableTitle') }}</p>
+                <p class="backend-status-text">{{ backendUnavailableMessage }}</p>
+                <p class="backend-status-hint">{{ t('chat.backendUnavailableHint') }}</p>
+              </div>
+              <NButton
+                class="backend-status-action"
+                quaternary
+                type="primary"
+                @click="handleRetrySession"
+              >
+                {{ t('common.retry') }}
+              </NButton>
+            </div>
+
+            <div class="workspace-router">
+              <Suspense>
+                <template #default>
+                  <RouterView v-slot="{ Component, route }">
+                    <component :is="Component" :key="route.fullPath" />
+                  </RouterView>
+                </template>
+                <template #fallback>
+                  <LoadingSpinner text="Loading chat..." />
+                </template>
+              </Suspense>
+            </div>
           </div>
-          <Suspense>
-            <template #default>
-              <RouterView v-slot="{ Component, route }">
-                <component :is="Component" :key="route.fullPath" />
-              </RouterView>
-            </template>
-            <template #fallback>
-              <LoadingSpinner text="Loading chat..." />
-            </template>
-          </Suspense>
         </NLayoutContent>
       </NLayout>
     </div>
@@ -113,6 +122,10 @@ async function handleRetrySession() {
 <style scoped>
 .workspace-shell {
   position: relative;
+  height: 100vh;
+  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
 }
 
 .workspace-shell::before {
@@ -121,18 +134,17 @@ async function handleRetrySession() {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 28%),
-    radial-gradient(circle at 20% 12%, rgba(79, 159, 114, 0.12), transparent 24%);
+    radial-gradient(circle at 18% 12%, rgba(125, 177, 153, 0.12), transparent 24%),
+    radial-gradient(circle at 82% 8%, rgba(131, 170, 165, 0.1), transparent 18%);
 }
 
 .workspace-frame {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid var(--app-border-soft);
   border-radius: 2rem;
-  box-shadow:
-    0 28px 80px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  background: rgba(250, 252, 249, 0.24);
+  box-shadow: var(--app-shadow-lg);
 }
 
 .workspace-frame::after {
@@ -141,15 +153,13 @@ async function handleRetrySession() {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at top right, rgba(191, 219, 254, 0.12), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 30%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 18%),
+    radial-gradient(circle at top right, rgba(131, 170, 165, 0.08), transparent 22%);
 }
 
 .workspace-frame-mobile {
   border-radius: 1.5rem;
-  box-shadow:
-    0 18px 40px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  box-shadow: var(--app-shadow-md);
 }
 
 .workspace-layout {
@@ -157,12 +167,24 @@ async function handleRetrySession() {
 }
 
 .workspace-surface {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 250, 252, 0.9));
-  backdrop-filter: blur(24px);
+  background: linear-gradient(180deg, var(--app-panel), var(--app-panel-strong));
+  backdrop-filter: blur(20px);
 }
 
 .workspace-content {
   background: transparent;
+}
+
+.workspace-content-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.workspace-router {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .backend-status-banner {
@@ -173,10 +195,10 @@ async function handleRetrySession() {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid rgba(245, 158, 11, 0.24);
+  border: 1px solid rgba(196, 148, 61, 0.24);
   border-radius: 1.25rem;
-  background: linear-gradient(135deg, rgba(255, 251, 235, 0.96), rgba(255, 247, 237, 0.88));
-  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.08);
+  background: linear-gradient(135deg, rgba(255, 249, 237, 0.94), rgba(249, 244, 229, 0.88));
+  box-shadow: 0 12px 30px rgba(97, 74, 24, 0.07);
   padding: 0.95rem 1rem;
 }
 
@@ -192,7 +214,7 @@ async function handleRetrySession() {
 
 .backend-status-eyebrow {
   margin: 0;
-  color: rgb(180, 83, 9);
+  color: rgb(133 94 33);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -202,7 +224,7 @@ async function handleRetrySession() {
 .backend-status-text,
 .backend-status-hint {
   margin: 0.2rem 0 0;
-  color: rgba(120, 53, 15, 0.92);
+  color: rgba(103, 74, 27, 0.92);
   line-height: 1.5;
 }
 
@@ -211,7 +233,7 @@ async function handleRetrySession() {
 }
 
 .backend-status-hint {
-  color: rgba(146, 64, 14, 0.82);
+  color: rgba(120, 90, 42, 0.82);
   font-size: 0.92rem;
 }
 
@@ -224,50 +246,47 @@ async function handleRetrySession() {
   background: transparent;
 }
 
-:global(.dark) .workspace-shell::before {
+:global(html.dark) .workspace-shell::before {
   background:
-    linear-gradient(135deg, rgba(148, 163, 184, 0.06), transparent 28%),
-    radial-gradient(circle at 20% 12%, rgba(79, 159, 114, 0.12), transparent 24%);
+    radial-gradient(circle at 18% 12%, rgba(125, 177, 153, 0.14), transparent 24%),
+    radial-gradient(circle at 82% 8%, rgba(131, 170, 165, 0.12), transparent 22%);
 }
 
-:global(.dark) .workspace-frame {
-  border-color: rgba(51, 65, 85, 0.8);
-  box-shadow:
-    0 30px 90px rgba(2, 6, 23, 0.34),
-    inset 0 1px 0 rgba(148, 163, 184, 0.05);
+:global(html.dark) .workspace-frame {
+  border-color: var(--app-border-soft);
+  background: rgba(18, 25, 22, 0.2);
+  box-shadow: var(--app-shadow-lg);
 }
 
-:global(.dark) .workspace-frame::after {
+:global(html.dark) .workspace-frame::after {
   background:
-    radial-gradient(circle at top right, rgba(30, 64, 175, 0.12), transparent 26%),
-    linear-gradient(180deg, rgba(148, 163, 184, 0.04), transparent 28%);
+    linear-gradient(180deg, rgba(230, 238, 232, 0.03), transparent 18%),
+    radial-gradient(circle at top right, rgba(131, 170, 165, 0.1), transparent 24%);
 }
 
-:global(.dark) .workspace-frame-mobile {
-  box-shadow:
-    0 18px 42px rgba(2, 6, 23, 0.24),
-    inset 0 1px 0 rgba(148, 163, 184, 0.04);
+:global(html.dark) .workspace-frame-mobile {
+  box-shadow: var(--app-shadow-md);
 }
 
-:global(.dark) .workspace-surface {
-  background: linear-gradient(180deg, rgba(9, 14, 24, 0.72), rgba(15, 23, 42, 0.92));
+:global(html.dark) .workspace-surface {
+  background: linear-gradient(180deg, var(--app-panel), var(--app-panel-strong));
 }
 
-:global(.dark) .backend-status-banner {
-  border-color: rgba(251, 191, 36, 0.2);
-  background: linear-gradient(135deg, rgba(67, 20, 7, 0.92), rgba(88, 28, 10, 0.78));
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+:global(html.dark) .backend-status-banner {
+  border-color: rgba(200, 153, 74, 0.22);
+  background: linear-gradient(135deg, rgba(65, 48, 24, 0.9), rgba(50, 40, 23, 0.8));
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.2);
 }
 
-:global(.dark) .backend-status-eyebrow {
+:global(html.dark) .backend-status-eyebrow {
   color: rgb(253, 186, 116);
 }
 
-:global(.dark) .backend-status-text {
+:global(html.dark) .backend-status-text {
   color: rgba(255, 237, 213, 0.96);
 }
 
-:global(.dark) .backend-status-hint {
+:global(html.dark) .backend-status-hint {
   color: rgba(254, 215, 170, 0.82);
 }
 </style>

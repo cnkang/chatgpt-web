@@ -186,10 +186,11 @@ function handlePress(event: KeyboardEvent) {
 
 .permission-modal__button {
   height: 3rem;
-  border: 0;
+  border: 1px solid var(--app-interactive-border);
   border-radius: 1rem;
-  background: linear-gradient(135deg, rgb(32 90 60), rgb(78 159 106));
-  box-shadow: 0 18px 32px rgba(75, 158, 95, 0.24);
+  background: var(--app-interactive-bg);
+  color: var(--app-interactive-text);
+  box-shadow: var(--app-interactive-shadow);
 }
 
 :global(.dark) .permission-modal {

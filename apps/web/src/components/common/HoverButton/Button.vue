@@ -10,9 +10,15 @@ function handleClick() {
 
 <template>
   <button
-    class="flex items-center justify-center w-10 h-10 transition rounded-full hover:bg-neutral-100 dark:hover:bg-[#414755]"
+    class="hover-button-base app-interactive-surface flex items-center justify-center w-10 h-10 rounded-full"
     @click="handleClick"
   >
     <slot />
   </button>
 </template>
+
+<style scoped>
+.hover-button-base {
+  color: inherit;
+}
+</style>

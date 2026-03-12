@@ -58,7 +58,7 @@ const userInfo = computed(() => userStore.userInfo)
   position: absolute;
   inset: -0.22rem;
   border-radius: 9999px;
-  border: 1px solid rgba(110, 231, 183, 0.28);
+  border: 1px solid rgba(125, 177, 153, 0.22);
   pointer-events: none;
 }
 
@@ -78,8 +78,8 @@ const userInfo = computed(() => userStore.userInfo)
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 9999px;
-  background: rgb(79 159 114);
-  box-shadow: 0 0 0 4px rgba(79, 159, 114, 0.12);
+  background: var(--app-accent);
+  box-shadow: 0 0 0 4px rgba(125, 177, 153, 0.12);
 }
 
 .user-badge__eyebrow {
@@ -87,7 +87,7 @@ const userInfo = computed(() => userStore.userInfo)
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgb(100 116 139);
+  color: var(--app-text-3);
 }
 
 .user-badge__name {
@@ -97,7 +97,7 @@ const userInfo = computed(() => userStore.userInfo)
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: rgb(15 23 42);
+  color: var(--app-text-1);
 }
 
 .user-badge__description {
@@ -106,19 +106,19 @@ const userInfo = computed(() => userStore.userInfo)
   font-size: 0.76rem;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: rgb(100 116 139);
+  color: var(--app-text-3);
 }
 
-:global(.dark) .user-badge__eyebrow,
-:global(.dark) .user-badge__description {
-  color: rgb(148 163 184);
+:global(html.dark) .user-badge__eyebrow,
+:global(html.dark) .user-badge__description {
+  color: var(--app-text-3);
 }
 
-:global(.dark) .user-badge__avatar::after {
-  border-color: rgba(52, 211, 153, 0.22);
+:global(html.dark) .user-badge__avatar::after {
+  border-color: rgba(125, 177, 153, 0.22);
 }
 
-:global(.dark) .user-badge__name {
-  color: rgb(241 245 249);
+:global(html.dark) .user-badge__name {
+  color: var(--app-text-1);
 }
 </style>

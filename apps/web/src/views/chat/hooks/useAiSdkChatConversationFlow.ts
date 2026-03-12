@@ -204,6 +204,25 @@ function toUIMessages(messages: StoredChat[]): UIMessage[] {
   }))
 }
 
+function areUIMessagesEquivalent(current: UIMessage[], next: UIMessage[]) {
+  if (current.length !== next.length) return false
+
+  for (let index = 0; index < current.length; index += 1) {
+    const currentMessage = current[index]
+    const nextMessage = next[index]
+
+    if (
+      currentMessage.id !== nextMessage.id ||
+      currentMessage.role !== nextMessage.role ||
+      getMessageText(currentMessage) !== getMessageText(nextMessage)
+    ) {
+      return false
+    }
+  }
+
+  return true
+}
+
 /**
  * Constructs a configured DefaultChatTransport for the chat API using authentication and app settings.
  *
@@ -447,6 +466,21 @@ export function useAiSdkChatConversationFlow(options: UseAiSdkChatConversationFl
       await scrollToBottomIfAtBottom()
     },
     { deep: true, immediate: true },
+  )
+
+  watch(
+    () => chatStore.getChatByUuid(uuid.value),
+    storedMessages => {
+      const nextMessages = toUIMessages(storedMessages)
+      if (loading.value && nextMessages.length > 0) return
+
+      if (areUIMessagesEquivalent(chat.value.messages, nextMessages)) return
+
+      chat.value.stop()
+      chat.value.clearError()
+      chat.value = createConversationChat(uuid.value, nextMessages, transport)
+    },
+    { deep: true },
   )
 
   watch(uuid, async nextUuid => {

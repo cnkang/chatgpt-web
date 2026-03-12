@@ -104,23 +104,15 @@ watch(
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
-        <div class="flex items-center justify-center p-4">
+        <div class="sider-clear-wrap px-4 pb-4">
           <HoverButton
             :tooltip="t('chat.clearHistoryTooltip')"
-            class="clear-history-btn"
+            class="clear-history-btn w-full"
             @click="handleClearAll"
           >
-            <div class="flex items-center space-x-1.5">
-              <SvgIcon
-                icon="ri:delete-bin-line"
-                class="w-4 h-4 text-gray-400 hover:text-red-400 transition-colors duration-200"
-              />
-              <span
-                v-if="!isMobile && !collapsed"
-                class="text-xs text-gray-500 hover:text-red-500 transition-colors duration-200 font-normal"
-              >
-                {{ t('chat.clearHistory') }}
-              </span>
+            <div class="clear-history-btn__content">
+              <SvgIcon icon="ri:eraser-line" class="clear-history-btn__icon" />
+              <span class="clear-history-btn__text">{{ t('chat.clearHistory') }}</span>
             </div>
           </HoverButton>
         </div>
@@ -160,7 +152,7 @@ watch(
 
 .chat-sider {
   position: relative;
-  background: linear-gradient(180deg, rgba(247, 250, 252, 0.95), rgba(255, 255, 255, 0.92));
+  background: linear-gradient(180deg, var(--app-sidebar), var(--app-panel-strong));
 }
 
 .chat-sider::after {
@@ -170,75 +162,103 @@ watch(
   right: 0;
   bottom: 1rem;
   width: 1px;
-  background: linear-gradient(
-    180deg,
-    rgba(226, 232, 240, 0),
-    rgba(203, 213, 225, 0.95),
-    rgba(226, 232, 240, 0)
-  );
+  background: linear-gradient(180deg, transparent, var(--app-border-strong), transparent);
   pointer-events: none;
 }
 
 .chat-sider-panel-desktop {
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.35);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.22);
 }
 
 .new-chat-button {
   height: 3rem;
-  border: 0;
+  border: 1px solid var(--app-interactive-border);
   border-radius: 1rem;
-  background: linear-gradient(135deg, rgb(32 90 60), rgb(78 159 106));
-  box-shadow: 0 16px 28px rgba(75, 158, 95, 0.22);
+  background: var(--app-interactive-bg);
+  color: var(--app-interactive-text);
+  box-shadow: var(--app-interactive-shadow);
+  --n-text-color: var(--app-text-1);
+  --n-text-color-hover: var(--app-text-1);
+  --n-text-color-pressed: var(--app-text-1);
+  --n-text-color-focus: var(--app-text-1);
 }
 
 .new-chat-button :deep(.n-button__content) {
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: white;
+  color: var(--app-text-1) !important;
 }
 
-.clear-history-btn {
-  opacity: 0.74;
-  transition:
-    opacity 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.72);
+.sider-clear-wrap {
+  border-top: 1px solid var(--app-border-soft);
 }
 
-.clear-history-btn:hover {
-  opacity: 1;
-  border-color: rgba(248, 113, 113, 0.22);
-  background-color: rgba(255, 255, 255, 0.94);
+.clear-history-btn :deep(button) {
+  width: 100%;
+  border: 1px solid var(--app-interactive-border);
+  border-radius: 0.85rem;
+  background: var(--app-interactive-bg);
+  box-shadow: var(--app-interactive-shadow);
+  padding: 0.58rem 0.72rem;
+  color: var(--app-interactive-text);
 }
 
-.dark .clear-history-btn:hover {
-  background-color: rgba(31, 41, 55, 0.82);
+.clear-history-btn__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
 }
 
-:global(.dark) .chat-sider {
-  background: linear-gradient(180deg, rgba(9, 14, 24, 0.96), rgba(15, 23, 42, 0.92));
+.clear-history-btn__icon {
+  color: var(--app-interactive-text);
 }
 
-:global(.dark) .chat-sider::after {
-  background: linear-gradient(
-    180deg,
-    rgba(51, 65, 85, 0),
-    rgba(71, 85, 105, 0.95),
-    rgba(51, 65, 85, 0)
-  );
+.clear-history-btn__text {
+  color: var(--app-text-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-:global(.dark) .new-chat-button {
-  background: linear-gradient(135deg, rgb(26 74 48), rgb(45 125 82));
-  box-shadow: 0 16px 28px rgba(16, 185, 129, 0.16);
+.clear-history-btn :deep(button):hover {
+  border-color: var(--app-interactive-border-hover);
+  background: var(--app-interactive-bg-hover);
+  color: var(--app-interactive-text-hover);
+  box-shadow: var(--app-interactive-shadow-hover);
 }
 
-:global(.dark) .clear-history-btn {
-  border-color: rgba(51, 65, 85, 0.84);
-  background: rgba(15, 23, 42, 0.76);
+.clear-history-btn :deep(button):active {
+  transform: translateY(0);
+  background: var(--app-interactive-bg-active);
+  box-shadow: var(--app-interactive-shadow);
+}
+
+:global(html.dark) .chat-sider {
+  background: linear-gradient(180deg, var(--app-sidebar), var(--app-panel-strong));
+}
+
+:global(html.dark) .chat-sider::after {
+  background: linear-gradient(180deg, transparent, var(--app-border-strong), transparent);
+}
+
+:global(html.dark) .sider-clear-wrap {
+  border-top-color: var(--app-border-soft);
+}
+
+:global(html.dark) .clear-history-btn :deep(button) {
+  border-color: var(--app-interactive-border);
+  background: var(--app-interactive-bg);
+  color: var(--app-interactive-text);
+}
+
+:global(html.dark) .clear-history-btn__icon {
+  color: var(--app-interactive-text);
+}
+
+:global(html.dark) .clear-history-btn :deep(button):hover {
+  border-color: var(--app-interactive-border-hover);
+  background: var(--app-interactive-bg-hover);
+  color: var(--app-interactive-text-hover);
+  box-shadow: var(--app-interactive-shadow-hover);
 }
 </style>

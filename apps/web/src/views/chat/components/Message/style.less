@@ -1,9 +1,40 @@
 .markdown-body {
   background-color: transparent;
-  font-size: 14px;
+  color: inherit;
+  font-size: inherit;
+  line-height: var(--app-reading-line-height);
+  letter-spacing: var(--app-reading-letter-spacing);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+
+  p,
+  li,
+  blockquote {
+    line-height: inherit;
+  }
 
   p {
     white-space: pre-wrap;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: inherit;
+    line-height: 1.36;
+  }
+
+  a {
+    color: var(--app-markdown-link);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 0.16em;
+
+    &:hover {
+      color: var(--app-markdown-link-hover);
+    }
   }
 
   ol {
@@ -14,18 +45,57 @@
     list-style-type: disc;
   }
 
+  code,
+  tt {
+    color: var(--app-markdown-inline-code-text);
+    background-color: var(--app-markdown-inline-code-bg);
+    border: 1px solid var(--app-markdown-inline-code-border);
+    border-radius: 0.45rem;
+    padding: 0.08em 0.4em;
+  }
+
   pre code,
   pre tt {
-    line-height: 1.65;
+    line-height: 1.62;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
   }
 
   .highlight pre,
   pre {
-    background-color: #fff;
+    background-color: var(--app-markdown-code-bg);
+    border: 1px solid var(--app-markdown-code-border);
+    border-radius: 0.9rem;
   }
 
   code.hljs {
     padding: 0;
+    background: transparent;
+    border: 0;
+  }
+
+  blockquote {
+    color: var(--app-text-2);
+    background: var(--app-markdown-quote-bg);
+    border-left-color: var(--app-markdown-quote-border);
+    border-radius: 0.72rem;
+    padding: 0.42rem 0.84rem;
+  }
+
+  table th {
+    background: var(--app-markdown-table-header-bg);
+  }
+
+  table tr:nth-child(2n) {
+    background: var(--app-markdown-table-row-even-bg);
+  }
+
+  table td,
+  table th {
+    border-color: var(--app-markdown-code-border);
   }
 
   .code-block {
@@ -43,15 +113,16 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      color: #b3b3b3;
+      color: var(--app-text-3);
 
       &__copy {
         cursor: pointer;
         margin-left: 0.5rem;
         user-select: none;
+        transition: color 0.2s ease;
 
         &:hover {
-          color: #65a665;
+          color: var(--app-accent);
         }
       }
     }
@@ -60,10 +131,10 @@
   // Mermaid
   div[id^='mermaid-container'] {
     padding: 4px;
-    border-radius: 4px;
+    border-radius: 0.75rem;
     overflow-x: auto !important;
-    background-color: #fff;
-    border: 1px solid #e5e5e5;
+    background-color: var(--app-markdown-mermaid-bg);
+    border: 1px solid var(--app-markdown-mermaid-border);
   }
 
   &.markdown-body-generate > dd:last-child:after,
@@ -82,7 +153,7 @@
   &.markdown-body-generate > td:last-child:after,
   &.markdown-body-generate > ul:last-child li:last-child:after {
     animation: blink 1s steps(5, start) infinite;
-    color: #000;
+    color: var(--app-markdown-cursor);
     content: '_';
     font-weight: 700;
     margin-left: 3px;
@@ -113,20 +184,15 @@ html.dark {
     &.markdown-body-generate > pre:last-child code:after,
     &.markdown-body-generate > td:last-child:after,
     &.markdown-body-generate > ul:last-child li:last-child:after {
-      color: #65a665;
+      color: var(--app-markdown-cursor);
     }
   }
 
   .message-reply {
     .whitespace-pre-wrap {
       white-space: pre-wrap;
-      color: var(--n-text-color);
+      color: var(--app-bubble-assistant-text);
     }
-  }
-
-  .highlight pre,
-  pre {
-    background-color: #282c34;
   }
 }
 
