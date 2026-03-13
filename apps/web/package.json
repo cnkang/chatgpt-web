@@ -35,7 +35,7 @@
     "ai": "^6.0.116",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.38",
-    "markstream-vue": "0.0.7",
+    "markstream-vue": "0.0.8",
     "mermaid": "^11.13.0",
     "naive-ui": "^2.44.1",
     "pinia": "^3.0.4",
