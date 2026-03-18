@@ -109,8 +109,8 @@ importers:
         specifier: ^0.16.38
         version: 0.16.38
       markstream-vue:
-        specifier: 0.0.8
-        version: 0.0.8(katex@0.16.38)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.30(typescript@5.9.3)))(vue@3.5.30(typescript@5.9.3))
+        specifier: 0.0.9
+        version: 0.0.9(katex@0.16.38)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.30(typescript@5.9.3)))(vue@3.5.30(typescript@5.9.3))
       mermaid:
         specifier: ^11.13.0
         version: 11.13.0
@@ -2433,8 +2433,8 @@ packages:
   markdown-it-task-checkbox@1.0.6:
     resolution: {integrity: sha512-7pxkHuvqTOu3iwVGmDPeYjQg+AIS9VQxzyLP9JCg9lBjgPAJXGEkChK6A2iFuj3tS0GV3HG2u5AMNhcQqwxpJw==}
 
-  markdown-it-ts@0.0.5:
-    resolution: {integrity: sha512-co2cRRjr6GkxKL04oEF/1ABWogdF2daTpNvFAOqXjsdtoAOnrEMDwlAgh05s4I0HLHPuwEiYl/5AsOmgnOEpKg==}
+  markdown-it-ts@0.0.7:
+    resolution: {integrity: sha512-XMQ0IcUQeK/dR7vIZGhtk20MAr2jMtdbNgS/cGfl1WjBE1rprodZja6jwk/PTN+rnsVd8mD4fe8wPcUPavHr3Q==}
     engines: {node: '>=18'}
 
   markdown-it@14.1.1:
@@ -2460,8 +2460,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  markstream-vue@0.0.8:
-    resolution: {integrity: sha512-wiIdhSm072G54i31pl+fzysi7CQJgVwY9sR0A1k53x8kIEd/ViPVz5898hmitCE//taOMaU9anb/BrO+/qG0Ow==}
+  markstream-vue@0.0.9:
+    resolution: {integrity: sha512-yIh/qlXJ0DCobBd07oiFnzlWW2T6sADCL46H7v0Fram7lhamzAezXXF1sIbsRkGmqRqdWngpzgdZkEtuRrOnSw==}
     peerDependencies:
       '@antv/infographic': ^0.2.3
       '@terrastruct/d2': '>=0.1.33'
@@ -2469,7 +2469,7 @@ packages:
       mermaid: '>=11'
       shiki: ^3.13.0
       stream-markdown: '>=0.0.14'
-      stream-monaco: '>=0.0.18'
+      stream-monaco: '>=0.0.20'
       vue: '>=3.0.0'
       vue-i18n: '>=9'
     peerDependenciesMeta:
@@ -2913,8 +2913,8 @@ packages:
   std-env@4.0.0:
     resolution: {integrity: sha512-zUMPtQ/HBY3/50VbpkupYHbRroTRZJPRLvreamgErJVys0ceuzMkD44J/QjqhHjOzK42GQ3QZIeFG1OYfOtKqQ==}
 
-  stream-markdown-parser@0.0.68:
-    resolution: {integrity: sha512-DxU4n+6n8HjHgmKH3leOYf+U7SjiUj3Tm0w1bHa1NFsMAXsX9VDP5++727/A3SIO+E00KSSQ20Ik1jFXPej5qw==}
+  stream-markdown-parser@0.0.72:
+    resolution: {integrity: sha512-I+mbNyg0WZN7cxyia6/XavEWL1pA78qvYqfTEK01cSyN6WaKAVT8H7tn+8hX/C+L1jXTf1jUqPopqz8FAz+peQ==}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -5508,7 +5508,7 @@ snapshots:
 
   markdown-it-task-checkbox@1.0.6: {}
 
-  markdown-it-ts@0.0.5:
+  markdown-it-ts@0.0.7:
     dependencies:
       entities: 4.5.0
       linkify-it: 5.0.0
@@ -5557,10 +5557,10 @@ snapshots:
 
   marked@16.4.2: {}
 
-  markstream-vue@0.0.8(katex@0.16.38)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.30(typescript@5.9.3)))(vue@3.5.30(typescript@5.9.3)):
+  markstream-vue@0.0.9(katex@0.16.38)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.30(typescript@5.9.3)))(vue@3.5.30(typescript@5.9.3)):
     dependencies:
       '@floating-ui/dom': 1.7.6
-      stream-markdown-parser: 0.0.68
+      stream-markdown-parser: 0.0.72
       vue: 3.5.30(typescript@5.9.3)
     optionalDependencies:
       katex: 0.16.38
@@ -6107,7 +6107,7 @@ snapshots:
 
   std-env@4.0.0: {}
 
-  stream-markdown-parser@0.0.68:
+  stream-markdown-parser@0.0.72:
     dependencies:
       markdown-it-container: 4.0.0
       markdown-it-footnote: 4.0.0
@@ -6116,7 +6116,7 @@ snapshots:
       markdown-it-sub: 2.0.0
       markdown-it-sup: 2.0.0
       markdown-it-task-checkbox: 1.0.6
-      markdown-it-ts: 0.0.5
+      markdown-it-ts: 0.0.7
 
   string-argv@0.3.2: {}
 
