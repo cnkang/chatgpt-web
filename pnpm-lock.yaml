@@ -42,8 +42,8 @@ importers:
         specifier: ^3.0.49
         version: 3.0.49(zod@4.3.6)
       '@ai-sdk/openai':
-        specifier: ^3.0.47
-        version: 3.0.47(zod@4.3.6)
+        specifier: ^3.0.48
+        version: 3.0.48(zod@4.3.6)
       '@chatgpt-web/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -218,20 +218,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/gateway@3.0.77':
-    resolution: {integrity: sha512-UdwIG2H2YMuntJQ5L+EmED5XiwnlvDT3HOmKfVFxR4Nq/RSLFA/HcchhwfNXHZ5UJjyuL2VO0huLbWSZ9ijemQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
   '@ai-sdk/gateway@3.0.78':
     resolution: {integrity: sha512-wqfkgOyqWKKxGL47k8biYcm5i5ZHXjs58ZiQUroDoIcu158EpCZa2qDxdcmeLHDMzx7Pu5Ei/JUmA7OrZ5d8xA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai@3.0.47':
-    resolution: {integrity: sha512-bRsb2sDN5u+pKO3Kdr0flpxtL+cPwQ2uCo/pVyzIbj2I4AkKAokJHhw5JWLVOeEwdlYzWfmv+hzaiGarzUcTFQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1578,12 +1566,6 @@ packages:
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
-
-  ai@6.0.134:
-    resolution: {integrity: sha512-YalNEaavld/kE444gOcsMKXdVVRGEe0SK77fAFcWYcqLg+a7xKnEet8bdfrEAJTfnMjj01rhgrIL10903w1a5Q==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
 
   ai@6.0.136:
     resolution: {integrity: sha512-cStC2i6FzQxHj9yVShcxq14yxP6Mbhp2kAheQTFvbIFd6hsn+izW7WrWW+AUH0Ek8Er8WImNkoYVDQ5Vy+rBjQ==}
@@ -3457,24 +3439,11 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
       zod: 4.3.6
 
-  '@ai-sdk/gateway@3.0.77(zod@4.3.6)':
-    dependencies:
-      '@ai-sdk/provider': 3.0.8
-      '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
-      '@vercel/oidc': 3.1.0
-      zod: 4.3.6
-
   '@ai-sdk/gateway@3.0.78(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
       '@vercel/oidc': 3.1.0
-      zod: 4.3.6
-
-  '@ai-sdk/openai@3.0.47(zod@4.3.6)':
-    dependencies:
-      '@ai-sdk/provider': 3.0.8
-      '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
       zod: 4.3.6
 
   '@ai-sdk/openai@3.0.48(zod@4.3.6)':
@@ -4612,14 +4581,6 @@ snapshots:
 
   agent-base@7.1.4:
     optional: true
-
-  ai@6.0.134(zod@4.3.6):
-    dependencies:
-      '@ai-sdk/gateway': 3.0.77(zod@4.3.6)
-      '@ai-sdk/provider': 3.0.8
-      '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
-      '@opentelemetry/api': 1.9.0
-      zod: 4.3.6
 
   ai@6.0.136(zod@4.3.6):
     dependencies:
