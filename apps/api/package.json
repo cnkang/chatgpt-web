@@ -49,7 +49,7 @@
     "@ai-sdk/azure": "^3.0.48",
     "@ai-sdk/openai": "^3.0.47",
     "@chatgpt-web/shared": "workspace:*",
-    "ai": "^6.0.134",
+    "ai": "^6.0.136",
     "openai": "^6.32.0",
     "redis": "^5.11.0",
     "zod": "^4.3.6"
