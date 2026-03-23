@@ -88,8 +88,8 @@ importers:
   apps/web:
     dependencies:
       '@ai-sdk/vue':
-        specifier: ^3.0.134
-        version: 3.0.134(vue@3.5.30(typescript@5.9.3))(zod@4.3.6)
+        specifier: ^3.0.136
+        version: 3.0.136(vue@3.5.30(typescript@5.9.3))(zod@4.3.6)
       '@chatgpt-web/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -252,8 +252,8 @@ packages:
     resolution: {integrity: sha512-oGMAgGoQdBXbZqNG0Ze56CHjDZ1IDYOwGYxYjO5KLSlz5HiNQ9udIXsPZ61VWaHGZ5XW/jyjmr6t2xz2jGVwbQ==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/vue@3.0.134':
-    resolution: {integrity: sha512-K6cMlSLTU65p1vrzR8A0iXJqW0hU5VEoMtKk8zrIelnoXQxh1my3XM8qkZ1wPKsOIFJGqFVSkC2qsavyLkoDgQ==}
+  '@ai-sdk/vue@3.0.136':
+    resolution: {integrity: sha512-MxU0ozulnGpGXtY5wsgTSuVdTdbQlMHE0GexmgIc16tVyTClDArslEWUms7FTlJBiWMERALxvoSLHbjlocl3BA==}
     engines: {node: '>=18'}
     peerDependencies:
       vue: ^3.3.4
@@ -2991,8 +2991,8 @@ packages:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
 
-  swrv@1.1.0:
-    resolution: {integrity: sha512-pjllRDr2s0iTwiE5Isvip51dZGR7GjLH1gCSVyE8bQnbAx6xackXsFdojau+1O5u98yHF5V73HQGOFxKUXO9gQ==}
+  swrv@1.2.0:
+    resolution: {integrity: sha512-lH/g4UcNyj+7lzK4eRGT4C68Q4EhQ6JtM9otPRIASfhhzfLWtbZPHcMuhuba7S9YVYuxkMUGImwMyGpfbkH07A==}
     peerDependencies:
       vue: '>=3.2.26 < 4'
 
@@ -3494,11 +3494,11 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/vue@3.0.134(vue@3.5.30(typescript@5.9.3))(zod@4.3.6)':
+  '@ai-sdk/vue@3.0.136(vue@3.5.30(typescript@5.9.3))(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
-      ai: 6.0.134(zod@4.3.6)
-      swrv: 1.1.0(vue@3.5.30(typescript@5.9.3))
+      ai: 6.0.136(zod@4.3.6)
+      swrv: 1.2.0(vue@3.5.30(typescript@5.9.3))
       vue: 3.5.30(typescript@5.9.3)
     transitivePeerDependencies:
       - zod
@@ -6192,7 +6192,7 @@ snapshots:
     dependencies:
       has-flag: 4.0.0
 
-  swrv@1.1.0(vue@3.5.30(typescript@5.9.3)):
+  swrv@1.2.0(vue@3.5.30(typescript@5.9.3)):
     dependencies:
       vue: 3.5.30(typescript@5.9.3)
 
