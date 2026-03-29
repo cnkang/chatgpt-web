@@ -106,11 +106,11 @@ importers:
         specifier: ^1.11.13
         version: 1.11.13
       katex:
-        specifier: ^0.16.43
-        version: 0.16.43
+        specifier: ^0.16.44
+        version: 0.16.44
       markstream-vue:
         specifier: 0.0.9
-        version: 0.0.9(katex@0.16.43)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@5.9.3)))(vue@3.5.31(typescript@5.9.3))
+        version: 0.0.9(katex@0.16.44)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@5.9.3)))(vue@3.5.31(typescript@5.9.3))
       mermaid:
         specifier: ^11.13.0
         version: 11.13.0
@@ -396,8 +396,8 @@ packages:
     peerDependencies:
       '@csstools/css-tokenizer': ^4.0.0
 
-  '@csstools/css-syntax-patches-for-csstree@1.1.1':
-    resolution: {integrity: sha512-BvqN0AMWNAnLk9G8jnUT77D+mUbY/H2b3uDTvg2isJkHaOufUE2R3AOwxWo7VBQKT1lOdwdvorddo2B/lk64+w==}
+  '@csstools/css-syntax-patches-for-csstree@1.1.2':
+    resolution: {integrity: sha512-5GkLzz4prTIpoyeUiIu3iV6CSG3Plo7xRVOFPKI7FVEJ3mZ0A8SwK0XU3Gl7xAkiQ+mDyam+NNp875/C5y+jSA==}
     peerDependencies:
       css-tree: ^3.2.1
     peerDependenciesMeta:
@@ -2255,8 +2255,8 @@ packages:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
 
-  katex@0.16.43:
-    resolution: {integrity: sha512-K7NL5JtGrFEglipOAjY4UYA69CnTuNmjArxeXF6+bw7h2OGySUPv6QWRjfb1gmutJ4Mw/qLeBqiROOEDULp4nA==}
+  katex@0.16.44:
+    resolution: {integrity: sha512-EkxoDTk8ufHqHlf9QxGwcxeLkWRR3iOuYfRpfORgYfqc8s13bgb+YtRY59NK5ZpRaCwq1kqA6a5lpX8C/eLphQ==}
     hasBin: true
 
   khroma@2.1.0:
@@ -3585,7 +3585,7 @@ snapshots:
       '@csstools/css-tokenizer': 4.0.0
     optional: true
 
-  '@csstools/css-syntax-patches-for-csstree@1.1.1(css-tree@3.2.1)':
+  '@csstools/css-syntax-patches-for-csstree@1.1.2(css-tree@3.2.1)':
     optionalDependencies:
       css-tree: 3.2.1
     optional: true
@@ -4724,7 +4724,7 @@ snapshots:
   cssstyle@5.3.7:
     dependencies:
       '@asamuzakjp/css-color': 4.1.2
-      '@csstools/css-syntax-patches-for-csstree': 1.1.1(css-tree@3.2.1)
+      '@csstools/css-syntax-patches-for-csstree': 1.1.2(css-tree@3.2.1)
       css-tree: 3.2.1
       lru-cache: 11.2.7
     optional: true
@@ -5281,7 +5281,7 @@ snapshots:
 
   jsonpointer@5.0.1: {}
 
-  katex@0.16.43:
+  katex@0.16.44:
     dependencies:
       commander: 8.3.0
 
@@ -5509,13 +5509,13 @@ snapshots:
 
   marked@16.4.2: {}
 
-  markstream-vue@0.0.9(katex@0.16.43)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@5.9.3)))(vue@3.5.31(typescript@5.9.3)):
+  markstream-vue@0.0.9(katex@0.16.44)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@5.9.3)))(vue@3.5.31(typescript@5.9.3)):
     dependencies:
       '@floating-ui/dom': 1.7.6
       stream-markdown-parser: 0.0.72
       vue: 3.5.31(typescript@5.9.3)
     optionalDependencies:
-      katex: 0.16.43
+      katex: 0.16.44
       mermaid: 11.13.0
       vue-i18n: 11.3.0(vue@3.5.31(typescript@5.9.3))
 
@@ -5541,7 +5541,7 @@ snapshots:
       dagre-d3-es: 7.0.14
       dayjs: 1.11.19
       dompurify: 3.3.2
-      katex: 0.16.43
+      katex: 0.16.44
       khroma: 2.1.0
       lodash-es: 4.17.23
       marked: 16.4.2
@@ -5609,7 +5609,7 @@ snapshots:
     dependencies:
       '@types/katex': 0.16.8
       devlop: 1.1.0
-      katex: 0.16.43
+      katex: 0.16.44
       micromark-factory-space: 2.0.1
       micromark-util-character: 2.1.1
       micromark-util-symbol: 2.0.1
