@@ -50,6 +50,6 @@
   "devDependencies": {
     "fast-check": "^4.6.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }

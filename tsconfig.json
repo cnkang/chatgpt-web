@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "types": ["vite/client", "node", "naive-ui/volar"],
     "strict": true,
+    "ignoreDeprecations": "6.0",
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true,
