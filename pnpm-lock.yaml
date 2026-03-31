@@ -108,8 +108,8 @@ importers:
         specifier: ^0.16.44
         version: 0.16.44
       markstream-vue:
-        specifier: 0.0.10-beta.4
-        version: 0.0.10-beta.4(katex@0.16.44)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2))
+        specifier: 0.0.10-beta.5
+        version: 0.0.10-beta.5(katex@0.16.44)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2))
       mermaid:
         specifier: ^11.13.0
         version: 11.13.0
@@ -341,6 +341,9 @@ packages:
 
   '@braintree/sanitize-url@7.1.2':
     resolution: {integrity: sha512-jigsZK+sMF/cuiB7sERuo9V7N9jx+dhmHHnQyDSVdpZwVutaBu7WvNYqMDLSgFgfB30n452TP3vjDAvFC973mA==}
+
+  '@chenglou/pretext@0.0.3':
+    resolution: {integrity: sha512-RQmqMqUAPRCyv4R3LlRi/ao6KbNWYclqLA+V1HS7sWgyUUbjn3JmmlfXZSY/BjM4rbmIaMSyIVisYocYGYftiQ==}
 
   '@chevrotain/cst-dts-gen@11.1.1':
     resolution: {integrity: sha512-fRHyv6/f542qQqiRGalrfJl/evD39mAvbJLCekPazhiextEatq1Jx1K/i9gSd5NNO0ds03ek0Cbo/4uVKmOBcw==}
@@ -2368,8 +2371,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  markstream-vue@0.0.10-beta.4:
-    resolution: {integrity: sha512-KTNGep9+lfnOP86yoeHvHg5mHvk3gtf9Auxho+/5pGdrg3CeI2HeCfKY7ba4fWjAHftsyz5u7BKDmwseltea6Q==}
+  markstream-vue@0.0.10-beta.5:
+    resolution: {integrity: sha512-AdBFplSri6XuRRjcYzkiI435IppkUbwXnzNTfUqnJWMFbaxmBhkETG+LOR/zOjyhe5KJshnyB8frDfpKsUFT/g==}
     hasBin: true
     peerDependencies:
       '@antv/infographic': ^0.2.3
@@ -2804,8 +2807,8 @@ packages:
   std-env@4.0.0:
     resolution: {integrity: sha512-zUMPtQ/HBY3/50VbpkupYHbRroTRZJPRLvreamgErJVys0ceuzMkD44J/QjqhHjOzK42GQ3QZIeFG1OYfOtKqQ==}
 
-  stream-markdown-parser@0.0.79:
-    resolution: {integrity: sha512-gL5WXoZJrCT33RwfUyh6d7+jnsErJlyI98sPey8eFLnVMY+qku8pcJrBKjMzcp6I3XSVY7CR+J7nr2vn3mo/PA==}
+  stream-markdown-parser@0.0.80:
+    resolution: {integrity: sha512-ebqCiAgrJ6CAhSy0BB521AxY9JA4cazPYniCC8ASJjxMr2qQZxGqTMPL9buhHIW44jLruA8vxN3TjVqWFsajNg==}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -3329,6 +3332,8 @@ snapshots:
     optional: true
 
   '@braintree/sanitize-url@7.1.2': {}
+
+  '@chenglou/pretext@0.0.3': {}
 
   '@chevrotain/cst-dts-gen@11.1.1':
     dependencies:
@@ -5186,10 +5191,11 @@ snapshots:
 
   marked@16.4.2: {}
 
-  markstream-vue@0.0.10-beta.4(katex@0.16.44)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2)):
+  markstream-vue@0.0.10-beta.5(katex@0.16.44)(mermaid@11.13.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2)):
     dependencies:
+      '@chenglou/pretext': 0.0.3
       '@floating-ui/dom': 1.7.6
-      stream-markdown-parser: 0.0.79
+      stream-markdown-parser: 0.0.80
       vue: 3.5.31(typescript@6.0.2)
     optionalDependencies:
       katex: 0.16.44
@@ -5728,7 +5734,7 @@ snapshots:
 
   std-env@4.0.0: {}
 
-  stream-markdown-parser@0.0.79:
+  stream-markdown-parser@0.0.80:
     dependencies:
       markdown-it-container: 4.0.0
       markdown-it-footnote: 4.0.0
