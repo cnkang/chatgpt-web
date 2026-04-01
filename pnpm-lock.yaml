@@ -108,8 +108,8 @@ importers:
         specifier: ^0.16.44
         version: 0.16.44
       markstream-vue:
-        specifier: 0.0.10-beta.5
-        version: 0.0.10-beta.5(katex@0.16.44)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2))
+        specifier: 0.0.10
+        version: 0.0.10(katex@0.16.44)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2))
       mermaid:
         specifier: ^11.14.0
         version: 11.14.0
@@ -2373,8 +2373,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  markstream-vue@0.0.10-beta.5:
-    resolution: {integrity: sha512-AdBFplSri6XuRRjcYzkiI435IppkUbwXnzNTfUqnJWMFbaxmBhkETG+LOR/zOjyhe5KJshnyB8frDfpKsUFT/g==}
+  markstream-vue@0.0.10:
+    resolution: {integrity: sha512-CdsCiPPdHO0EApeFMN68U/isu+9iKg6tBibnpr1WbMQysKiC9dZmHhCZs3jocT1Q1qXV3Iat9kKddwEV+wFjgQ==}
     hasBin: true
     peerDependencies:
       '@antv/infographic': ^0.2.3
@@ -2382,8 +2382,8 @@ packages:
       katex: '>=0.16.22'
       mermaid: '>=11'
       shiki: ^3.13.0
-      stream-markdown: '>=0.0.14'
-      stream-monaco: '>=0.0.20'
+      stream-markdown: '>=0.0.15'
+      stream-monaco: '>=0.0.21'
       vue: '>=3.0.0'
       vue-i18n: '>=9'
     peerDependenciesMeta:
@@ -2812,8 +2812,8 @@ packages:
   std-env@4.0.0:
     resolution: {integrity: sha512-zUMPtQ/HBY3/50VbpkupYHbRroTRZJPRLvreamgErJVys0ceuzMkD44J/QjqhHjOzK42GQ3QZIeFG1OYfOtKqQ==}
 
-  stream-markdown-parser@0.0.80:
-    resolution: {integrity: sha512-ebqCiAgrJ6CAhSy0BB521AxY9JA4cazPYniCC8ASJjxMr2qQZxGqTMPL9buhHIW44jLruA8vxN3TjVqWFsajNg==}
+  stream-markdown-parser@0.0.81:
+    resolution: {integrity: sha512-fktDhGLmTVVAuuMMi2Ishx1TKYDPtLqHay5NOkiVHx85JpRxm6z/YuLRxTTmpMzWAZgBk+oOfAhk7FDCQX2DxA==}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -5198,11 +5198,11 @@ snapshots:
 
   marked@16.4.2: {}
 
-  markstream-vue@0.0.10-beta.5(katex@0.16.44)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2)):
+  markstream-vue@0.0.10(katex@0.16.44)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.31(typescript@6.0.2)))(vue@3.5.31(typescript@6.0.2)):
     dependencies:
       '@chenglou/pretext': 0.0.3
       '@floating-ui/dom': 1.7.6
-      stream-markdown-parser: 0.0.80
+      stream-markdown-parser: 0.0.81
       vue: 3.5.31(typescript@6.0.2)
     optionalDependencies:
       katex: 0.16.44
@@ -5748,7 +5748,7 @@ snapshots:
 
   std-env@4.0.0: {}
 
-  stream-markdown-parser@0.0.80:
+  stream-markdown-parser@0.0.81:
     dependencies:
       markdown-it-container: 4.0.0
       markdown-it-footnote: 4.0.0
