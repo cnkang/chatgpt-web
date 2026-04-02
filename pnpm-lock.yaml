@@ -53,8 +53,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/shared
       ai:
-        specifier: ^6.0.142
-        version: 6.0.142(zod@4.3.6)
+        specifier: ^6.0.143
+        version: 6.0.143(zod@4.3.6)
       openai:
         specifier: ^6.33.0
         version: 6.33.0(ws@8.20.0)(zod@4.3.6)
@@ -99,8 +99,8 @@ importers:
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.31(typescript@6.0.2))
       ai:
-        specifier: ^6.0.142
-        version: 6.0.142(zod@4.3.6)
+        specifier: ^6.0.143
+        version: 6.0.143(zod@4.3.6)
       html-to-image:
         specifier: ^1.11.13
         version: 1.11.13
