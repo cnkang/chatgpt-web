@@ -53,8 +53,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/shared
       ai:
-        specifier: ^6.0.143
-        version: 6.0.143(zod@4.3.6)
+        specifier: ^6.0.146
+        version: 6.0.146(zod@4.3.6)
       openai:
         specifier: ^6.33.0
         version: 6.33.0(ws@8.20.0)(zod@4.3.6)
@@ -99,8 +99,8 @@ importers:
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
       ai:
-        specifier: ^6.0.143
-        version: 6.0.143(zod@4.3.6)
+        specifier: ^6.0.146
+        version: 6.0.146(zod@4.3.6)
       html-to-image:
         specifier: ^1.11.13
         version: 1.11.13
@@ -219,6 +219,12 @@ packages:
 
   '@ai-sdk/gateway@3.0.85':
     resolution: {integrity: sha512-oPvs3bYnxndBY/O0gFSFuc5aA/QKCJbk/CaJaRnKgA/ZPH17jeVvEtiUBE6/N8hWhK7XgX53NFI7F3CGmDfm1g==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/gateway@3.0.88':
+    resolution: {integrity: sha512-AFoj7xdWAtCQcy0jJ235ENSakYM8D28qBX+rB+/rX4r8qe/LXgl0e5UivOqxAlIM5E9jnQdYxIPuj3XFtGk/yg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1522,6 +1528,12 @@ packages:
 
   ai@6.0.143:
     resolution: {integrity: sha512-wVDb7StQ1EPQ9GDAOmi1AsuAXQRSii+zZT2sFK+MCisH4vV7XNEAdzXL+sKsUAFhhq+EtVFWWlB4mCk4hcoIMw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  ai@6.0.146:
+    resolution: {integrity: sha512-70DE8k1rR0N3mXxyyfjYAx/FxRln/kQ5ym18lt1ys1eUklcPuoIXGbUBwdfCbmkt6YF3jCDZ5+OgkWieP/NGDw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -3238,6 +3250,13 @@ snapshots:
       '@vercel/oidc': 3.1.0
       zod: 4.3.6
 
+  '@ai-sdk/gateway@3.0.88(zod@4.3.6)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.8
+      '@ai-sdk/provider-utils': 4.0.22(zod@4.3.6)
+      '@vercel/oidc': 3.1.0
+      zod: 4.3.6
+
   '@ai-sdk/openai@3.0.49(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 3.0.8
@@ -4311,6 +4330,14 @@ snapshots:
       '@ai-sdk/gateway': 3.0.85(zod@4.3.6)
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.21(zod@4.3.6)
+      '@opentelemetry/api': 1.9.0
+      zod: 4.3.6
+
+  ai@6.0.146(zod@4.3.6):
+    dependencies:
+      '@ai-sdk/gateway': 3.0.88(zod@4.3.6)
+      '@ai-sdk/provider': 3.0.8
+      '@ai-sdk/provider-utils': 4.0.22(zod@4.3.6)
       '@opentelemetry/api': 1.9.0
       zod: 4.3.6
 
