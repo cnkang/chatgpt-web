@@ -105,11 +105,11 @@ importers:
         specifier: ^1.11.13
         version: 1.11.13
       katex:
-        specifier: ^0.16.44
-        version: 0.16.44
+        specifier: ^0.16.45
+        version: 0.16.45
       markstream-vue:
         specifier: 0.0.10
-        version: 0.0.10(katex@0.16.44)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2))
+        version: 0.0.10(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2))
       mermaid:
         specifier: ^11.14.0
         version: 11.14.0
@@ -2186,8 +2186,8 @@ packages:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
 
-  katex@0.16.44:
-    resolution: {integrity: sha512-EkxoDTk8ufHqHlf9QxGwcxeLkWRR3iOuYfRpfORgYfqc8s13bgb+YtRY59NK5ZpRaCwq1kqA6a5lpX8C/eLphQ==}
+  katex@0.16.45:
+    resolution: {integrity: sha512-pQpZbdBu7wCTmQUh7ufPmLr0pFoObnGUoL/yhtwJDgmmQpbkg/0HSVti25Fu4rmd1oCR6NGWe9vqTWuWv3GcNA==}
     hasBin: true
 
   khroma@2.1.0:
@@ -5013,7 +5013,7 @@ snapshots:
 
   jsonpointer@5.0.1: {}
 
-  katex@0.16.44:
+  katex@0.16.45:
     dependencies:
       commander: 8.3.0
 
@@ -5223,14 +5223,14 @@ snapshots:
 
   marked@16.4.2: {}
 
-  markstream-vue@0.0.10(katex@0.16.44)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2)):
+  markstream-vue@0.0.10(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.3.0(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2)):
     dependencies:
       '@chenglou/pretext': 0.0.3
       '@floating-ui/dom': 1.7.6
       stream-markdown-parser: 0.0.81
       vue: 3.5.32(typescript@6.0.2)
     optionalDependencies:
-      katex: 0.16.44
+      katex: 0.16.45
       mermaid: 11.14.0
       vue-i18n: 11.3.0(vue@3.5.32(typescript@6.0.2))
 
@@ -5256,7 +5256,7 @@ snapshots:
       dagre-d3-es: 7.0.14
       dayjs: 1.11.20
       dompurify: 3.3.3
-      katex: 0.16.44
+      katex: 0.16.45
       khroma: 2.1.0
       lodash-es: 4.18.1
       marked: 16.4.2
@@ -5324,7 +5324,7 @@ snapshots:
     dependencies:
       '@types/katex': 0.16.8
       devlop: 1.1.0
-      katex: 0.16.44
+      katex: 0.16.45
       micromark-factory-space: 2.0.1
       micromark-util-character: 2.1.1
       micromark-util-symbol: 2.0.1
