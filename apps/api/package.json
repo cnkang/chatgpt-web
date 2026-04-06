@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@ai-sdk/azure": "^3.0.51",
-    "@ai-sdk/openai": "^3.0.50",
+    "@ai-sdk/openai": "^3.0.51",
     "@chatgpt-web/shared": "workspace:*",
     "ai": "^6.0.146",
     "openai": "^6.33.0",
