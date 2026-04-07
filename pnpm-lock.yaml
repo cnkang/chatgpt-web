@@ -108,8 +108,8 @@ importers:
         specifier: ^0.16.45
         version: 0.16.45
       markstream-vue:
-        specifier: 0.0.10
-        version: 0.0.10(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.3.1(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2))
+        specifier: 0.0.11
+        version: 0.0.11(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.3.1(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2))
       mermaid:
         specifier: ^11.14.0
         version: 11.14.0
@@ -2423,8 +2423,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  markstream-vue@0.0.10:
-    resolution: {integrity: sha512-CdsCiPPdHO0EApeFMN68U/isu+9iKg6tBibnpr1WbMQysKiC9dZmHhCZs3jocT1Q1qXV3Iat9kKddwEV+wFjgQ==}
+  markstream-vue@0.0.11:
+    resolution: {integrity: sha512-zN2sDT+OSVqBEQbbbaiMdMcXNFPWCZ1RWn8xIAw6jbxlknPLCZd6EGO0iy/TJ1UwtogjkqhL5W9tooFUZMurMQ==}
     hasBin: true
     peerDependencies:
       '@antv/infographic': ^0.2.3
@@ -5370,7 +5370,7 @@ snapshots:
 
   marked@16.4.2: {}
 
-  markstream-vue@0.0.10(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.3.1(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2)):
+  markstream-vue@0.0.11(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.3.1(vue@3.5.32(typescript@6.0.2)))(vue@3.5.32(typescript@6.0.2)):
     dependencies:
       '@chenglou/pretext': 0.0.3
       '@floating-ui/dom': 1.7.6
