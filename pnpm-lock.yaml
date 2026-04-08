@@ -47,8 +47,8 @@ importers:
         specifier: ^3.0.53
         version: 3.0.53(zod@4.3.6)
       '@ai-sdk/openai':
-        specifier: ^3.0.51
-        version: 3.0.51(zod@4.3.6)
+        specifier: ^3.0.52
+        version: 3.0.52(zod@4.3.6)
       '@chatgpt-web/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -225,12 +225,6 @@ packages:
 
   '@ai-sdk/gateway@3.0.94':
     resolution: {integrity: sha512-uDDwLZhCkvC89crVS3S90D5L7AcVN8WriGuYVNYgVAaVcvy3Mthy3R9ICfzG75BObhz6pm2FWnhxDfNRK+t69Q==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai@3.0.51':
-    resolution: {integrity: sha512-qBgDOC+vlXwLFbZ3UoKx3T8VFyul3K39JNyW6E4XnOnzLT4Mlhb0GeDC06RvYqwGWOQFBQNLe/vegOMVtNpl5g==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -3332,12 +3326,6 @@ snapshots:
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.23(zod@4.3.6)
       '@vercel/oidc': 3.1.0
-      zod: 4.3.6
-
-  '@ai-sdk/openai@3.0.51(zod@4.3.6)':
-    dependencies:
-      '@ai-sdk/provider': 3.0.8
-      '@ai-sdk/provider-utils': 4.0.23(zod@4.3.6)
       zod: 4.3.6
 
   '@ai-sdk/openai@3.0.52(zod@4.3.6)':
