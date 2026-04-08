@@ -6,8 +6,8 @@ settings:
 
 overrides:
   dompurify: ^3.3.2
-  lodash@<4.17.23: 4.17.23
-  lodash-es@<4.17.23: 4.17.23
+  lodash@<4.18.1: 4.18.1
+  lodash-es@<4.18.1: 4.18.1
   sourcemap-codec: npm:@jridgewell/sourcemap-codec@^1.5.0
   node-domexception: npm:domexception@^4.0.0
   source-map: ^0.7.4
@@ -2334,14 +2334,11 @@ packages:
     resolution: {integrity: sha512-arhlxbFRmoQHl33a0Zkle/YWlmNwoyt6QNZEIJcqNbdrsix5Lvc4HyyI3EnwxTYlZYc32EbYrQ8SzEZ7dqgg9A==}
     engines: {node: '>=14'}
 
-  lodash-es@4.17.23:
-    resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
-
   lodash-es@4.18.1:
     resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
-  lodash@4.17.23:
-    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   log-update@6.1.0:
     resolution: {integrity: sha512-9ie8ItPR6tjY5uYJh8K/Zrv/RMZ5VOlOWvtZdEHYSTFKZfIBPQa9tOAEeAWhd+AnIneLJ22w5fjOYtoutpWq5w==}
@@ -3426,12 +3423,12 @@ snapshots:
     dependencies:
       '@chevrotain/gast': 11.1.2
       '@chevrotain/types': 11.1.2
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   '@chevrotain/gast@11.1.2':
     dependencies:
       '@chevrotain/types': 11.1.2
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   '@chevrotain/regexp-to-ast@11.1.2': {}
 
@@ -4507,7 +4504,7 @@ snapshots:
   chevrotain-allstar@0.3.1(chevrotain@11.1.2):
     dependencies:
       chevrotain: 11.1.2
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   chevrotain@11.1.2:
     dependencies:
@@ -4516,7 +4513,7 @@ snapshots:
       '@chevrotain/regexp-to-ast': 11.1.2
       '@chevrotain/types': 11.1.2
       '@chevrotain/utils': 11.1.2
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   chokidar@4.0.3:
     dependencies:
@@ -4779,7 +4776,7 @@ snapshots:
   dagre-d3-es@7.0.14:
     dependencies:
       d3: 7.9.0
-      lodash-es: 4.17.23
+      lodash-es: 4.18.1
 
   data-urls@6.0.1:
     dependencies:
@@ -5239,11 +5236,9 @@ snapshots:
       pkg-types: 2.3.0
       quansync: 0.2.11
 
-  lodash-es@4.17.23: {}
-
   lodash-es@4.18.1: {}
 
-  lodash@4.17.23: {}
+  lodash@4.18.1: {}
 
   log-update@6.1.0:
     dependencies:
@@ -5600,8 +5595,8 @@ snapshots:
       date-fns-tz: 3.2.0(date-fns@4.1.0)
       evtd: 0.2.4
       highlight.js: 11.11.1
-      lodash: 4.17.23
-      lodash-es: 4.17.23
+      lodash: 4.18.1
+      lodash-es: 4.18.1
       seemly: 0.3.10
       treemate: 0.3.11
       vdirs: 0.1.8(vue@3.5.32(typescript@6.0.2))
