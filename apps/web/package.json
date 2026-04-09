@@ -28,7 +28,7 @@
     "test:lighthouse": "node -e \"const fs=require('fs'); fs.mkdirSync('lighthouse-results',{recursive:true}); fs.writeFileSync('lighthouse-results/summary.json', JSON.stringify({status:'skipped', reason:'Lighthouse tests not implemented in repo'}, null, 2)); console.log('Lighthouse tests skipped: placeholder results generated');\""
   },
   "dependencies": {
-    "@ai-sdk/vue": "^3.0.149",
+    "@ai-sdk/vue": "^3.0.154",
     "@chatgpt-web/shared": "workspace:*",
     "@iconify/vue": "^5.0.0",
     "@vueuse/core": "^14.2.1",
