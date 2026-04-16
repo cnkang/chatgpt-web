@@ -88,8 +88,8 @@ importers:
   apps/web:
     dependencies:
       '@ai-sdk/vue':
-        specifier: ^3.0.159
-        version: 3.0.159(vue@3.5.32(typescript@6.0.2))(zod@4.3.6)
+        specifier: ^3.0.165
+        version: 3.0.165(vue@3.5.32(typescript@6.0.2))(zod@4.3.6)
       '@chatgpt-web/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -246,8 +246,8 @@ packages:
     resolution: {integrity: sha512-oGMAgGoQdBXbZqNG0Ze56CHjDZ1IDYOwGYxYjO5KLSlz5HiNQ9udIXsPZ61VWaHGZ5XW/jyjmr6t2xz2jGVwbQ==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/vue@3.0.159':
-    resolution: {integrity: sha512-x6BQc/eQsk6so2JC02jXPdvRXKwSL6xjmb12c7PbheHrUbrNzv6FSCZvLppLYaJ1MKwKhjl1csFJ2oj+/djCOg==}
+  '@ai-sdk/vue@3.0.165':
+    resolution: {integrity: sha512-XEk//+J4yx4dJO9yS4DL9bSyvCutoeEzlOIFuuOpcbS6xeNMkV8ivt/gLCL61QEWBbMaG8SEKKMUqT+yEsW8CQ==}
     engines: {node: '>=18'}
     peerDependencies:
       vue: ^3.3.4
@@ -3358,10 +3358,10 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/vue@3.0.159(vue@3.5.32(typescript@6.0.2))(zod@4.3.6)':
+  '@ai-sdk/vue@3.0.165(vue@3.5.32(typescript@6.0.2))(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider-utils': 4.0.23(zod@4.3.6)
-      ai: 6.0.159(zod@4.3.6)
+      ai: 6.0.165(zod@4.3.6)
       swrv: 1.2.0(vue@3.5.32(typescript@6.0.2))
       vue: 3.5.32(typescript@6.0.2)
     transitivePeerDependencies:
