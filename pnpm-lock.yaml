@@ -45,8 +45,8 @@ importers:
   apps/api:
     dependencies:
       '@ai-sdk/azure':
-        specifier: ^3.0.53
-        version: 3.0.53(zod@4.3.6)
+        specifier: ^3.0.54
+        version: 3.0.54(zod@4.3.6)
       '@ai-sdk/openai':
         specifier: ^3.0.53
         version: 3.0.53(zod@4.3.6)
@@ -212,20 +212,14 @@ packages:
   '@acemir/cssom@0.9.31':
     resolution: {integrity: sha512-ZnR3GSaH+/vJ0YlHau21FjfLYjMpYVIzTD8M8vIEQvIGxeOXyXdzCI140rrCY862p/C/BbzWsjc1dgnM9mkoTA==}
 
-  '@ai-sdk/azure@3.0.53':
-    resolution: {integrity: sha512-oG5/uugLnw4cdGD2sfphkfpgshc5/OYf9X819xNlxRM9hUdKWJs38D9k0rX4UaH7JH0WxOy4HtExd4AXLtUbAA==}
+  '@ai-sdk/azure@3.0.54':
+    resolution: {integrity: sha512-lnW7V+Kl3OKKvNXHaZSf/D35vo4bchfMm7WzxILZMPJ5N7W6i1oDeSXVurSKlR685Kvpi8ZA76LBJKSbzff3yw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
   '@ai-sdk/gateway@3.0.96':
     resolution: {integrity: sha512-BDiVEMUVHGpngReeigzLyJobG0TvzYbNGzdHI8JYBZHrjOX4aL6qwIls7z3p7V4TuXVWUCbG8TSWEe7ksX4Vhw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
-
-  '@ai-sdk/openai@3.0.52':
-    resolution: {integrity: sha512-4Rr8NCGmfWTz6DCUvixn9UmyZcMatiHn0zWoMzI3JCUe9R1P/vsPOpCBALKoSzVYOjyJnhtnVIbfUKujcS39uw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -3314,9 +3308,9 @@ snapshots:
   '@acemir/cssom@0.9.31':
     optional: true
 
-  '@ai-sdk/azure@3.0.53(zod@4.3.6)':
+  '@ai-sdk/azure@3.0.54(zod@4.3.6)':
     dependencies:
-      '@ai-sdk/openai': 3.0.52(zod@4.3.6)
+      '@ai-sdk/openai': 3.0.53(zod@4.3.6)
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.23(zod@4.3.6)
       zod: 4.3.6
@@ -3326,12 +3320,6 @@ snapshots:
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.23(zod@4.3.6)
       '@vercel/oidc': 3.1.0
-      zod: 4.3.6
-
-  '@ai-sdk/openai@3.0.52(zod@4.3.6)':
-    dependencies:
-      '@ai-sdk/provider': 3.0.8
-      '@ai-sdk/provider-utils': 4.0.23(zod@4.3.6)
       zod: 4.3.6
 
   '@ai-sdk/openai@3.0.53(zod@4.3.6)':
