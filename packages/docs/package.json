@@ -19,6 +19,6 @@
     "clean": "echo 'Nothing to clean in docs package'"
   },
   "devDependencies": {
-    "markdownlint-cli2": "^0.22.0"
+    "markdownlint-cli2": "^0.22.1"
   }
 }
