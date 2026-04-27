@@ -109,8 +109,8 @@ importers:
         specifier: ^0.16.45
         version: 0.16.45
       markstream-vue:
-        specifier: 0.0.12
-        version: 0.0.12(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.4.0(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3))
+        specifier: 0.0.13
+        version: 0.0.13(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.4.0(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3))
       mermaid:
         specifier: ^11.14.0
         version: 11.14.0
@@ -183,7 +183,7 @@ importers:
         version: 6.0.2
       vitest:
         specifier: ^4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(jsdom@27.4.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
+        version: 4.1.2(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(jsdom@27.4.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/docs:
     devDependencies:
@@ -2415,17 +2415,16 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  markstream-vue@0.0.12:
-    resolution: {integrity: sha512-fG4/UtwepfDFdf16cHp4FM4Xybcmnlpxfa2MEkC9rwIRtJbCCWQy2ghoTraxMwg2EFHU0NcGMIC19ETnSaFAsw==}
+  markstream-vue@0.0.13:
+    resolution: {integrity: sha512-Ml8QZ23Z0SfQ5ZAgiKVkD7Go0FvIDuVdcQIpBd8ri1Y6qnMWqol46RWy5TGJ88dVNOmaj+DDXTbVrIczMuvmgA==}
     hasBin: true
     peerDependencies:
       '@antv/infographic': ^0.2.3
       '@terrastruct/d2': '>=0.1.33'
       katex: '>=0.16.22'
       mermaid: '>=11'
-      shiki: ^3.13.0
       stream-markdown: '>=0.0.15'
-      stream-monaco: '>=0.0.22'
+      stream-monaco: '>=0.0.38'
       vue: '>=3.0.0'
       vue-i18n: '>=9'
     peerDependenciesMeta:
@@ -2436,8 +2435,6 @@ packages:
       katex:
         optional: true
       mermaid:
-        optional: true
-      shiki:
         optional: true
       stream-markdown:
         optional: true
@@ -2859,8 +2856,8 @@ packages:
   std-env@4.1.0:
     resolution: {integrity: sha512-Rq7ybcX2RuC55r9oaPVEW7/xu3tj8u4GeBYHBWCychFtzMIr86A7e3PPEBPT37sHStKX3+TiX/Fr/ACmJLVlLQ==}
 
-  stream-markdown-parser@0.0.83:
-    resolution: {integrity: sha512-/M2NV4D88YtIn0i537JoVD0AMUTt2phTvAvMTtcks6SmSYY8XxVe45ghqycQ2CRyLLOMBu3SrlhzG1S6eydb/g==}
+  stream-markdown-parser@0.0.89:
+    resolution: {integrity: sha512-h7owUSvkezRGS3hiq0Sp2UDxyk/ERQKFx5JjYbi8yJOUQW7ZHaHhFaJfmJW382XiPI/PCGwoELV+cPr2x/rukA==}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -4207,13 +4204,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.2(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))':
+  '@vitest/mocker@4.1.2(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
       '@vitest/spy': 4.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3)
 
   '@vitest/mocker@4.1.5(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
@@ -4276,7 +4273,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vitest: 4.1.2(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(jsdom@27.4.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.2(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(jsdom@27.4.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
     optional: true
 
   '@vitest/ui@4.1.5(vitest@4.1.5)':
@@ -5367,11 +5364,11 @@ snapshots:
 
   marked@16.4.2: {}
 
-  markstream-vue@0.0.12(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.4.0(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3)):
+  markstream-vue@0.0.13(katex@0.16.45)(mermaid@11.14.0)(vue-i18n@11.4.0(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3)):
     dependencies:
       '@chenglou/pretext': 0.0.5
       '@floating-ui/dom': 1.7.6
-      stream-markdown-parser: 0.0.83
+      stream-markdown-parser: 0.0.89
       vue: 3.5.33(typescript@6.0.3)
     optionalDependencies:
       katex: 0.16.45
@@ -5915,7 +5912,7 @@ snapshots:
 
   std-env@4.1.0: {}
 
-  stream-markdown-parser@0.0.83:
+  stream-markdown-parser@0.0.89:
     dependencies:
       markdown-it-container: 4.0.0
       markdown-it-footnote: 4.0.0
@@ -6188,10 +6185,10 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.8.3
 
-  vitest@4.1.2(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(jsdom@27.4.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3)):
+  vitest@4.1.2(@opentelemetry/api@1.9.0)(@types/node@25.6.0)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(jsdom@27.4.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.2
-      '@vitest/mocker': 4.1.2(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.2(vite@8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
       '@vitest/pretty-format': 4.1.2
       '@vitest/runner': 4.1.2
       '@vitest/snapshot': 4.1.2
@@ -6208,7 +6205,7 @@ snapshots:
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vite: 8.0.10(@types/node@25.6.0)(esbuild@0.27.2)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.10(@types/node@25.6.0)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
