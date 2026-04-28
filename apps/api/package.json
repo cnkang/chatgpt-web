@@ -50,7 +50,7 @@
     "@ai-sdk/openai": "^3.0.53",
     "@chatgpt-web/shared": "workspace:*",
     "ai": "^6.0.168",
-    "openai": "^6.34.0",
+    "openai": "^6.35.0",
     "redis": "^5.12.1",
     "zod": "^4.3.6"
   },
