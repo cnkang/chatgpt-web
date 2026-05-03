@@ -31,7 +31,7 @@
     "@ai-sdk/vue": "^3.0.171",
     "@chatgpt-web/shared": "workspace:*",
     "@iconify/vue": "^5.0.0",
-    "@vueuse/core": "^14.2.1",
+    "@vueuse/core": "^14.3.0",
     "ai": "^6.0.171",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.45",
