@@ -46,25 +46,25 @@ importers:
     dependencies:
       '@ai-sdk/azure':
         specifier: ^3.0.56
-        version: 3.0.56(zod@4.3.6)
+        version: 3.0.56(zod@4.4.2)
       '@ai-sdk/openai':
         specifier: ^3.0.55
-        version: 3.0.55(zod@4.3.6)
+        version: 3.0.55(zod@4.4.2)
       '@chatgpt-web/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       ai:
         specifier: ^6.0.171
-        version: 6.0.171(zod@4.3.6)
+        version: 6.0.171(zod@4.4.2)
       openai:
         specifier: ^6.35.0
-        version: 6.35.0(ws@8.20.0)(zod@4.3.6)
+        version: 6.35.0(ws@8.20.0)(zod@4.4.2)
       redis:
         specifier: ^5.12.1
         version: 5.12.1(@opentelemetry/api@1.9.0)
       zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+        specifier: ^4.4.2
+        version: 4.4.2
     devDependencies:
       '@types/node':
         specifier: ^25.6.0
@@ -89,7 +89,7 @@ importers:
     dependencies:
       '@ai-sdk/vue':
         specifier: ^3.0.171
-        version: 3.0.171(vue@3.5.33(typescript@6.0.3))(zod@4.3.6)
+        version: 3.0.171(vue@3.5.33(typescript@6.0.3))(zod@4.4.2)
       '@chatgpt-web/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -101,7 +101,7 @@ importers:
         version: 14.2.1(vue@3.5.33(typescript@6.0.3))
       ai:
         specifier: ^6.0.171
-        version: 6.0.171(zod@4.3.6)
+        version: 6.0.171(zod@4.4.2)
       html-to-image:
         specifier: ^1.11.13
         version: 1.11.13
@@ -194,8 +194,8 @@ importers:
   packages/shared:
     dependencies:
       zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+        specifier: ^4.4.2
+        version: 4.4.2
     devDependencies:
       fast-check:
         specifier: ^4.7.0
@@ -2944,11 +2944,11 @@ packages:
     resolution: {integrity: sha512-Bf+ILmBgretUrdJxzXM0SgXLZ3XfiaUuOj/IKQHuTXip+05Xn+uyEYdVg0kYDipTBcLrCVyUzAPz7QmArb0mmw==}
     engines: {node: '>=14.0.0'}
 
-  tldts-core@7.0.29:
-    resolution: {integrity: sha512-W99NuU7b1DcG3uJ3v9k9VztCH3WialNbBkBft5wCs8V8mexu0XQqaZEYb9l9RNNzK8+3EJ9PKWB0/RUtTQ/o+Q==}
+  tldts-core@7.0.30:
+    resolution: {integrity: sha512-uiHN8PIB1VmWyS98eZYja4xzlYqeFZVjb4OuYlJQnZAuJhMw4PbKQOKgHKhBdJR3FE/t5mUQ1Kd80++B+qhD1Q==}
 
-  tldts@7.0.29:
-    resolution: {integrity: sha512-JIXCerhudr/N6OWLwLF1HVsTTUo7ry6qHa5eWZEkiMuxsIiAACL55tGLfqfHfoH7QaMQUW8fngD7u7TxWexYQg==}
+  tldts@7.0.30:
+    resolution: {integrity: sha512-ELrFxuqsDdHUwoh0XxDbxuLD3Wnz49Z57IFvTtvWy1hJdcMZjXLIuonjilCiWHlT2GbE4Wlv1wKVTzDFnXH1aw==}
     hasBin: true
 
   to-regex-range@5.0.1:
@@ -3302,49 +3302,49 @@ packages:
     engines: {node: '>= 14.6'}
     hasBin: true
 
-  zod@4.3.6:
-    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+  zod@4.4.2:
+    resolution: {integrity: sha512-IynmDyxsEsb9RKzO3J9+4SxXnl2FTFSzNBaKKaMV6tsSk0rw9gYw9gs+JFCq/qk2LCZ78KDwyj+Z289TijSkUw==}
 
 snapshots:
 
   '@acemir/cssom@0.9.31':
     optional: true
 
-  '@ai-sdk/azure@3.0.56(zod@4.3.6)':
+  '@ai-sdk/azure@3.0.56(zod@4.4.2)':
     dependencies:
-      '@ai-sdk/openai': 3.0.55(zod@4.3.6)
+      '@ai-sdk/openai': 3.0.55(zod@4.4.2)
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.25(zod@4.3.6)
-      zod: 4.3.6
+      '@ai-sdk/provider-utils': 4.0.25(zod@4.4.2)
+      zod: 4.4.2
 
-  '@ai-sdk/gateway@3.0.106(zod@4.3.6)':
+  '@ai-sdk/gateway@3.0.106(zod@4.4.2)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.25(zod@4.3.6)
+      '@ai-sdk/provider-utils': 4.0.25(zod@4.4.2)
       '@vercel/oidc': 3.2.0
-      zod: 4.3.6
+      zod: 4.4.2
 
-  '@ai-sdk/openai@3.0.55(zod@4.3.6)':
+  '@ai-sdk/openai@3.0.55(zod@4.4.2)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.25(zod@4.3.6)
-      zod: 4.3.6
+      '@ai-sdk/provider-utils': 4.0.25(zod@4.4.2)
+      zod: 4.4.2
 
-  '@ai-sdk/provider-utils@4.0.25(zod@4.3.6)':
+  '@ai-sdk/provider-utils@4.0.25(zod@4.4.2)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.0.8
-      zod: 4.3.6
+      zod: 4.4.2
 
   '@ai-sdk/provider@3.0.10':
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/vue@3.0.171(vue@3.5.33(typescript@6.0.3))(zod@4.3.6)':
+  '@ai-sdk/vue@3.0.171(vue@3.5.33(typescript@6.0.3))(zod@4.4.2)':
     dependencies:
-      '@ai-sdk/provider-utils': 4.0.25(zod@4.3.6)
-      ai: 6.0.171(zod@4.3.6)
+      '@ai-sdk/provider-utils': 4.0.25(zod@4.4.2)
+      ai: 6.0.171(zod@4.4.2)
       swrv: 1.2.0(vue@3.5.33(typescript@6.0.3))
       vue: 3.5.33(typescript@6.0.3)
     transitivePeerDependencies:
@@ -4436,13 +4436,13 @@ snapshots:
   agent-base@7.1.4:
     optional: true
 
-  ai@6.0.171(zod@4.3.6):
+  ai@6.0.171(zod@4.4.2):
     dependencies:
-      '@ai-sdk/gateway': 3.0.106(zod@4.3.6)
+      '@ai-sdk/gateway': 3.0.106(zod@4.4.2)
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.25(zod@4.3.6)
+      '@ai-sdk/provider-utils': 4.0.25(zod@4.4.2)
       '@opentelemetry/api': 1.9.0
-      zod: 4.3.6
+      zod: 4.4.2
 
   alien-signals@3.1.2: {}
 
@@ -5649,10 +5649,10 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
-  openai@6.35.0(ws@8.20.0)(zod@4.3.6):
+  openai@6.35.0(ws@8.20.0)(zod@4.4.2):
     optionalDependencies:
       ws: 8.20.0
-      zod: 4.3.6
+      zod: 4.4.2
 
   package-manager-detector@1.6.0: {}
 
@@ -6008,12 +6008,12 @@ snapshots:
 
   tinyrainbow@3.1.0: {}
 
-  tldts-core@7.0.29:
+  tldts-core@7.0.30:
     optional: true
 
-  tldts@7.0.29:
+  tldts@7.0.30:
     dependencies:
-      tldts-core: 7.0.29
+      tldts-core: 7.0.30
     optional: true
 
   to-regex-range@5.0.1:
@@ -6024,7 +6024,7 @@ snapshots:
 
   tough-cookie@6.0.1:
     dependencies:
-      tldts: 7.0.29
+      tldts: 7.0.30
     optional: true
 
   tr46@6.0.0:
@@ -6404,4 +6404,4 @@ snapshots:
 
   yaml@2.8.3: {}
 
-  zod@4.3.6: {}
+  zod@4.4.2: {}
