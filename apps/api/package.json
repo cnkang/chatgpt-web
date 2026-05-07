@@ -46,7 +46,7 @@
     "common:cleanup": "node -e \"const fs=require('node:fs'); fs.rmSync('node_modules',{recursive:true,force:true}); fs.rmSync('pnpm-lock.yaml',{force:true});\""
   },
   "dependencies": {
-    "@ai-sdk/azure": "^3.0.62",
+    "@ai-sdk/azure": "^3.0.63",
     "@ai-sdk/openai": "^3.0.62",
     "@chatgpt-web/shared": "workspace:*",
     "ai": "^6.0.175",
