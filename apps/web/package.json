@@ -30,7 +30,7 @@
   "dependencies": {
     "@ai-sdk/vue": "^3.0.175",
     "@chatgpt-web/shared": "workspace:*",
-    "@iconify/vue": "^5.0.0",
+    "@iconify/vue": "^5.0.1",
     "@vueuse/core": "^14.3.0",
     "ai": "^6.0.175",
     "html-to-image": "^1.11.13",
